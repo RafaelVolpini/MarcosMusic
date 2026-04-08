@@ -1,0 +1,103 @@
+@startuml
+left to right direction
+hide circle
+skinparam linetype ortho
+skinparam shadowing false
+skinparam backgroundColor #FFFFFF
+skinparam defaultTextAlignment center
+skinparam entity {
+  BackgroundColor #F4F7FB
+  BorderColor #1F3A5F
+  FontColor #0B1F33
+}
+skinparam ArrowColor #1F3A5F
+
+entity "USERS" as users {
+  +id : UUID <<PK>>
+  --
+  name : VARCHAR
+  email : VARCHAR <<UNIQUE>>
+  phone : VARCHAR
+  role : ENUM (STUDENT, TEACHER)
+  created_at : TIMESTAMP
+}
+
+entity "INSTRUMENTS" as instruments {
+  +id : INT <<PK>>
+  --
+  name : VARCHAR <<UNIQUE>>
+}
+
+entity "TEACHER_INSTRUMENTS" as teacher_instruments {
+  +teacher_id : UUID <<PK, FK>>
+  +instrument_id : INT <<PK, FK>>
+}
+
+entity "ROOMS" as rooms {
+  +id : INT <<PK>>
+  --
+  name : VARCHAR <<UNIQUE>>
+  capacity : INT
+}
+
+entity "LESSONS" as lessons {
+  +id : UUID <<PK>>
+  --
+  student_id : UUID <<FK>>
+  teacher_id : UUID <<FK>>
+  instrument_id : INT <<FK>>
+  room_id : INT <<FK>>
+  scheduled_at : TIMESTAMP
+  lesson_type : ENUM (ONLINE, PRESENTIAL)
+  status : ENUM (SCHEDULED, COMPLETED, CANCELLED)
+  meeting_link : VARCHAR
+  notes : TEXT
+}
+
+entity "PAYMENTS" as payments {
+  +id : UUID <<PK>>
+  --
+  lesson_id : UUID <<FK>>
+  student_id : UUID <<FK>>
+  amount : DECIMAL
+  due_date : DATE
+  paid_at : TIMESTAMP
+  status : ENUM (PENDING, PAID, OVERDUE)
+}
+
+entity "VIDEO_REPOSITORIES" as video_repositories {
+  +id : UUID <<PK>>
+  --
+  title : VARCHAR
+  description : TEXT
+}
+
+entity "VIDEO_LESSONS" as video_lessons {
+  +id : UUID <<PK>>
+  --
+  title : VARCHAR
+  video_url : VARCHAR
+  lesson_id : UUID <<FK>>
+  video_repository_id : UUID <<FK>>
+  status : ENUM (PUBLISHED, DRAFT)
+}
+
+' =====================
+' RELACIONAMENTOS
+' =====================
+
+users ||--o{ lessons : "student_id"
+users ||--o{ lessons : "teacher_id"
+instruments ||--o{ lessons : "instrument_id"
+rooms ||--o{ lessons : "room_id"
+
+users ||--o{ teacher_instruments : "teacher_id"
+instruments ||--o{ teacher_instruments : "instrument_id"
+
+lessons ||--o{ payments : "lesson_id"
+users ||--o{ payments : "student_id"
+
+lessons ||--o{ video_lessons : "lesson_id"
+video_repositories ||--o{ video_lessons : "video_repository_id"
+
+@enduml
