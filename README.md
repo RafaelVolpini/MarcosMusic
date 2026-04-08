@@ -5,14 +5,16 @@
 ## Alunos integrantes da equipe
 
 * Artur Costa Cavalcante Coelho
-* [Nome completo do aluno 2]
-* [Nome completo do aluno 3]
-* [Nome completo do aluno 4]
+* Bernardo Parreiras Prado
+* João Paulo Aguiar Prado
+* Paulo Victor Fernandes de Araujo Silva
+* Rafael Nagem Volpini
 
 ## Professores responsáveis
 
-* [Nome completo do professor 1]
-* [Nome completo do professor 2]
+* Michelle Hanne Soares de Andrade
+* Nelson Ribeiro de Carvalho Junior
+* Luiz Carlos da Silva
 
 ## Instruções de utilização
 
