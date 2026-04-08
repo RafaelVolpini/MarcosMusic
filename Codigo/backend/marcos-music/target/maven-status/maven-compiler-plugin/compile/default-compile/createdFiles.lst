@@ -1,0 +1,9 @@
+com\marcos\music\MarcosMusicApplication.class
+com\marcos\music\entity\Role.class
+com\marcos\music\security\JwtService.class
+com\marcos\music\security\SecurityConfig.class
+com\marcos\music\service\AuthService.class
+com\marcos\music\controller\AuthController.class
+com\marcos\music\entity\Usuario.class
+com\marcos\music\repository\UserRepository.class
+com\marcos\music\dto\AuthDTO.class
