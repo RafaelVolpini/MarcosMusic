@@ -1,18 +1,21 @@
 import { useState } from 'react';
-import type { Lesson, Teacher, Room, LessonType, WeeklyAvailability } from '../../types';
+import type { Lesson, Teacher, Room, LessonType, WeeklyAvailability, Student } from '../../types';
+import type { AuthUser } from '../../lib/auth';
 import { CalendarView } from '../calendar/CalendarView';
 import { LessonModal } from '../modals/LessonModal';
 import { NewLessonModal } from '../modals/NewLessonModal';
 
 interface AgendaPageProps {
   lessons: Lesson[];
+  students: Student[];
   teachers: Teacher[];
   rooms: Room[];
   availability: WeeklyAvailability;
+  currentUser: AuthUser;
   onUpdateLesson: (lesson: Lesson) => void;
   onDeleteLesson: (id: string) => void;
   onCreateLesson: (data: {
-    studentName: string;
+    studentId: string;
     teacherId: string;
     roomId: string;
     date: string;
@@ -22,12 +25,14 @@ interface AgendaPageProps {
     instrument: string;
     notes: string;
     meetLink: string;
+    attendanceConfirmed: boolean;
+    reminderMinutesBefore: number;
   }) => void;
   onMoveLesson: (id: string, date: string, time: string) => void;
 }
 
 export function AgendaPage({
-  lessons, teachers, rooms, availability,
+  lessons, students, teachers, rooms, availability, currentUser,
   onUpdateLesson, onDeleteLesson, onCreateLesson, onMoveLesson,
 }: AgendaPageProps) {
   const [selectedLesson, setSelectedLesson] = useState<Lesson | null>(null);
@@ -45,6 +50,7 @@ export function AgendaPage({
 
       <LessonModal
         lesson={selectedLesson}
+        currentUser={currentUser}
         onClose={() => setSelectedLesson(null)}
         onUpdate={(lesson) => { onUpdateLesson(lesson); setSelectedLesson(null); }}
         onDelete={(id) => { onDeleteLesson(id); setSelectedLesson(null); }}
@@ -54,9 +60,12 @@ export function AgendaPage({
         open={!!newLessonModal}
         defaultDate={newLessonModal?.date ?? ''}
         defaultTime={newLessonModal?.time ?? ''}
+        lessons={lessons}
+        students={students}
         teachers={teachers}
         rooms={rooms}
         availability={availability}
+        currentUser={currentUser}
         onClose={() => setNewLessonModal(null)}
         onCreate={(data) => { onCreateLesson(data); setNewLessonModal(null); }}
       />

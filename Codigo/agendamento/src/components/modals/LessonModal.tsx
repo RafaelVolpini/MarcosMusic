@@ -1,12 +1,13 @@
 import type { ReactNode } from 'react';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   X, User, GraduationCap, Building2, Clock, FileText,
-  Video, ExternalLink, CheckCircle, XCircle,
+  Video, ExternalLink, CheckCircle, XCircle, Bell,
   RefreshCw, Music,
 } from 'lucide-react';
 import type { Lesson } from '../../types';
+import type { AuthUser } from '../../lib/auth';
 import { formatTime, formatDuration, generateMeetLink } from '../../utils';
 import { Button } from '../ui/Button';
 import { Badge } from '../ui/Badge';
@@ -14,6 +15,7 @@ import { Avatar } from '../ui/Avatar';
 
 interface LessonModalProps {
   lesson: Lesson | null;
+  currentUser: AuthUser;
   onClose: () => void;
   onUpdate: (lesson: Lesson) => void;
   onDelete: (lessonId: string) => void;
@@ -33,24 +35,53 @@ const STATUS_BADGE: Record<string, { variant: 'success' | 'info' | 'danger' | 'w
   rescheduled: { variant: 'warning', label: 'Reagendada' },
 };
 
-export function LessonModal({ lesson, onClose, onUpdate, onDelete }: LessonModalProps) {
-  const [notes, setNotes] = useState(lesson?.notes ?? '');
-  const [meetLink, setMeetLink] = useState(lesson?.meetLink ?? '');
+export function LessonModal({ lesson, currentUser, onClose, onUpdate, onDelete }: LessonModalProps) {
+  const [notes, setNotes] = useState('');
+  const [meetLink, setMeetLink] = useState('');
+  const [attendanceConfirmed, setAttendanceConfirmed] = useState(false);
+  const [reminderMinutesBefore, setReminderMinutesBefore] = useState(30);
   const [editing, setEditing] = useState(false);
   const [confirmDelete, setConfirmDelete] = useState(false);
+
+  useEffect(() => {
+    if (!lesson) return;
+    setNotes(lesson.notes ?? '');
+    setMeetLink(lesson.meetLink ?? '');
+    setAttendanceConfirmed(lesson.attendanceConfirmed ?? false);
+    setReminderMinutesBefore(lesson.reminderMinutesBefore ?? 30);
+    setEditing(false);
+    setConfirmDelete(false);
+  }, [lesson]);
 
   if (!lesson) return null;
 
   const statusInfo = STATUS_BADGE[lesson.status];
   const duration = formatDuration(lesson.startTime, lesson.endTime);
+  const canManageMeet = currentUser.role === 'teacher';
 
   const handleGenerateMeet = () => {
+    if (!canManageMeet) return;
     const link = generateMeetLink();
     setMeetLink(link);
   };
 
+  const handleSendReminder = () => {
+    const phoneRaw = (lesson.studentPhone ?? '').replace(/\D/g, '');
+    if (!phoneRaw) return;
+
+    const message = encodeURIComponent(`Olá ${lesson.studentName}, lembrete da sua aula de ${lesson.instrument} hoje às ${lesson.startTime}.`);
+    window.open(`https://wa.me/55${phoneRaw}?text=${message}`, '_blank', 'noopener,noreferrer');
+  };
+
   const handleSave = () => {
-    onUpdate({ ...lesson, notes, meetLink });
+    onUpdate({
+      ...lesson,
+      notes,
+      meetLink,
+      attendanceConfirmed,
+      attendanceConfirmedAt: attendanceConfirmed ? (lesson.attendanceConfirmedAt ?? new Date().toISOString()) : undefined,
+      reminderMinutesBefore,
+    });
     setEditing(false);
   };
 
@@ -135,33 +166,64 @@ export function LessonModal({ lesson, onClose, onUpdate, onDelete }: LessonModal
                 </div>
 
                 {/* Meet link */}
-                {(lesson.type === 'online' || meetLink) && (
-                  <InfoRow icon={<Video size={14} />} label="Link da Aula Online">
-                    {meetLink ? (
-                      <div className="flex items-center gap-2">
-                        <a
-                          href={meetLink}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="text-sm text-(--accent-700) hover:underline flex items-center gap-1 truncate"
-                        >
-                          {meetLink.replace('https://', '')}
-                          <ExternalLink size={12} className="shrink-0" />
-                        </a>
-                        {editing && (
-                          <Button size="sm" variant="ghost" onClick={() => setMeetLink('')}>
-                            <X size={12} />
-                          </Button>
-                        )}
-                      </div>
+                <InfoRow icon={<Video size={14} />} label="Link da Aula">
+                  {meetLink ? (
+                    <div className="flex items-center gap-2">
+                      <a
+                        href={meetLink}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-sm text-(--accent-700) hover:underline flex items-center gap-1 truncate"
+                      >
+                        {meetLink.replace('https://', '')}
+                        <ExternalLink size={12} className="shrink-0" />
+                      </a>
+                      {editing && canManageMeet && (
+                        <Button size="sm" variant="ghost" onClick={() => setMeetLink('')}>
+                          <X size={12} />
+                        </Button>
+                      )}
+                    </div>
+                  ) : (
+                    <Button size="sm" variant="secondary" onClick={handleGenerateMeet} disabled={!canManageMeet}>
+                      <Video size={12} />
+                      Gerar link Meet
+                    </Button>
+                  )}
+                </InfoRow>
+
+                <div className="grid grid-cols-2 gap-4">
+                  <InfoRow icon={<CheckCircle size={14} />} label="Presença">
+                    {editing ? (
+                      <label className="flex items-center gap-2 text-sm text-[var(--text)]">
+                        <input
+                          type="checkbox"
+                          checked={attendanceConfirmed}
+                          onChange={(e) => setAttendanceConfirmed(e.target.checked)}
+                          className="rounded border-[var(--input-border)]"
+                        />
+                        Confirmada
+                      </label>
                     ) : (
-                      <Button size="sm" variant="secondary" onClick={handleGenerateMeet}>
-                        <Video size={12} />
-                        Gerar link Meet
-                      </Button>
+                      <span className="text-sm text-[var(--heading)]">
+                        {attendanceConfirmed ? 'Confirmada' : 'Pendente'}
+                      </span>
                     )}
                   </InfoRow>
-                )}
+                  <InfoRow icon={<Bell size={14} />} label="Lembrete">
+                    {editing ? (
+                      <input
+                        type="number"
+                        min={0}
+                        value={reminderMinutesBefore}
+                        onChange={(e) => setReminderMinutesBefore(Number(e.target.value || 0))}
+                        className="w-full text-sm border border-[var(--input-border)] rounded-xl px-3 py-2 focus:outline-none focus:ring-2 focus:ring-(--accent-100) text-[var(--text)] bg-[var(--input-bg)]"
+                      />
+                    ) : (
+                      <span className="text-sm text-[var(--heading)]">{reminderMinutesBefore} min antes</span>
+                    )}
+                  </InfoRow>
+                </div>
 
                 {/* Notes */}
                 <InfoRow icon={<FileText size={14} />} label="Observações">
@@ -203,6 +265,10 @@ export function LessonModal({ lesson, onClose, onUpdate, onDelete }: LessonModal
                   <>
                     <Button variant="secondary" size="sm" onClick={() => setEditing(true)}>
                       Editar
+                    </Button>
+                    <Button variant="ghost" size="sm" onClick={handleSendReminder} disabled={!lesson.studentPhone}>
+                      <Bell size={13} />
+                      Lembrar no WhatsApp
                     </Button>
                     <Button variant="ghost" size="sm">
                       <RefreshCw size={13} />

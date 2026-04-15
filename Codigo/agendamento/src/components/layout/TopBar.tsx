@@ -26,10 +26,15 @@ interface Notification {
   unread: boolean;
 }
 
-const MOCK_NOTIFICATIONS: Notification[] = [
+const TEACHER_NOTIFICATIONS: Notification[] = [
   { id: 'n1', title: 'Aula em 30 min', message: 'Pedro Alves - Piano às 10:00', time: '2h atrás', unread: true },
   { id: 'n2', title: 'Pagamento em atraso', message: 'Gabriel Mendes - R$ 480,00 vencido', time: '1d atrás', unread: true },
   { id: 'n3', title: 'Nova mensagem', message: 'Thiago: "Preciso reagendar minha aula"', time: '2d atrás', unread: false },
+];
+
+const STUDENT_NOTIFICATIONS: Notification[] = [
+  { id: 's1', title: 'Aula confirmada', message: 'Sua próxima aula foi confirmada para amanhã às 18:00.', time: '1h atrás', unread: true },
+  { id: 's2', title: 'Lembrete enviado', message: 'Lembrete de presença foi enviado para seu WhatsApp.', time: '5h atrás', unread: false },
 ];
 
 interface TopBarProps {
@@ -44,7 +49,8 @@ export function TopBar({ activePage, user, onLogout }: TopBarProps) {
   const [profileOpen, setProfileOpen] = useState(false);
   const [query, setQuery] = useState('');
 
-  const unreadCount = MOCK_NOTIFICATIONS.filter(n => n.unread).length;
+  const notifications = user.role === 'teacher' ? TEACHER_NOTIFICATIONS : STUDENT_NOTIFICATIONS;
+  const unreadCount = notifications.filter(n => n.unread).length;
   const initials = `${user.firstName?.[0] ?? ''}${user.lastName?.[0] ?? ''}`.trim().toUpperCase() || user.email.slice(0, 2).toUpperCase();
   const studentAvatarBg = 'linear-gradient(135deg, var(--accent-gradient-from), var(--accent-gradient-to))';
 
@@ -135,7 +141,7 @@ export function TopBar({ activePage, user, onLogout }: TopBarProps) {
                 )}
               </div>
               <div className="divide-y divide-[var(--border)]">
-                {MOCK_NOTIFICATIONS.map(n => (
+                {notifications.map(n => (
                   <div key={n.id} className={cn('px-4 py-3 hover:bg-[var(--hover-bg)] cursor-pointer transition-colors', n.unread && 'bg-[var(--accent-50)]/30')}>
                     <div className="flex items-start gap-3">
                       {n.unread && (
@@ -201,10 +207,10 @@ export function TopBar({ activePage, user, onLogout }: TopBarProps) {
                 <p className="text-xs text-[var(--muted)]">{user.email}</p>
               </div>
               {[
-                { icon: <User size={14} />, label: 'Meu Perfil', color: 'text-[var(--accent-600)]' },
-                { icon: <Music size={14} />, label: 'Minha Escola', color: 'text-[var(--accent-icon-fg)]' },
-                { icon: <Settings size={14} />, label: 'Configurações', color: 'text-[var(--muted)]' },
-              ].map(item => (
+                { icon: <User size={14} />, label: 'Meu Perfil', color: 'text-[var(--accent-600)]', roles: ['teacher', 'student'] as AuthUser['role'][] },
+                { icon: <Music size={14} />, label: 'Minha Escola', color: 'text-[var(--accent-icon-fg)]', roles: ['teacher'] as AuthUser['role'][] },
+                { icon: <Settings size={14} />, label: 'Configurações', color: 'text-[var(--muted)]', roles: ['teacher'] as AuthUser['role'][] },
+              ].filter(item => item.roles.includes(user.role)).map(item => (
                 <button key={item.label} className="flex items-center gap-3 w-full px-4 py-2.5 text-sm text-[var(--text)] hover:bg-[var(--hover-bg)] transition-colors group">
                   <span className={cn('transition-colors', item.color)}>{item.icon}</span>
                   {item.label}

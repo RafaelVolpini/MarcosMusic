@@ -14,9 +14,39 @@ export interface ContractAcceptance {
   acceptedAt: string;
 }
 
-const BACKEND_URL = 'http://localhost:8081';
+const BACKEND_URL = '';
 
 const SESSION_KEY = 'musga:auth:session';
+const PROFILE_KEY = 'musga:auth:profiles';
+
+interface StoredProfile {
+  firstName: string;
+  lastName: string;
+  phone: string;
+}
+
+function readProfiles(): Record<string, StoredProfile> {
+  const raw = localStorage.getItem(PROFILE_KEY);
+  if (!raw) return {};
+  try {
+    return JSON.parse(raw) as Record<string, StoredProfile>;
+  } catch {
+    return {};
+  }
+}
+
+function saveProfile(email: string, profile: StoredProfile): void {
+  const normalizedEmail = email.trim().toLowerCase();
+  const profiles = readProfiles();
+  profiles[normalizedEmail] = profile;
+  localStorage.setItem(PROFILE_KEY, JSON.stringify(profiles));
+}
+
+function getProfile(email: string): StoredProfile | null {
+  const normalizedEmail = email.trim().toLowerCase();
+  const profiles = readProfiles();
+  return profiles[normalizedEmail] ?? null;
+}
 
 // ─── Session helpers (token + user stored in sessionStorage) ────────────────
 
@@ -74,6 +104,12 @@ export async function registerUser(input: {
     token,
   };
 
+  saveProfile(user.email, {
+    firstName: user.firstName,
+    lastName: user.lastName,
+    phone: user.phone,
+  });
+
   saveSession(user);
 }
 
@@ -102,9 +138,9 @@ export async function login(emailInput: string, passwordInput: string): Promise<
   // Deriva papel: professor tem email fixo
   const role: AuthUser['role'] = email === 'marcos@musga.com' ? 'teacher' : 'student';
 
-  const namePart = email.split('@')[0] ?? 'Usuário';
-  const firstName = role === 'teacher' ? 'Marcos' : namePart;
-  const lastName  = role === 'teacher' ? 'Mello'  : '';
+  const profile = getProfile(email);
+  const firstName = role === 'teacher' ? 'Marcos' : (profile?.firstName?.trim() || 'Aluno');
+  const lastName  = role === 'teacher' ? 'Mello'  : (profile?.lastName?.trim() || '');
 
   const user: AuthUser = {
     role,
@@ -112,7 +148,7 @@ export async function login(emailInput: string, passwordInput: string): Promise<
     lastName,
     name: `${firstName} ${lastName}`.trim(),
     email,
-    phone: '',
+    phone: profile?.phone?.trim() || '',
     token: data.token,
     termos: data.termos ?? false,
   };

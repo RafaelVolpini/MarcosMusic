@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
 import { Layout } from './components/layout/Layout';
 import { Dashboard } from './components/pages/Dashboard';
@@ -26,6 +26,13 @@ import {
 
 const LESSON_DURATION_MINUTES = 50;
 
+const normalizeName = (value: string) =>
+  value
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .trim()
+    .toLowerCase();
+
 const addMinutesToTime = (time: string, minutesToAdd: number) => {
   const [h, m] = time.split(':').map(Number);
   const total = h * 60 + m + minutesToAdd;
@@ -50,6 +57,33 @@ function App() {
   const [lessons, setLessons] = useState<Lesson[]>(mockLessons);
   const [availability, setAvailability] = useState<WeeklyAvailability>(INITIAL_AVAILABILITY);
 
+  const studentFromEmail = sessionUser?.role === 'student'
+    ? mockStudents.find((student) => student.email.trim().toLowerCase() === sessionUser.email.trim().toLowerCase())
+    : null;
+
+  const studentFromFirstName = sessionUser?.role === 'student'
+    ? mockStudents.find((student) => {
+      const studentFirstName = student.name.split(' ')[0] ?? '';
+      const sessionFirstName = sessionUser.firstName || sessionUser.name.split(' ')[0] || '';
+      return normalizeName(studentFirstName) === normalizeName(sessionFirstName);
+    })
+    : null;
+
+  const studentFromSession = studentFromEmail ?? studentFromFirstName;
+
+  const lessonBelongsToSessionUser = (lesson: Lesson) => {
+    if (!sessionUser) return false;
+    if (sessionUser.role === 'teacher') return true;
+
+    if (studentFromSession?.id && lesson.studentId === studentFromSession.id) return true;
+
+    return normalizeName(lesson.studentName) === normalizeName(sessionUser.name);
+  };
+
+  const visibleLessons = sessionUser?.role === 'teacher'
+    ? lessons
+    : lessons.filter(lessonBelongsToSessionUser);
+
   const handleLoginSuccess = (user: AuthUser) => {
     setSessionUser(user);
     setContractAccepted(hasAcceptedContract(user.email));
@@ -68,7 +102,7 @@ function App() {
 
   const allowedPages: Page[] = sessionUser?.role === 'teacher'
     ? ['dashboard', 'aboutMe', 'agenda', 'students', 'rooms', 'rescheduling', 'video', 'lessonAlerts', 'settings']
-    : ['aboutMe', 'agenda', 'rescheduling', 'video', 'settings'];
+    : ['aboutMe', 'agenda', 'rescheduling', 'video'];
 
   const defaultPage: Page = sessionUser?.role === 'teacher' ? 'dashboard' : 'agenda';
 
@@ -77,13 +111,33 @@ function App() {
     : defaultPage;
 
   const handleUpdateLesson = (updated: Lesson) =>
-    setLessons(prev => prev.map(l => l.id === updated.id ? updated : l));
+    setLessons((prev) => prev.map((lesson) => {
+      if (lesson.id !== updated.id) return lesson;
+      if (!lessonBelongsToSessionUser(lesson)) return lesson;
+
+      if (sessionUser?.role === 'student') {
+        return {
+          ...updated,
+          studentId: lesson.studentId,
+          studentName: lesson.studentName,
+          teacherId: lesson.teacherId,
+          teacherName: lesson.teacherName,
+          roomId: lesson.roomId,
+          roomName: lesson.roomName,
+        };
+      }
+
+      return updated;
+    }));
 
   const handleDeleteLesson = (id: string) =>
-    setLessons(prev => prev.filter(l => l.id !== id));
+    setLessons((prev) => prev.filter((lesson) => {
+      if (lesson.id !== id) return true;
+      return !lessonBelongsToSessionUser(lesson);
+    }));
 
   const handleCreateLesson = (data: {
-    studentName: string;
+    studentId: string;
     teacherId: string;
     roomId: string;
     date: string;
@@ -93,13 +147,21 @@ function App() {
     instrument: string;
     notes: string;
     meetLink: string;
+    attendanceConfirmed: boolean;
+    reminderMinutesBefore: number;
   }) => {
+    const selectedStudent = mockStudents.find((student) => student.id === data.studentId);
+    const effectiveStudentId = selectedStudent?.id ?? studentFromSession?.id ?? `s${Date.now()}`;
+    const effectiveStudentName = selectedStudent?.name ?? sessionUser?.firstName ?? 'Aluno';
+    const effectiveStudentPhone = selectedStudent?.phone ?? sessionUser?.phone ?? '';
+
     const teacher = mockTeachers.find(t => t.id === data.teacherId);
     const room = mockRooms.find(r => r.id === data.roomId);
     const newLesson: Lesson = {
       id: `l${Date.now()}`,
-      studentId: `s${Date.now()}`,
-      studentName: data.studentName,
+      studentId: effectiveStudentId,
+      studentName: effectiveStudentName,
+      studentPhone: effectiveStudentPhone,
       teacherId: data.teacherId,
       teacherName: teacher?.name ?? '',
       roomId: data.roomId,
@@ -112,6 +174,9 @@ function App() {
       instrument: data.instrument,
       notes: data.notes,
       meetLink: data.meetLink,
+      attendanceConfirmed: data.attendanceConfirmed,
+      attendanceConfirmedAt: data.attendanceConfirmed ? new Date().toISOString() : undefined,
+      reminderMinutesBefore: data.reminderMinutesBefore,
       color: teacher?.color ?? '#7c3aed',
     };
     setLessons(prev => [...prev, newLesson]);
@@ -120,17 +185,59 @@ function App() {
   const handleMoveLesson = (id: string, newDate: string, newStartTime: string) => {
     setLessons(prev => prev.map(l => {
       if (l.id !== id) return l;
+      if (!lessonBelongsToSessionUser(l)) return l;
       const endTime = addMinutesToTime(newStartTime, LESSON_DURATION_MINUTES);
       return { ...l, date: newDate, startTime: newStartTime, endTime };
     }));
   };
+
+  useEffect(() => {
+    const timer = window.setInterval(async () => {
+      const now = new Date();
+      const dueLessons = visibleLessons.filter((lesson) => {
+        if (!lesson.reminderMinutesBefore || lesson.reminderMinutesBefore <= 0) return false;
+        if (lesson.lastReminderSentAt) return false;
+        if (lesson.status !== 'scheduled') return false;
+
+        const lessonDateTime = new Date(`${lesson.date}T${lesson.startTime}:00`);
+        const reminderAt = new Date(lessonDateTime.getTime() - lesson.reminderMinutesBefore * 60_000);
+
+        return now >= reminderAt && now < lessonDateTime;
+      });
+
+      if (!dueLessons.length) return;
+
+      if ('Notification' in window) {
+        const permission = Notification.permission === 'granted'
+          ? 'granted'
+          : await Notification.requestPermission();
+
+        if (permission === 'granted') {
+          dueLessons.forEach((lesson) => {
+            new Notification('Lembrete de aula', {
+              body: `${lesson.studentName} - ${lesson.instrument} às ${lesson.startTime}`,
+            });
+          });
+        }
+      }
+
+      const sentAt = new Date().toISOString();
+      setLessons((prev) => prev.map((lesson) => (
+        dueLessons.some((due) => due.id === lesson.id)
+          ? { ...lesson, lastReminderSentAt: sentAt }
+          : lesson
+      )));
+    }, 30_000);
+
+    return () => window.clearInterval(timer);
+  }, [visibleLessons]);
 
   const renderPage = () => {
     switch (safeActivePage) {
       case 'dashboard':
         return (
           <Dashboard
-            lessons={lessons}
+            lessons={visibleLessons}
             students={mockStudents}
             onNavigate={setActivePage}
           />
@@ -140,10 +247,12 @@ function App() {
       case 'agenda':
         return (
           <AgendaPage
-            lessons={lessons}
+            lessons={visibleLessons}
+            students={mockStudents}
             teachers={mockTeachers}
             rooms={mockRooms}
             availability={availability}
+            currentUser={sessionUser!}
             onUpdateLesson={handleUpdateLesson}
             onDeleteLesson={handleDeleteLesson}
             onCreateLesson={handleCreateLesson}
@@ -156,16 +265,16 @@ function App() {
         return (
           <RoomsPage
             availability={availability}
-            lessons={lessons}
+            lessons={visibleLessons}
             onChangeAvailability={setAvailability}
           />
         );
       case 'rescheduling':
-        return <ReschedulingPage lessons={lessons} />;
+        return <ReschedulingPage lessons={visibleLessons} />;
       case 'video':
         return <VideoPage videos={mockVideos} />;
       case 'lessonAlerts':
-        return <LessonAlertsPage lessons={lessons} students={mockStudents} />;
+        return <LessonAlertsPage lessons={visibleLessons} students={mockStudents} />;
       case 'settings':
         return <SettingsPage />;
     }

@@ -11,6 +11,7 @@ export interface Student {
   name: string;
   email: string;
   phone: string;
+  active?: boolean;
   avatar?: string;
   instrument: string;
   level: 'beginner' | 'intermediate' | 'advanced';
@@ -48,6 +49,7 @@ export interface Lesson {
   id: string;
   studentId: string;
   studentName: string;
+  studentPhone?: string;
   teacherId: string;
   teacherName: string;
   roomId: string;
@@ -60,6 +62,10 @@ export interface Lesson {
   instrument: string;
   notes?: string;
   meetLink?: string;
+  attendanceConfirmed?: boolean;
+  attendanceConfirmedAt?: string;
+  reminderMinutesBefore?: number;
+  lastReminderSentAt?: string;
   color: string;
   recording?: VideoRecording;
 }

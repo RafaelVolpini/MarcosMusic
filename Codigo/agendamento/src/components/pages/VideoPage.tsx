@@ -1,6 +1,6 @@
 import { useState, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Play, Video, Film, Clock, HardDrive, ExternalLink, X, UploadCloud } from 'lucide-react';
+import { Play, Film, Clock, HardDrive, X, UploadCloud } from 'lucide-react';
 import type { VideoRecording } from '../../types';
 import { Card } from '../ui/Card';
 import { Button } from '../ui/Button';
@@ -15,7 +15,6 @@ export function VideoPage({ videos }: VideoPageProps) {
   const [uploadProgress, setUploadProgress] = useState(0);
   const [uploadedName, setUploadedName] = useState('');
   const [activeVideo, setActiveVideo] = useState<string | null>(null);
-  const [meetLink, setMeetLink] = useState('');
   const fileRef = useRef<HTMLInputElement>(null);
 
   const simulateUpload = (name: string) => {
@@ -39,44 +38,11 @@ export function VideoPage({ videos }: VideoPageProps) {
     if (file) simulateUpload(file.name);
   };
 
-  const generateMeet = () => {
-    const seg = (n: number) => Array.from({ length: n }, () => 'abcdefghijklmnopqrstuvwxyz'[Math.floor(Math.random() * 26)]).join('');
-    setMeetLink(`https://meet.google.com/${seg(3)}-${seg(4)}-${seg(3)}`);
-  };
-
   return (
     <div className="page-padding space-y-6">
-      {/* Top section: Join/Create Meet */}
+      {/* Top section */}
       <Card className="p-5 app-surface">
         <div className="flex items-start gap-4 flex-wrap">
-          <div className="flex-1 min-w-64">
-            <h3 className="text-sm font-semibold text-[var(--heading)] mb-1">Criar Aula Online</h3>
-            <p className="text-xs text-[var(--muted)] mb-3">Gere um link Google Meet instantâneo para sua aula</p>
-            <div className="flex gap-2">
-              <Button onClick={generateMeet}>
-                <Video size={14} />
-                Gerar link Meet
-              </Button>
-              {meetLink && (
-                <a href={meetLink} target="_blank" rel="noopener noreferrer">
-                  <Button variant="secondary">
-                    <ExternalLink size={14} />
-                    Entrar na aula
-                  </Button>
-                </a>
-              )}
-            </div>
-            {meetLink && (
-              <motion.p
-                initial={{ opacity: 0, y: 4 }}
-                animate={{ opacity: 1, y: 0 }}
-                className="mt-2 text-xs text-[var(--accent-700)] font-mono bg-[var(--accent-50)] px-3 py-1.5 rounded-lg inline-block"
-              >
-                {meetLink}
-              </motion.p>
-            )}
-          </div>
-
           {/* Upload panel */}
           <div className="flex-1 min-w-64">
             <h3 className="text-sm font-semibold text-[var(--heading)] mb-1">Enviar Gravação</h3>

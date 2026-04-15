@@ -34,7 +34,7 @@ const NAV_ITEMS: NavItem[] = [
   { id: 'rescheduling', label: 'Reagendamentos',  icon: <RefreshCw size={20} />,       color: 'var(--accent-500)', roles: ['teacher', 'student'] },
   { id: 'video',        label: 'Aulas Online',    icon: <Music size={20} />,           color: 'var(--accent-500)', roles: ['teacher', 'student'] },
   { id: 'lessonAlerts', label: 'Alertar Aula',    icon: <MessageCircle size={20} />,   color: 'var(--accent-500)', roles: ['teacher'] },
-  { id: 'settings',     label: 'Configurações',   icon: <Settings size={20} />,        color: 'var(--accent-500)', roles: ['teacher', 'student'] },
+  { id: 'settings',     label: 'Configurações',   icon: <Settings size={20} />,        color: 'var(--accent-500)', roles: ['teacher'] },
 ];
 
 interface SidebarProps {
