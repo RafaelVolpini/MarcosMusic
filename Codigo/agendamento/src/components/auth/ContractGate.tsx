@@ -4,7 +4,9 @@ import { CheckCircle2, ChevronDown, Download } from 'lucide-react';
 import html2canvas from 'html2canvas';
 import jsPDF from 'jspdf';
 import { Button } from '../ui/Button';
-import { acceptContract, type ContractAcceptance, type AuthUser } from '../../lib/auth';
+import { acceptContract, getUser, type ContractAcceptance, type AuthUser } from '../../lib/auth';
+
+const SESSION_KEY = 'musga:auth:session';
 
 const CONTRACT_DATA = {
   teacherName: '___________________________',
@@ -26,6 +28,7 @@ export function ContractGate({ user, onAccepted }: ContractGateProps) {
   const [accepted, setAccepted] = useState(false);
   const [confirmation, setConfirmation] = useState<ContractAcceptance | null>(null);
   const [downloading, setDownloading] = useState(false);
+  const [confirming, setConfirming] = useState(false);
   const scrollRef = useRef<HTMLDivElement>(null);
   const contractRef = useRef<HTMLDivElement>(null);
 
@@ -78,9 +81,24 @@ export function ContractGate({ user, onAccepted }: ContractGateProps) {
     }
   };
 
-  const handleConfirm = () => {
-    const record = acceptContract(user.email);
-    setConfirmation(record);
+  const handleConfirm = async () => {
+    setConfirming(true);
+    try {
+      const record = await acceptContract(user.email);
+      // Atualiza a sessão com termos=true
+      const current = getUser();
+      if (current) {
+        current.termos = true;
+        sessionStorage.setItem(SESSION_KEY, JSON.stringify(current));
+      }
+      setConfirmation(record);
+    } catch {
+      // Silencia erro de rede; o backend pode estar offline
+      const fallback: ContractAcceptance = { email: user.email, acceptedAt: new Date().toISOString() };
+      setConfirmation(fallback);
+    } finally {
+      setConfirming(false);
+    }
   };
 
   return (
@@ -99,7 +117,7 @@ export function ContractGate({ user, onAccepted }: ContractGateProps) {
 
         <div className="app-surface relative overflow-hidden rounded-3xl border shadow-xl" style={{ borderColor: 'var(--border)' }}>
           <div ref={scrollRef} onScroll={handleScroll} className="max-h-[56vh] overflow-y-auto px-6 py-7 sm:max-h-[62vh] sm:px-10 sm:py-10 lg:max-h-[68vh]">
-            <div ref={contractRef} className="space-y-6 text-[15px] leading-relaxed text-slate-700">
+            <div ref={contractRef} className="space-y-6 text-[15px] leading-relaxed text-[var(--text)]">
               <ContractContent data={CONTRACT_DATA} />
             </div>
           </div>
@@ -108,7 +126,7 @@ export function ContractGate({ user, onAccepted }: ContractGateProps) {
             <button
               type="button"
               onClick={scrollToBottom}
-              className="absolute bottom-0 left-0 right-0 flex h-20 items-end justify-center border-none bg-linear-to-t from-white via-white/80 to-transparent pb-3"
+              className="absolute bottom-0 left-0 right-0 flex h-20 items-end justify-center border-none bg-linear-to-t from-[var(--surface)] via-[var(--surface)]/80 to-transparent pb-3"
             >
                 <span className="flex items-center gap-1 text-sm animate-bounce" style={{ color: 'var(--muted)' }}>
                 <ChevronDown size={14} />
@@ -134,12 +152,12 @@ export function ContractGate({ user, onAccepted }: ContractGateProps) {
               checked={accepted}
               onChange={(event) => setAccepted(event.target.checked)}
               disabled={!hasScrolledToBottom}
-              className="mt-0.5 h-4 w-4 rounded border-slate-300 accent-(--accent-600)"
+              className="mt-0.5 h-4 w-4 rounded border-[var(--border)] accent-(--accent-600)"
             />
             <span className="text-sm" style={{ color: 'var(--text)' }}>Li e concordo com todos os termos deste contrato.</span>
           </label>
 
-          <Button onClick={handleConfirm} disabled={!accepted} className="h-11 w-full justify-center text-sm">
+          <Button onClick={handleConfirm} disabled={!accepted || confirming} className="h-11 w-full justify-center text-sm">
             Confirmar e Continuar
           </Button>
         </div>

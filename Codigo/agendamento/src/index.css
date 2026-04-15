@@ -1,5 +1,7 @@
 @import "tailwindcss";
 
+@custom-variant dark (&:where([data-theme=dark], [data-theme=dark] *));
+
 @theme {
   /* Vibrant primary - Electric Indigo */
   --color-primary-50: #eef2ff;
@@ -39,12 +41,19 @@
 }
 
 :root {
-  --bg: #f8fafc;
+  --bg: #e8eaf3;
   --text: #0f172a;
-  --surface: #ffffff;
-  --surface-soft: #f8fafc;
-  --border: #e2e8f0;
+  --surface: #f4f5fb;
+  --surface-soft: #dfe2ef;
+  --border: #c5cce6;
   --muted: #64748b;
+  --heading: #0f172a;
+  --hover-bg: #d8dcee;
+  --input-bg: #f4f5fb;
+  --input-border: #c5cce6;
+  --input-text: #1e293b;
+  --dropdown-bg: #f4f5fb;
+  --dropdown-border: #d8dcee;
   --radius: 16px;
   --page-padding: 24px;
   --accent-50: #eef2ff;
@@ -54,6 +63,10 @@
   --accent-700: #4338ca;
   --accent-gradient-from: #6366f1;
   --accent-gradient-to: #9333ea;
+  /* Icon bg tints — auto-adapt to accent palette + surface color */
+  --accent-icon-bg: color-mix(in srgb, var(--accent-500) 12%, var(--surface));
+  --accent-icon-bg-active: color-mix(in srgb, var(--accent-500) 20%, var(--surface));
+  --accent-icon-fg: var(--accent-600);
 }
 
 :root[data-theme='dark'] {
@@ -63,6 +76,13 @@
   --surface-soft: #111827;
   --border: #1f2937;
   --muted: #94a3b8;
+  --heading: #f1f5f9;
+  --hover-bg: #1e293b;
+  --input-bg: #1e293b;
+  --input-border: #334155;
+  --input-text: #e2e8f0;
+  --dropdown-bg: #1e293b;
+  --dropdown-border: #334155;
 }
 
 :root[data-density='compact'] {

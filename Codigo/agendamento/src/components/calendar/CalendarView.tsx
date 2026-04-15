@@ -68,7 +68,7 @@ export function CalendarView({
   // Drag handlers
   const handleDragStart = useCallback((lesson: Lesson, e: React.DragEvent) => {
     const startMins = timeToMinutes(lesson.startTime);
-    const clickMins = HOUR_START * 60; // approximate
+    const clickMins = HOUR_START * 60;
     setDragging({ lesson, offsetMinutes: startMins - clickMins });
     e.dataTransfer.effectAllowed = 'move';
   }, []);
@@ -77,7 +77,7 @@ export function CalendarView({
     e.preventDefault();
     const rect = (e.currentTarget as HTMLElement).getBoundingClientRect();
     const relY = e.clientY - rect.top;
-    const totalMins = HOUR_START * 60 + Math.floor(relY / CELL_HEIGHT * 60) ;
+    const totalMins = HOUR_START * 60 + Math.floor(relY / CELL_HEIGHT * 60);
     const snapped = Math.round(totalMins / 60) * 60;
     const h = Math.floor(snapped / 60);
     const m = snapped % 60;
@@ -96,30 +96,41 @@ export function CalendarView({
   return (
     <div className="flex flex-col h-full">
       {/* Toolbar */}
-      <div className="flex items-center gap-3 px-6 py-4 border-b border-slate-100 bg-white shrink-0">
+      <div className="flex items-center gap-3 px-6 py-4 border-b border-[var(--border)] bg-[var(--surface)] shrink-0">
         <div className="flex items-center gap-1">
-          <button onClick={() => navigate(-1)} className="w-8 h-8 flex items-center justify-center rounded-lg text-slate-500 hover:bg-slate-100 transition-colors">
+          <button
+            onClick={() => navigate(-1)}
+            className="w-8 h-8 flex items-center justify-center rounded-lg text-[var(--muted)] hover:bg-[var(--hover-bg)] transition-colors"
+          >
             <ChevronLeft size={16} />
           </button>
-          <button onClick={goToday} className="px-3 h-8 text-xs font-semibold text-indigo-600 hover:bg-indigo-50 rounded-lg transition-colors">
+          <button
+            onClick={goToday}
+            className="px-3 h-8 text-xs font-semibold text-[var(--accent-600)] hover:bg-[var(--accent-icon-bg)] rounded-lg transition-colors"
+          >
             Hoje
           </button>
-          <button onClick={() => navigate(1)} className="w-8 h-8 flex items-center justify-center rounded-lg text-slate-500 hover:bg-slate-100 transition-colors">
+          <button
+            onClick={() => navigate(1)}
+            className="w-8 h-8 flex items-center justify-center rounded-lg text-[var(--muted)] hover:bg-[var(--hover-bg)] transition-colors"
+          >
             <ChevronRight size={16} />
           </button>
         </div>
 
-        <h2 className="text-sm font-bold text-slate-800 capitalize flex-1">{headerLabel}</h2>
+        <h2 className="text-sm font-bold text-[var(--heading)] capitalize flex-1">{headerLabel}</h2>
 
         {/* View toggle */}
-        <div className="flex items-center bg-slate-100 rounded-xl p-0.5">
+        <div className="flex items-center bg-[var(--surface-soft)] border border-[var(--border)] rounded-xl p-0.5">
           {(['week', 'day'] as CalendarView[]).map(v => (
             <button
               key={v}
               onClick={() => setView(v)}
               className={cn(
                 'px-3 h-7 text-xs font-semibold rounded-lg transition-all',
-                view === v ? 'bg-white text-slate-800 shadow-sm' : 'text-slate-500 hover:text-slate-700',
+                view === v
+                  ? 'bg-[var(--surface)] text-[var(--heading)] shadow-sm'
+                  : 'text-[var(--muted)] hover:text-[var(--text)]',
               )}
             >
               {v === 'week' ? 'Semana' : 'Dia'}
@@ -132,9 +143,9 @@ export function CalendarView({
           Nova Aula
         </Button>
 
-        <div className="hidden lg:flex items-center gap-3 ml-1 text-[11px] text-slate-500">
+        <div className="hidden lg:flex items-center gap-3 ml-1 text-[11px] text-[var(--muted)]">
           <span className="inline-flex items-center gap-1.5">
-            <span className="w-2 h-2 rounded-full bg-emerald-500" />
+            <span className="w-2 h-2 rounded-full bg-[var(--accent-500)]" />
             Disponível
           </span>
           <span className="inline-flex items-center gap-1.5">
@@ -142,28 +153,30 @@ export function CalendarView({
             Indisponível
           </span>
         </div>
-
       </div>
 
       {/* Calendar grid */}
-      <div className="flex-1 overflow-auto bg-white">
-        <div className={`grid h-full`} style={{ gridTemplateColumns: `56px repeat(${displayDays.length}, 1fr)` }}>
+      <div className="flex-1 overflow-auto bg-[var(--surface)]">
+        <div className="grid h-full" style={{ gridTemplateColumns: `56px repeat(${displayDays.length}, 1fr)` }}>
           {/* Day headers */}
-          <div className="border-b border-slate-100 sticky top-0 z-10 bg-white" /> {/* time gutter header */}
+          <div className="border-b border-[var(--border)] sticky top-0 z-10 bg-[var(--surface)]" />
           {displayDays.map((day, i) => {
             const today = isToday(day);
             return (
               <div
                 key={i}
-                className="border-b border-l border-slate-100 sticky top-0 z-10 bg-white px-2 py-2 text-center"
+                className="border-b border-l border-[var(--border)] sticky top-0 z-10 bg-[var(--surface)] px-2 py-2 text-center"
               >
-                <p className={cn('text-xs font-semibold', today ? 'text-indigo-600' : 'text-slate-400')}>
+                <p className={cn('text-xs font-semibold', today ? 'text-[var(--accent-600)]' : 'text-[var(--muted)]')}>
                   {DAY_LABELS[day.getDay()]}
                 </p>
-                <div className={cn(
-                  'w-8 h-8 rounded-full flex items-center justify-center mx-auto mt-0.5 text-sm font-bold',
-                  today ? 'bg-linear-to-br from-indigo-500 to-purple-600 text-white' : 'text-slate-800',
-                )}>
+                <div
+                  className={cn(
+                    'w-8 h-8 rounded-full flex items-center justify-center mx-auto mt-0.5 text-sm font-bold',
+                    today ? 'text-white' : 'text-[var(--heading)]',
+                  )}
+                  style={today ? { background: 'linear-gradient(135deg, var(--accent-gradient-from), var(--accent-gradient-to))' } : {}}
+                >
                   {day.getDate()}
                 </div>
               </div>
@@ -174,8 +187,8 @@ export function CalendarView({
           {HOURS.map(hour => (
             <div key={hour} className="contents">
               {/* Hour label */}
-              <div className="pr-2 pt-1 text-right border-r border-slate-100 select-none" style={{ height: CELL_HEIGHT }}>
-                <span className="text-xs text-slate-400 font-medium">{hour}:00</span>
+              <div className="pr-2 pt-1 text-right border-r border-[var(--border)] select-none" style={{ height: CELL_HEIGHT }}>
+                <span className="text-xs text-[var(--muted)] font-medium">{hour}:00</span>
               </div>
 
               {/* Day columns */}
@@ -193,15 +206,14 @@ export function CalendarView({
                   <div
                     key={`cell-${hour}-${di}`}
                     className={cn(
-                      'relative border-b border-l border-gray-100 group',
+                      'relative border-b border-l border-[var(--border)] group',
                       unavailable && 'cursor-not-allowed',
                     )}
                     style={{ height: CELL_HEIGHT }}
-                      title={unavailable ? 'Horario indisponivel para agendamento' : 'Horario disponivel para agendamento'}
+                    title={unavailable ? 'Horario indisponivel para agendamento' : 'Horario disponivel para agendamento'}
                     onDragOver={(e) => handleDragOver(dateStr, e)}
                     onDrop={() => handleDrop(dateStr)}
                     onClick={(e) => {
-                      const dateISO = dateStr;
                       if (unavailable) return;
                       const rect = e.currentTarget.getBoundingClientRect();
                       const relY = e.clientY - rect.top;
@@ -210,27 +222,32 @@ export function CalendarView({
                       const h = Math.floor(snapped / 60);
                       const m = snapped % 60;
                       const selectedTime = `${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}`;
-                      if (!isAvailable(dateISO, selectedTime)) return;
+                      if (!isAvailable(dateStr, selectedTime)) return;
                       onNewLesson(dateStr, selectedTime);
                     }}
                   >
                     {/* Hover highlight */}
-                  {!unavailable && <div className="absolute inset-0 bg-emerald-50/0 group-hover:bg-emerald-50/50 transition-colors duration-100 cursor-pointer" />}
+                    {!unavailable && (
+                      <div className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-100 cursor-pointer bg-[var(--accent-icon-bg)]" />
+                    )}
 
-                  {!dayLessons.length && (
-                    <span
-                      className={cn(
-                        'absolute top-1.5 right-1.5 w-2 h-2 rounded-full pointer-events-none',
-                        unavailable ? 'bg-rose-500' : 'bg-emerald-500',
-                      )}
-                    />
-                  )}
+                    {!dayLessons.length && (
+                      <span
+                        className={cn(
+                          'absolute top-1.5 right-1.5 w-2 h-2 rounded-full pointer-events-none',
+                          unavailable ? 'bg-rose-500' : 'bg-[var(--accent-500)]',
+                        )}
+                      />
+                    )}
 
                     {/* Drop indicator */}
                     {dragOver?.date === dateStr && dragging && (
-                      <div className="absolute left-1 right-1 h-12 bg-purple-100 border-2 border-purple-400 border-dashed rounded-lg opacity-60"
+                      <div
+                        className="absolute left-1 right-1 h-12 border-2 border-dashed rounded-lg opacity-60"
                         style={{
                           top: `${((timeToMinutes(dragOver.time) - hour * 60) / 60) * CELL_HEIGHT}px`,
+                          backgroundColor: 'var(--accent-icon-bg)',
+                          borderColor: 'var(--accent-500)',
                         }}
                       />
                     )}
@@ -294,28 +311,28 @@ function LessonBlock({ lesson, hourStart, isUnavailable, onClick, onDragStart }:
       style={{
         top: `${top}px`,
         height: `${height}px`,
-        backgroundColor: '#ffffff',
-        borderColor: isUnavailable ? '#fda4af' : '#e2e8f0',
+        backgroundColor: 'var(--surface)',
+        borderColor: isUnavailable ? '#fda4af' : 'var(--border)',
       }}
     >
       <div className="absolute left-0 inset-y-0 w-1" style={{ backgroundColor: lesson.color }} />
 
-      <p className="text-[11px] font-semibold text-slate-800 truncate leading-tight pl-1">
+      <p className="text-[11px] font-semibold text-[var(--heading)] truncate leading-tight pl-1">
         {lesson.studentName}
       </p>
       {height > 32 && (
-        <p className="text-[10px] text-slate-500 truncate mt-0.5 pl-1">
+        <p className="text-[10px] text-[var(--muted)] truncate mt-0.5 pl-1">
           {timeRange}
         </p>
       )}
       {height > 44 && (
-        <p className="text-[10px] text-slate-400 truncate mt-0.5 pl-1">
+        <p className="text-[10px] text-[var(--muted)] truncate mt-0.5 pl-1">
           {lesson.instrument}
         </p>
       )}
       {isOnline && (
         <span className="absolute top-1 right-1">
-          <span className="text-[9px] bg-blue-100 text-blue-600 font-semibold px-1 rounded">ONLINE</span>
+          <span className="text-[9px] bg-[var(--accent-icon-bg)] text-[var(--accent-600)] font-semibold px-1 rounded">ONLINE</span>
         </span>
       )}
       {isUnavailable && (

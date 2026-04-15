@@ -18,8 +18,8 @@ import {
   mockRooms, mockVideos,
 } from './data/mockData';
 import {
-  hasAcceptedContract,
   logout,
+  hasAcceptedContract,
   type AuthUser,
   type ContractAcceptance,
 } from './lib/auth';

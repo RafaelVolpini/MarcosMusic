@@ -5,16 +5,8 @@ export interface AuthUser {
   name: string;
   email: string;
   phone: string;
-}
-
-interface StoredUser {
-  role: 'teacher' | 'student';
-  firstName: string;
-  lastName: string;
-  email: string;
-  phone: string;
-  password: string;
-  createdAt: string;
+  token?: string;
+  termos?: boolean | null;
 }
 
 export interface ContractAcceptance {
@@ -22,146 +14,133 @@ export interface ContractAcceptance {
   acceptedAt: string;
 }
 
-const USER_KEY = 'musga:auth:user';
-const USERS_KEY = 'musga:auth:users';
-const CONTRACT_KEY = 'musga:contract:acceptances';
-const TEACHER_LOGIN_EMAIL = 'marcos@musga.com';
-const TEACHER_LOGIN_PASSWORD = '1234';
+const BACKEND_URL = 'http://localhost:8081';
 
-const safeReadJSON = <T>(key: string, fallback: T): T => {
-  if (typeof window === 'undefined') return fallback;
-  const raw = window.localStorage.getItem(key);
-  if (!raw) return fallback;
+const SESSION_KEY = 'musga:auth:session';
 
-  try {
-    return JSON.parse(raw) as T;
-  } catch {
-    return fallback;
-  }
-};
+// ─── Session helpers (token + user stored in sessionStorage) ────────────────
 
-export function getUser(): AuthUser | null {
-  return safeReadJSON<AuthUser | null>(USER_KEY, null);
+function saveSession(user: AuthUser): void {
+  sessionStorage.setItem(SESSION_KEY, JSON.stringify(user));
 }
 
-const normalizeEmail = (email: string) => email.trim().toLowerCase();
+export function getUser(): AuthUser | null {
+  const raw = sessionStorage.getItem(SESSION_KEY);
+  if (!raw) return null;
+  try {
+    return JSON.parse(raw) as AuthUser;
+  } catch {
+    return null;
+  }
+}
 
-const buildAuthUser = (user: StoredUser): AuthUser => ({
-  role: user.role,
-  firstName: user.firstName,
-  lastName: user.lastName,
-  name: `${user.firstName} ${user.lastName}`.trim(),
-  email: user.email,
-  phone: user.phone,
-});
+export function getToken(): string | null {
+  return getUser()?.token ?? null;
+}
 
-const getStoredUsers = (): StoredUser[] =>
-  safeReadJSON<StoredUser[]>(USERS_KEY, []);
+export function logout(): void {
+  sessionStorage.removeItem(SESSION_KEY);
+}
 
-const saveStoredUsers = (users: StoredUser[]) => {
-  window.localStorage.setItem(USERS_KEY, JSON.stringify(users));
-};
 
-const saveSession = (user: AuthUser) => {
-  window.localStorage.setItem(USER_KEY, JSON.stringify(user));
-};
-
-export function registerUser(input: {
+export async function registerUser(input: {
   firstName: string;
   lastName: string;
   email: string;
   phone: string;
   password: string;
-}) {
-  const email = normalizeEmail(input.email);
-  const users = getStoredUsers();
+}): Promise<void> {
+  const res = await fetch(`${BACKEND_URL}/auth/register`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ email: input.email.trim().toLowerCase(), password: input.password }),
+  });
 
-  if (users.some((u) => u.email === email)) {
-    throw new Error('Ja existe um cadastro com este e-mail.');
+  if (!res.ok) {
+    const msg = await res.text().catch(() => 'Erro ao registrar');
+    throw new Error(msg || 'Erro ao registrar');
   }
 
-  const newUser: StoredUser = {
+  // O backend devolve o token diretamente como string
+  const token = await res.text();
+
+  const user: AuthUser = {
     role: 'student',
     firstName: input.firstName.trim(),
     lastName: input.lastName.trim(),
-    email,
+    name: `${input.firstName.trim()} ${input.lastName.trim()}`.trim(),
+    email: input.email.trim().toLowerCase(),
     phone: input.phone.trim(),
-    password: input.password,
-    createdAt: new Date().toISOString(),
+    token,
   };
 
-  users.push(newUser);
-  saveStoredUsers(users);
-
+  saveSession(user);
 }
 
-export function login(emailInput: string, passwordInput: string): AuthUser | null {
-  const email = normalizeEmail(emailInput);
+// ─── Login ───────────────────────────────────────────────────────────────────
+
+interface LoginResponse {
+  token: string;
+  termos: boolean | null;
+  ultimoLogin: string | null;
+}
+
+export async function login(emailInput: string, passwordInput: string): Promise<AuthUser | null> {
+  const email = emailInput.trim().toLowerCase();
   const password = passwordInput.trim();
 
-  if (email === TEACHER_LOGIN_EMAIL && password === TEACHER_LOGIN_PASSWORD) {
-    const teacherUser: AuthUser = {
-      role: 'teacher',
-      firstName: 'Marcos',
-      lastName: 'Mello',
-      name: 'Marcos Mello',
-      email: TEACHER_LOGIN_EMAIL,
-      phone: '(11) 99999-9999',
-    };
-    saveSession(teacherUser);
-    return teacherUser;
-  }
+  const res = await fetch(`${BACKEND_URL}/auth/login`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ email, password }),
+  });
 
-  const users = getStoredUsers();
-  const found = users.find((u) => u.email === email && u.password === password);
+  if (!res.ok) return null;
 
-  if (!found && email && password) {
-    const autoStudent: StoredUser = {
-      role: 'student',
-      firstName: email.split('@')[0] || 'Aluno',
-      lastName: '',
-      email,
-      phone: '',
-      password,
-      createdAt: new Date().toISOString(),
-    };
-    users.push(autoStudent);
-    saveStoredUsers(users);
-    const authUser = buildAuthUser(autoStudent);
-    saveSession(authUser);
-    return authUser;
-  }
+  const data: LoginResponse = await res.json();
 
-  if (!found) return null;
+  // Deriva papel: professor tem email fixo
+  const role: AuthUser['role'] = email === 'marcos@musga.com' ? 'teacher' : 'student';
 
-  const authUser = buildAuthUser(found);
-  saveSession(authUser);
-  return authUser;
+  const namePart = email.split('@')[0] ?? 'Usuário';
+  const firstName = role === 'teacher' ? 'Marcos' : namePart;
+  const lastName  = role === 'teacher' ? 'Mello'  : '';
+
+  const user: AuthUser = {
+    role,
+    firstName,
+    lastName,
+    name: `${firstName} ${lastName}`.trim(),
+    email,
+    phone: '',
+    token: data.token,
+    termos: data.termos ?? false,
+  };
+
+  saveSession(user);
+  return user;
 }
 
-export function logout() {
-  window.localStorage.removeItem(USER_KEY);
+// ─── Contract ────────────────────────────────────────────────────────────────
+
+export async function acceptContract(email: string): Promise<ContractAcceptance> {
+  const normalizedEmail = email.trim().toLowerCase();
+
+  const res = await fetch(`${BACKEND_URL}/auth/accept-terms`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ email: normalizedEmail }),
+  });
+
+  if (!res.ok) {
+    throw new Error('Falha ao registrar aceitação dos termos');
+  }
+
+  return { email: normalizedEmail, acceptedAt: new Date().toISOString() };
 }
 
 export function hasAcceptedContract(email: string): boolean {
-  const acceptances = safeReadJSON<Record<string, ContractAcceptance>>(CONTRACT_KEY, {});
-  return Boolean(acceptances[email.trim().toLowerCase()]);
-}
-
-export function getContractAcceptance(email: string): ContractAcceptance | null {
-  const acceptances = safeReadJSON<Record<string, ContractAcceptance>>(CONTRACT_KEY, {});
-  return acceptances[email.trim().toLowerCase()] ?? null;
-}
-
-export function acceptContract(email: string): ContractAcceptance {
-  const normalizedEmail = email.trim().toLowerCase();
-  const acceptances = safeReadJSON<Record<string, ContractAcceptance>>(CONTRACT_KEY, {});
-  const record: ContractAcceptance = {
-    email: normalizedEmail,
-    acceptedAt: new Date().toISOString(),
-  };
-
-  acceptances[normalizedEmail] = record;
-  window.localStorage.setItem(CONTRACT_KEY, JSON.stringify(acceptances));
-  return record;
+  const user = getUser();
+  if (!user || user.email !== email.trim().toLowerCase()) return false;
+  return user.termos === true;
 }

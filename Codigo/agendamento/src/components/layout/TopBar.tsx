@@ -46,15 +46,15 @@ export function TopBar({ activePage, user, onLogout }: TopBarProps) {
 
   const unreadCount = MOCK_NOTIFICATIONS.filter(n => n.unread).length;
   const initials = `${user.firstName?.[0] ?? ''}${user.lastName?.[0] ?? ''}`.trim().toUpperCase() || user.email.slice(0, 2).toUpperCase();
-  const studentAvatarBg = 'linear-gradient(135deg, #0ea5e9, #2563eb)';
+  const studentAvatarBg = 'linear-gradient(135deg, var(--accent-gradient-from), var(--accent-gradient-to))';
 
   return (
-    <header className="app-surface h-16 flex items-center gap-4 px-6 border-b border-slate-200/60 shrink-0 relative z-20">
+    <header className="app-surface h-16 flex items-center gap-4 px-6 border-b border-[var(--border)] shrink-0 relative z-20">
       {/* Page title */}
       <div className="flex-1">
         <div className="flex items-center gap-2">
-          <h1 className="text-xl font-bold bg-linear-to-r from-slate-900 via-slate-700 to-slate-800 bg-clip-text text-transparent">{PAGE_LABELS[activePage]}</h1>
-          <span className="hidden sm:flex items-center justify-center w-6 h-6 rounded-full bg-(--accent-50) text-(--accent-600)">
+          <h1 className="text-xl font-bold text-[var(--heading)]">{PAGE_LABELS[activePage]}</h1>
+          <span className="hidden sm:flex items-center justify-center w-6 h-6 rounded-full bg-[var(--accent-icon-bg)] text-[var(--accent-icon-fg)]">
             <Music size={13} />
           </span>
         </div>
@@ -70,7 +70,7 @@ export function TopBar({ activePage, user, onLogout }: TopBarProps) {
               animate={{ width: 300, opacity: 1 }}
               exit={{ width: 40, opacity: 0 }}
               transition={{ type: 'spring', stiffness: 300, damping: 28 }}
-              className="flex items-center gap-2 h-10 bg-slate-50 border border-slate-200 rounded-xl px-3"
+              className="flex items-center gap-2 h-10 bg-[var(--surface-soft)] border border-[var(--input-border)] rounded-xl px-3"
             >
               <Search size={16} className="text-(--accent-600) shrink-0" />
               <input
@@ -78,9 +78,9 @@ export function TopBar({ activePage, user, onLogout }: TopBarProps) {
                 value={query}
                 onChange={e => setQuery(e.target.value)}
                 placeholder="Buscar alunos..."
-                className="flex-1 bg-transparent text-sm text-slate-700 outline-none placeholder:text-slate-400"
+                className="flex-1 bg-transparent text-sm text-[var(--text)] outline-none placeholder:text-[var(--muted)]"
               />
-              <button onClick={() => { setSearchOpen(false); setQuery(''); }} className="text-slate-400 hover:text-slate-600">
+              <button onClick={() => { setSearchOpen(false); setQuery(''); }} className="text-[var(--muted)] hover:text-[var(--text)]">
                 <X size={14} />
               </button>
             </motion.div>
@@ -91,7 +91,7 @@ export function TopBar({ activePage, user, onLogout }: TopBarProps) {
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
               onClick={() => setSearchOpen(true)}
-              className="w-10 h-10 flex items-center justify-center rounded-xl text-slate-500 hover:bg-slate-100 hover:text-(--accent-600) transition-colors"
+              className="w-10 h-10 flex items-center justify-center rounded-xl text-[var(--muted)] hover:bg-[var(--hover-bg)] hover:text-(--accent-600) transition-colors"
             >
               <Search size={18} />
             </motion.button>
@@ -103,12 +103,12 @@ export function TopBar({ activePage, user, onLogout }: TopBarProps) {
       <div className="relative">
         <button
           onClick={() => { setNotifOpen(v => !v); setProfileOpen(false); }}
-          className="relative w-10 h-10 flex items-center justify-center rounded-xl text-slate-500 hover:bg-slate-100 hover:text-(--accent-600) transition-colors"
+          className="relative w-10 h-10 flex items-center justify-center rounded-xl text-[var(--muted)] hover:bg-[var(--hover-bg)] hover:text-(--accent-600) transition-colors"
         >
           <Bell size={18} />
           {unreadCount > 0 && (
             <span
-              className="absolute top-1.5 right-1.5 w-2.5 h-2.5 rounded-full ring-2 ring-white"
+              className="absolute top-1.5 right-1.5 w-2.5 h-2.5 rounded-full ring-2 ring-[var(--surface)]"
               style={{ background: 'linear-gradient(135deg, var(--accent-gradient-from), var(--accent-gradient-to))' }}
             />
           )}
@@ -121,10 +121,10 @@ export function TopBar({ activePage, user, onLogout }: TopBarProps) {
               animate={{ opacity: 1, y: 0, scale: 1 }}
               exit={{ opacity: 0, y: 8, scale: 0.96 }}
               transition={{ duration: 0.15 }}
-              className="absolute right-0 top-12 w-80 bg-white rounded-2xl shadow-2xl shadow-slate-200/50 border border-slate-100 overflow-hidden"
+              className="absolute right-0 top-12 w-80 bg-[var(--dropdown-bg)] rounded-2xl shadow-2xl border border-[var(--dropdown-border)] overflow-hidden"
             >
-              <div className="px-4 py-3 border-b border-slate-100 flex items-center justify-between bg-linear-to-r from-slate-50 to-white">
-                <span className="text-sm font-bold text-slate-800">Notificações</span>
+              <div className="px-4 py-3 border-b border-[var(--border)] flex items-center justify-between bg-[var(--surface-soft)]">
+                <span className="text-sm font-bold text-[var(--heading)]">Notificações</span>
                 {unreadCount > 0 && (
                   <span
                     className="text-xs text-white font-medium px-2.5 py-0.5 rounded-full"
@@ -134,9 +134,9 @@ export function TopBar({ activePage, user, onLogout }: TopBarProps) {
                   </span>
                 )}
               </div>
-              <div className="divide-y divide-slate-50">
+              <div className="divide-y divide-[var(--border)]">
                 {MOCK_NOTIFICATIONS.map(n => (
-                  <div key={n.id} className={cn('px-4 py-3 hover:bg-slate-50 cursor-pointer transition-colors', n.unread && 'bg-(--accent-50)/70')}>
+                  <div key={n.id} className={cn('px-4 py-3 hover:bg-[var(--hover-bg)] cursor-pointer transition-colors', n.unread && 'bg-[var(--accent-50)]/30')}>
                     <div className="flex items-start gap-3">
                       {n.unread && (
                         <div
@@ -146,9 +146,9 @@ export function TopBar({ activePage, user, onLogout }: TopBarProps) {
                       )}
                       {!n.unread && <div className="w-2 h-2 mt-1.5 shrink-0 rounded-full bg-transparent" />}
                       <div>
-                        <p className="text-sm font-medium text-slate-800">{n.title}</p>
-                        <p className="text-xs text-slate-500 mt-0.5">{n.message}</p>
-                        <p className="text-xs text-slate-400 mt-1">{n.time}</p>
+                        <p className="text-sm font-medium text-[var(--heading)]">{n.title}</p>
+                        <p className="text-xs text-[var(--muted)] mt-0.5">{n.message}</p>
+                        <p className="text-xs text-[var(--muted)] mt-1 opacity-70">{n.time}</p>
                       </div>
                     </div>
                   </div>
@@ -163,7 +163,7 @@ export function TopBar({ activePage, user, onLogout }: TopBarProps) {
       <div className="relative">
         <button
           onClick={() => { setProfileOpen(v => !v); setNotifOpen(false); }}
-          className="flex items-center gap-2 h-10 px-2 rounded-xl hover:bg-slate-50 transition-colors"
+          className="flex items-center gap-2 h-10 px-2 rounded-xl hover:bg-[var(--hover-bg)] transition-colors"
         >
           <div
             className="w-9 h-9 rounded-xl overflow-hidden shrink-0 shadow-lg ring-2 ring-(--accent-100)"
@@ -178,10 +178,10 @@ export function TopBar({ activePage, user, onLogout }: TopBarProps) {
             )}
           </div>
           <div className="hidden sm:block text-left">
-            <p className="text-sm font-semibold text-slate-800 leading-tight">{user.name || 'Usuario'}</p>
-            <p className="text-xs text-slate-400 leading-tight">{user.role === 'teacher' ? 'Professor' : 'Aluno'}</p>
+            <p className="text-sm font-semibold text-[var(--heading)] leading-tight">{user.name || 'Usuario'}</p>
+            <p className="text-xs text-[var(--muted)] leading-tight">{user.role === 'teacher' ? 'Professor' : 'Aluno'}</p>
           </div>
-          <ChevronDown size={14} className={cn('text-slate-400 transition-transform', profileOpen && 'rotate-180')} />
+          <ChevronDown size={14} className={cn('text-[var(--muted)] transition-transform', profileOpen && 'rotate-180')} />
         </button>
 
         <AnimatePresence>
@@ -191,26 +191,26 @@ export function TopBar({ activePage, user, onLogout }: TopBarProps) {
               animate={{ opacity: 1, y: 0, scale: 1 }}
               exit={{ opacity: 0, y: 8, scale: 0.96 }}
               transition={{ duration: 0.15 }}
-              className="absolute right-0 top-12 w-56 bg-white rounded-2xl shadow-2xl shadow-slate-200/50 border border-slate-100 overflow-hidden"
+              className="absolute right-0 top-12 w-56 bg-[var(--dropdown-bg)] rounded-2xl shadow-2xl border border-[var(--dropdown-border)] overflow-hidden"
             >
-              <div className="px-4 py-3 border-b border-slate-100 bg-linear-to-r from-slate-50 to-white">
+              <div className="px-4 py-3 border-b border-[var(--border)] bg-[var(--surface-soft)]">
                 <div className="flex items-center gap-2">
-                  <p className="text-sm font-bold text-slate-800">{user.name || 'Usuario'}</p>
+                  <p className="text-sm font-bold text-[var(--heading)]">{user.name || 'Usuario'}</p>
                   <Music size={12} className="text-(--accent-600)" />
                 </div>
-                <p className="text-xs text-slate-500">{user.email}</p>
+                <p className="text-xs text-[var(--muted)]">{user.email}</p>
               </div>
               {[
                 { icon: <User size={14} />, label: 'Meu Perfil', color: 'text-[var(--accent-600)]' },
-                { icon: <Music size={14} />, label: 'Minha Escola', color: 'text-teal-500' },
-                { icon: <Settings size={14} />, label: 'Configurações', color: 'text-slate-500' },
+                { icon: <Music size={14} />, label: 'Minha Escola', color: 'text-[var(--accent-icon-fg)]' },
+                { icon: <Settings size={14} />, label: 'Configurações', color: 'text-[var(--muted)]' },
               ].map(item => (
-                <button key={item.label} className="flex items-center gap-3 w-full px-4 py-2.5 text-sm text-slate-700 hover:bg-slate-50 transition-colors group">
+                <button key={item.label} className="flex items-center gap-3 w-full px-4 py-2.5 text-sm text-[var(--text)] hover:bg-[var(--hover-bg)] transition-colors group">
                   <span className={cn('transition-colors', item.color)}>{item.icon}</span>
                   {item.label}
                 </button>
               ))}
-              <div className="border-t border-slate-100">
+              <div className="border-t border-[var(--border)]">
                 <button
                   onClick={onLogout}
                   className="flex items-center gap-3 w-full px-4 py-2.5 text-sm text-rose-500 hover:bg-rose-50 transition-colors font-medium"

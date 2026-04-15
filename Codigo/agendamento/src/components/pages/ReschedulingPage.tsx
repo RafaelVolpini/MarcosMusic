@@ -20,8 +20,8 @@ export function ReschedulingPage({ lessons }: ReschedulingPageProps) {
         <div className="flex items-start gap-3">
           <RefreshCw size={18} className="text-[var(--accent-600)] shrink-0 mt-0.5" />
           <div>
-            <h3 className="text-sm font-semibold text-slate-900">Reagendamento de Aulas</h3>
-            <p className="text-xs text-slate-500 mt-0.5">
+            <h3 className="text-sm font-semibold text-[var(--heading)]">Reagendamento de Aulas</h3>
+            <p className="text-xs text-[var(--muted)] mt-0.5">
               Arraste aulas na agenda ou use os controles abaixo para reagendar. <br />
               {candidates.length} aula(s) disponíveis para reagendamento.
             </p>
@@ -42,22 +42,22 @@ export function ReschedulingPage({ lessons }: ReschedulingPageProps) {
                 <div className="w-1 h-12 rounded-full shrink-0" style={{ backgroundColor: lesson.color }} />
                 <Avatar name={lesson.studentName} size="sm" />
                 <div className="flex-1 min-w-0">
-                  <p className="text-sm font-medium text-slate-900">{lesson.studentName}</p>
-                  <p className="text-xs text-slate-400">{lesson.instrument} · {lesson.teacherName}</p>
+                  <p className="text-sm font-medium text-[var(--heading)]">{lesson.studentName}</p>
+                  <p className="text-xs text-[var(--muted)]">{lesson.instrument} · {lesson.teacherName}</p>
                 </div>
                 <div className="text-center hidden sm:block">
-                  <p className="text-xs text-slate-400">Data atual</p>
-                  <p className="text-xs font-medium text-slate-700">
+                  <p className="text-xs text-[var(--muted)]">Data atual</p>
+                  <p className="text-xs font-medium text-[var(--text)]">
                     {new Date(lesson.date).toLocaleDateString('pt-BR', { day: 'numeric', month: 'short' })}
                   </p>
-                  <p className="text-xs text-slate-500">{formatTime(lesson.startTime)}</p>
+                  <p className="text-xs text-[var(--muted)]">{formatTime(lesson.startTime)}</p>
                 </div>
-                <ArrowRight size={14} className="text-slate-300" />
+                <ArrowRight size={14} className="text-[var(--muted)]" />
                 <div className="text-center">
                   <input
                     type="date"
                     defaultValue={lesson.date}
-                    className="text-xs border border-slate-200 rounded-lg px-2 py-1 text-slate-700 focus:outline-none focus:ring-2 focus:ring-[var(--accent-100)]"
+                    className="text-xs border border-[var(--input-border)] rounded-lg px-2 py-1 text-[var(--text)] bg-[var(--input-bg)] focus:outline-none focus:ring-2 focus:ring-[var(--accent-100)]"
                   />
                 </div>
                 <Button size="sm" variant="secondary">

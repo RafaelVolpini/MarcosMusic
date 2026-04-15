@@ -79,7 +79,7 @@ export function AboutMePage() {
                     <span style={{ color: 'var(--text)' }}>{skill.label}</span>
                     <span style={{ color: 'var(--muted)' }}>{skill.level}%</span>
                   </div>
-                  <div className="h-2 rounded-full bg-slate-200/70 dark:bg-slate-700/70">
+                  <div className="h-2 rounded-full bg-[var(--surface-soft)]">
                     <div
                       className="h-2 rounded-full"
                       style={{ width: `${skill.level}%`, background: `linear-gradient(90deg, ${skill.color}, var(--accent-600))` }}

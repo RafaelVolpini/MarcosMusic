@@ -96,11 +96,11 @@ export function LessonAlertsPage({ lessons, students }: LessonAlertsPageProps) {
 
       <div className="grid grid-cols-1 xl:grid-cols-5 gap-6">
         <Card className="overflow-hidden app-surface xl:col-span-3">
-          <div className="px-5 py-4 border-b border-slate-100">
-            <h3 className="text-sm font-semibold text-slate-900">Selecione a aula para alertar</h3>
-            <p className="text-xs text-slate-500 mt-1">{lessonsWithPhone.length} com WhatsApp disponível</p>
+          <div className="px-5 py-4 border-b border-[var(--border)]">
+            <h3 className="text-sm font-semibold text-[var(--heading)]">Selecione a aula para alertar</h3>
+            <p className="text-xs text-[var(--muted)] mt-1">{lessonsWithPhone.length} com WhatsApp disponível</p>
           </div>
-          <div className="divide-y divide-slate-50">
+          <div className="divide-y divide-[var(--border)]">
             {visibleLessons.map((lesson, i) => {
               const student = students.find(s => s.id === lesson.studentId);
               const hasPhone = Boolean(student?.phone);
@@ -113,18 +113,19 @@ export function LessonAlertsPage({ lessons, students }: LessonAlertsPageProps) {
                   animate={{ opacity: 1, x: 0 }}
                   transition={{ delay: i * 0.03 }}
                   onClick={() => setSelectedLessonId(lesson.id)}
-                  className={`w-full text-left flex items-center gap-4 px-5 py-4 transition-colors ${isSelected ? 'bg-(--accent-50)' : 'hover:bg-slate-50/60'}`}
+                  className="w-full text-left flex items-center gap-4 px-5 py-4 transition-colors hover:bg-[var(--hover-bg)]"
+                  style={isSelected ? { backgroundColor: 'var(--accent-icon-bg)' } : {}}
                 >
                   <Avatar name={lesson.studentName} size="sm" />
                   <div className="flex-1 min-w-0">
-                    <p className="text-sm font-medium text-slate-900">{lesson.studentName}</p>
-                    <p className="text-xs text-slate-400">{lesson.instrument} • {lesson.roomName}</p>
+                    <p className="text-sm font-medium text-[var(--heading)]">{lesson.studentName}</p>
+                    <p className="text-xs text-[var(--muted)]">{lesson.instrument} • {lesson.roomName}</p>
                   </div>
                   <div className="text-right">
-                    <p className="text-xs font-medium text-slate-700">
+                    <p className="text-xs font-medium text-[var(--text)]">
                       {new Date(`${lesson.date}T00:00:00`).toLocaleDateString('pt-BR', { day: 'numeric', month: 'short' })}
                     </p>
-                    <p className="text-xs text-slate-400">{formatTime(lesson.startTime)}</p>
+                    <p className="text-xs text-[var(--muted)]">{formatTime(lesson.startTime)}</p>
                   </div>
                   <Badge variant={hasPhone ? 'success' : 'warning'} className="shrink-0">
                     <Phone size={13} />
@@ -135,7 +136,7 @@ export function LessonAlertsPage({ lessons, students }: LessonAlertsPageProps) {
             })}
 
             {visibleLessons.length === 0 && (
-              <div className="px-5 py-10 text-center text-sm text-slate-400">
+              <div className="px-5 py-10 text-center text-sm text-[var(--muted)]">
                 Nenhuma aula agendada para alertar.
               </div>
             )}
@@ -143,27 +144,27 @@ export function LessonAlertsPage({ lessons, students }: LessonAlertsPageProps) {
         </Card>
 
         <Card className="overflow-hidden app-surface xl:col-span-2">
-          <div className="px-5 py-4 border-b border-slate-100">
-            <h3 className="text-sm font-semibold text-slate-900">Personalizar mensagem</h3>
-            <p className="text-xs text-slate-500 mt-1">Use placeholders: {'{nome}'}, {'{instrumento}'}, {'{data}'}, {'{hora}'}, {'{sala}'}</p>
+          <div className="px-5 py-4 border-b border-[var(--border)]">
+            <h3 className="text-sm font-semibold text-[var(--heading)]">Personalizar mensagem</h3>
+            <p className="text-xs text-[var(--muted)] mt-1">Use placeholders: {'{nome}'}, {'{instrumento}'}, {'{data}'}, {'{hora}'}, {'{sala}'}</p>
           </div>
 
           <div className="p-5 space-y-4">
             <label className="block">
-              <span className="text-xs font-medium text-slate-600">Template da mensagem</span>
+              <span className="text-xs font-medium text-[var(--muted)]">Template da mensagem</span>
               <textarea
                 value={messageTemplate}
                 onChange={e => setMessageTemplate(e.target.value)}
                 rows={6}
-                className="mt-1 w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm text-slate-700 outline-none focus:ring-2 focus:ring-(--accent-200) focus:border-(--accent-300)"
+                className="mt-1 w-full rounded-xl border border-[var(--input-border)] bg-[var(--input-bg)] px-3 py-2 text-sm text-[var(--text)] outline-none focus:ring-2 focus:ring-[var(--accent-500)]/30 focus:border-[var(--accent-500)]/50"
               />
             </label>
 
-            <div className="rounded-xl border border-slate-200 bg-slate-50 p-3">
-              <p className="text-xs font-medium text-slate-600 mb-2 flex items-center gap-1">
+            <div className="rounded-xl border border-[var(--border)] bg-[var(--surface-soft)] p-3">
+              <p className="text-xs font-medium text-[var(--muted)] mb-2 flex items-center gap-1">
                 <PenSquare size={12} /> Prévia
               </p>
-              <p className="text-sm text-slate-800 whitespace-pre-wrap">
+              <p className="text-sm text-[var(--text)] whitespace-pre-wrap">
                 {previewMessage || 'Selecione uma aula para ver a prévia da mensagem.'}
               </p>
             </div>

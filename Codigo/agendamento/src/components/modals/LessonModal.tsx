@@ -75,27 +75,27 @@ export function LessonModal({ lesson, onClose, onUpdate, onDelete }: LessonModal
             transition={{ type: 'spring', stiffness: 340, damping: 28 }}
             className="fixed inset-0 z-50 flex items-center justify-center pointer-events-none px-4"
           >
-            <div className="app-surface bg-white rounded-3xl shadow-2xl w-full max-w-lg pointer-events-auto overflow-hidden">
+            <div className="app-surface rounded-3xl shadow-2xl w-full max-w-lg pointer-events-auto overflow-hidden">
               {/* Header with color accent */}
               <div
                 className="h-2 rounded-t-3xl"
                 style={{ backgroundColor: lesson.color }}
               />
-              <div className="px-6 py-5 border-b border-slate-100">
+              <div className="px-6 py-5 border-b border-[var(--border)]">
                 <div className="flex items-start justify-between">
                   <div>
                     <div className="flex items-center gap-2 mb-1">
                       <Badge variant={statusInfo.variant}>{statusInfo.label}</Badge>
                       <Badge variant="default">{TYPE_LABELS[lesson.type]}</Badge>
                     </div>
-                    <h2 className="text-lg font-bold text-slate-900">{lesson.instrument}</h2>
-                    <p className="text-sm text-slate-500 mt-0.5">
+                    <h2 className="text-lg font-bold text-[var(--heading)]">{lesson.instrument}</h2>
+                    <p className="text-sm text-[var(--muted)] mt-0.5">
                       {new Date(lesson.date).toLocaleDateString('pt-BR', { weekday: 'long', day: 'numeric', month: 'long' })}
                     </p>
                   </div>
                   <button
                     onClick={onClose}
-                    className="w-8 h-8 flex items-center justify-center rounded-xl text-slate-400 hover:text-slate-600 hover:bg-slate-100 transition-colors"
+                    className="w-8 h-8 flex items-center justify-center rounded-xl text-[var(--muted)] hover:text-[var(--text)] hover:bg-[var(--hover-bg)] transition-colors"
                   >
                     <X size={16} />
                   </button>
@@ -110,13 +110,13 @@ export function LessonModal({ lesson, onClose, onUpdate, onDelete }: LessonModal
                   <InfoRow icon={<User size={14} />} label="Aluno">
                     <div className="flex items-center gap-2">
                       <Avatar name={lesson.studentName} size="sm" />
-                      <span className="text-sm font-medium text-slate-900">{lesson.studentName}</span>
+                      <span className="text-sm font-medium text-[var(--heading)]">{lesson.studentName}</span>
                     </div>
                   </InfoRow>
                   <InfoRow icon={<GraduationCap size={14} />} label="Professor">
                     <div className="flex items-center gap-2">
                       <div className="w-5 h-5 rounded-full shrink-0" style={{ backgroundColor: lesson.color }} />
-                      <span className="text-sm font-medium text-slate-900">{lesson.teacherName}</span>
+                      <span className="text-sm font-medium text-[var(--heading)]">{lesson.teacherName}</span>
                     </div>
                   </InfoRow>
                 </div>
@@ -124,13 +124,13 @@ export function LessonModal({ lesson, onClose, onUpdate, onDelete }: LessonModal
                 {/* Room & Time */}
                 <div className="grid grid-cols-2 gap-4">
                   <InfoRow icon={<Building2 size={14} />} label="Sala">
-                    <span className="text-sm text-slate-900">{lesson.roomName}</span>
+                    <span className="text-sm text-[var(--heading)]">{lesson.roomName}</span>
                   </InfoRow>
                   <InfoRow icon={<Clock size={14} />} label="Horário">
-                    <span className="text-sm text-slate-900">
+                    <span className="text-sm text-[var(--heading)]">
                       {formatTime(lesson.startTime)} – {formatTime(lesson.endTime)}
                     </span>
-                    <span className="text-xs text-slate-400 ml-1">({duration})</span>
+                    <span className="text-xs text-[var(--muted)] ml-1">({duration})</span>
                   </InfoRow>
                 </div>
 
@@ -171,23 +171,23 @@ export function LessonModal({ lesson, onClose, onUpdate, onDelete }: LessonModal
                       onChange={e => setNotes(e.target.value)}
                       rows={3}
                       placeholder="Adicionar observações sobre a aula..."
-                      className="w-full text-sm border border-slate-200 rounded-xl px-3 py-2 resize-none focus:outline-none focus:ring-2 focus:ring-(--accent-100) text-slate-700"
+                      className="w-full text-sm border border-[var(--input-border)] rounded-xl px-3 py-2 resize-none focus:outline-none focus:ring-2 focus:ring-(--accent-100) text-[var(--text)] bg-[var(--input-bg)]"
                     />
                   ) : (
-                    <p className="text-sm text-slate-700">{notes || <span className="text-slate-400 italic">Sem observações</span>}</p>
+                    <p className="text-sm text-[var(--text)]">{notes || <span className="text-[var(--muted)] italic">Sem observações</span>}</p>
                   )}
                 </InfoRow>
 
                 {/* Recording */}
                 {lesson.recording && (
                   <InfoRow icon={<Music size={14} />} label="Gravação">
-                    <div className="flex items-center gap-2 bg-slate-50 rounded-xl px-3 py-2">
+                    <div className="flex items-center gap-2 bg-[var(--surface-soft)] rounded-xl px-3 py-2">
                       <div className="w-8 h-8 rounded-lg bg-(--accent-50) flex items-center justify-center">
                         <Video size={14} className="text-(--accent-600)" />
                       </div>
                       <div className="flex-1 min-w-0">
-                        <p className="text-xs font-medium text-slate-900 truncate">{lesson.recording.title}</p>
-                        <p className="text-xs text-slate-400">{Math.floor(lesson.recording.duration / 60)} min</p>
+                        <p className="text-xs font-medium text-[var(--heading)] truncate">{lesson.recording.title}</p>
+                        <p className="text-xs text-[var(--muted)]">{Math.floor(lesson.recording.duration / 60)} min</p>
                       </div>
                       <a href={lesson.recording.url} className="text-(--accent-600) hover:text-(--accent-700)">
                         <ExternalLink size={14} />
@@ -198,7 +198,7 @@ export function LessonModal({ lesson, onClose, onUpdate, onDelete }: LessonModal
               </div>
 
               {/* Footer actions */}
-              <div className="px-6 py-4 border-t border-slate-100 flex items-center gap-2">
+              <div className="px-6 py-4 border-t border-[var(--border)] flex items-center gap-2">
                 {!editing ? (
                   <>
                     <Button variant="secondary" size="sm" onClick={() => setEditing(true)}>
@@ -215,7 +215,7 @@ export function LessonModal({ lesson, onClose, onUpdate, onDelete }: LessonModal
                       </Button>
                     ) : (
                       <div className="ml-auto flex items-center gap-2">
-                        <span className="text-xs text-slate-500">Tem certeza?</span>
+                        <span className="text-xs text-[var(--muted)]">Tem certeza?</span>
                         <Button variant="danger" size="sm" onClick={() => onDelete(lesson.id)}>Sim, cancelar</Button>
                         <Button variant="ghost" size="sm" onClick={() => setConfirmDelete(false)}>Não</Button>
                       </div>
@@ -251,8 +251,8 @@ function InfoRow({ icon, label, children }: InfoRowProps) {
   return (
     <div>
       <div className="flex items-center gap-1.5 mb-1">
-        <span className="text-slate-400">{icon}</span>
-        <span className="text-xs font-medium text-slate-400 uppercase tracking-wide">{label}</span>
+        <span className="text-[var(--muted)]">{icon}</span>
+        <span className="text-xs font-medium text-[var(--muted)] uppercase tracking-wide">{label}</span>
       </div>
       <div className="ml-5">{children}</div>
     </div>

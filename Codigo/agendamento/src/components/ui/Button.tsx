@@ -10,8 +10,8 @@ interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
 
 const variantClasses = {
   primary: 'text-white shadow-lg hover:brightness-105 active:brightness-95',
-  secondary: 'bg-white text-slate-700 border border-slate-200 hover:bg-slate-50 hover:border-slate-300 shadow-sm',
-  ghost: 'text-slate-600 hover:bg-slate-100 hover:text-slate-900',
+  secondary: 'bg-[var(--surface)] text-[var(--text)] border border-[var(--border)] hover:bg-[var(--hover-bg)] hover:border-[var(--accent-500)]/40 shadow-sm',
+  ghost: 'text-[var(--muted)] hover:bg-[var(--hover-bg)] hover:text-[var(--text)]',
   danger: 'bg-gradient-to-r from-rose-500 to-pink-600 text-white hover:from-rose-600 hover:to-pink-700 shadow-lg shadow-rose-500/25',
 };
 

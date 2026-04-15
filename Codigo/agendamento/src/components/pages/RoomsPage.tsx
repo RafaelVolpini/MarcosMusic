@@ -99,8 +99,8 @@ export function RoomsPage({ availability, lessons, onChangeAvailability }: Rooms
     <div className="p-6">
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-6">
         <div>
-          <p className="text-sm text-slate-600">Calendario semanal para lancar horarios disponiveis</p>
-          <p className="text-xs text-slate-400 mt-0.5">{totalSlots} horarios marcados para aula</p>
+          <p className="text-sm text-[var(--muted)]">Calendario semanal para lancar horarios disponiveis</p>
+          <p className="text-xs text-[var(--muted)] opacity-70 mt-0.5">{totalSlots} horarios marcados para aula</p>
         </div>
         <div className="flex items-center gap-2">
           <Button variant="secondary" size="sm" onClick={applyBusinessHours}>
@@ -113,7 +113,7 @@ export function RoomsPage({ availability, lessons, onChangeAvailability }: Rooms
       </div>
 
       {warning && (
-        <div className="mb-4 px-3 py-2 rounded-xl border border-amber-200 bg-amber-50 text-amber-700 text-xs flex items-center gap-2">
+        <div className="mb-4 px-3 py-2 rounded-xl border border-amber-200 bg-amber-50 text-amber-700 text-xs flex items-center gap-2 dark:bg-amber-950/40 dark:border-amber-900/50 dark:text-amber-400">
           <AlertTriangle size={14} className="shrink-0" />
           {warning}
         </div>
@@ -128,16 +128,16 @@ export function RoomsPage({ availability, lessons, onChangeAvailability }: Rooms
           <div className="overflow-x-auto">
             <div className="min-w-215">
               <div className="grid grid-cols-[92px_repeat(7,minmax(108px,1fr))]">
-                <div className="h-14 border-b border-r border-slate-100 bg-slate-50 flex items-center justify-center text-xs text-slate-400 font-medium">
+                <div className="h-14 border-b border-r border-[var(--border)] bg-[var(--surface-soft)] flex items-center justify-center text-xs text-[var(--muted)] font-medium">
                   Horario
                 </div>
                 {WEEK_DAYS.map((day) => (
                   <div
                     key={day.key}
-                    className="h-14 border-b border-slate-100 bg-slate-50 px-3 flex items-center justify-between"
+                    className="h-14 border-b border-[var(--border)] bg-[var(--surface-soft)] px-3 flex items-center justify-between"
                   >
-                    <span className="text-xs font-semibold text-slate-700">{day.label}</span>
-                    <span className="text-[10px] text-slate-400 bg-white border border-slate-200 rounded-full px-2 py-0.5">
+                    <span className="text-xs font-semibold text-[var(--heading)]">{day.label}</span>
+                    <span className="text-[10px] text-[var(--muted)] bg-[var(--surface)] border border-[var(--border)] rounded-full px-2 py-0.5">
                       {availability[day.key].length}
                     </span>
                   </div>
@@ -145,10 +145,8 @@ export function RoomsPage({ availability, lessons, onChangeAvailability }: Rooms
 
                 {TIME_SLOTS.map((time) => (
                   <div key={time} className="contents">
-                    <div
-                      className="h-14 border-b border-r border-slate-100 flex items-center justify-center gap-1 text-xs font-medium text-slate-500"
-                    >
-                      <Clock3 size={11} className="text-slate-400" />
+                    <div className="h-14 border-b border-r border-[var(--border)] flex items-center justify-center gap-1 text-xs font-medium text-[var(--muted)]">
+                      <Clock3 size={11} className="text-[var(--muted)] opacity-60" />
                       {time}
                     </div>
 
@@ -159,18 +157,20 @@ export function RoomsPage({ availability, lessons, onChangeAvailability }: Rooms
                           key={`${day.key}-${time}`}
                           onClick={() => toggleSlot(day.key, time)}
                           className={cn(
-                            'h-14 border-b border-slate-100 px-2 transition-colors',
-                            'hover:bg-emerald-50/70',
-                            isActive && 'bg-emerald-50',
+                            'h-14 border-b border-[var(--border)] px-2 transition-colors',
+                            isActive
+                              ? 'bg-[var(--accent-icon-bg)]'
+                              : 'hover:bg-[var(--hover-bg)]',
                           )}
                         >
                           <div
                             className={cn(
                               'h-9 rounded-lg border text-xs font-medium flex items-center justify-center gap-1.5 transition-all',
                               isActive
-                                ? 'bg-linear-to-r from-emerald-500 to-teal-500 text-white border-transparent shadow-sm'
-                                : 'bg-white text-slate-400 border-slate-200',
+                                ? 'text-white border-transparent shadow-sm'
+                                : 'bg-[var(--surface)] text-[var(--muted)] border-[var(--border)]',
                             )}
+                            style={isActive ? { background: 'linear-gradient(135deg, var(--accent-gradient-from), var(--accent-gradient-to))' } : {}}
                           >
                             {isActive ? (
                               <>
@@ -187,15 +187,15 @@ export function RoomsPage({ availability, lessons, onChangeAvailability }: Rooms
                   </div>
                 ))}
               </div>
-            </div>
-          </div>
 
-          <div className="px-4 py-3 border-t border-slate-100 bg-slate-50 flex items-center justify-between text-xs">
-            <div className="flex items-center gap-1.5 text-slate-500">
-              <CalendarClock size={13} className="text-slate-400" />
-              Clique em qualquer celula para marcar ou remover disponibilidade.
+              <div className="px-4 py-3 border-t border-[var(--border)] bg-[var(--surface-soft)] flex items-center justify-between text-xs">
+                <div className="flex items-center gap-1.5 text-[var(--muted)]">
+                  <CalendarClock size={13} className="text-[var(--muted)] opacity-60" />
+                  Clique em qualquer celula para marcar ou remover disponibilidade.
+                </div>
+                <div className="text-[var(--heading)] font-semibold">Total: {totalSlots} horarios</div>
+              </div>
             </div>
-            <div className="text-slate-600 font-semibold">Total: {totalSlots} horarios</div>
           </div>
         </Card>
       </motion.div>

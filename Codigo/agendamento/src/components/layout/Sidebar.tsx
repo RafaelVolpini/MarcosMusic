@@ -27,14 +27,14 @@ interface NavItem {
 
 const NAV_ITEMS: NavItem[] = [
   { id: 'dashboard',    label: 'Dashboard',       icon: <Disc3 size={20} />,           color: 'var(--accent-500)', roles: ['teacher'] },
-  { id: 'aboutMe',      label: 'Sobre Mim',       icon: <Gamepad2 size={20} />,        color: '#6366f1', roles: ['teacher', 'student'] },
-  { id: 'agenda',       label: 'Agenda',          icon: <CalendarDays size={20} />,    color: '#14b8a6', roles: ['teacher', 'student'] },
-  { id: 'students',     label: 'Alunos',          icon: <Users size={20} />,           color: '#f59e0b', roles: ['teacher'] },
-  { id: 'rooms',        label: 'Calendario',      icon: <CalendarClock size={20} />,   color: '#8b5cf6', roles: ['teacher'] },
-  { id: 'rescheduling', label: 'Reagendamentos',  icon: <RefreshCw size={20} />,       color: '#ec4899', roles: ['teacher', 'student'] },
-  { id: 'video',        label: 'Aulas Online',    icon: <Music size={20} />,           color: '#06b6d4', roles: ['teacher', 'student'] },
-  { id: 'lessonAlerts', label: 'Alertar Aula',    icon: <MessageCircle size={20} />,   color: '#22c55e', roles: ['teacher'] },
-  { id: 'settings',     label: 'Configurações',   icon: <Settings size={20} />,        color: '#64748b', roles: ['teacher', 'student'] },
+  { id: 'aboutMe',      label: 'Sobre Mim',       icon: <Gamepad2 size={20} />,        color: 'var(--accent-500)', roles: ['teacher', 'student'] },
+  { id: 'agenda',       label: 'Agenda',          icon: <CalendarDays size={20} />,    color: 'var(--accent-500)', roles: ['teacher', 'student'] },
+  { id: 'students',     label: 'Alunos',          icon: <Users size={20} />,           color: 'var(--accent-500)', roles: ['teacher'] },
+  { id: 'rooms',        label: 'Calendario',      icon: <CalendarClock size={20} />,   color: 'var(--accent-500)', roles: ['teacher'] },
+  { id: 'rescheduling', label: 'Reagendamentos',  icon: <RefreshCw size={20} />,       color: 'var(--accent-500)', roles: ['teacher', 'student'] },
+  { id: 'video',        label: 'Aulas Online',    icon: <Music size={20} />,           color: 'var(--accent-500)', roles: ['teacher', 'student'] },
+  { id: 'lessonAlerts', label: 'Alertar Aula',    icon: <MessageCircle size={20} />,   color: 'var(--accent-500)', roles: ['teacher'] },
+  { id: 'settings',     label: 'Configurações',   icon: <Settings size={20} />,        color: 'var(--accent-500)', roles: ['teacher', 'student'] },
 ];
 
 interface SidebarProps {
@@ -48,14 +48,14 @@ interface SidebarProps {
 export function Sidebar({ collapsed, onToggle, activePage, onNavigate, user }: SidebarProps) {
   const visibleNavItems = NAV_ITEMS.filter((item) => item.roles.includes(user.role));
   const initials = `${user.firstName?.[0] ?? ''}${user.lastName?.[0] ?? ''}`.trim().toUpperCase() || user.email.slice(0, 2).toUpperCase();
-  const studentAvatarBg = 'linear-gradient(135deg, #0ea5e9, #2563eb)';
+  const studentAvatarBg = 'linear-gradient(135deg, var(--accent-gradient-from), var(--accent-gradient-to))';
 
   return (
     <motion.aside
       initial={false}
       animate={{ width: collapsed ? 80 : 260 }}
       transition={{ type: 'spring', stiffness: 300, damping: 30 }}
-      className="relative flex flex-col h-full bg-slate-900 overflow-hidden z-10 shrink-0"
+      className="relative flex flex-col h-full overflow-hidden z-10 shrink-0 bg-[var(--surface)] border-r border-[var(--border)]"
     >
       {/* Gradient accent line */}
       <div
@@ -81,8 +81,8 @@ export function Sidebar({ collapsed, onToggle, activePage, onNavigate, user }: S
               transition={{ duration: 0.2 }}
               className="overflow-hidden"
             >
-              <p className="font-bold text-white leading-tight tracking-tight text-lg whitespace-nowrap">Musga</p>
-              <p className="text-xs text-slate-400 whitespace-nowrap">Gestão de Aulas</p>
+              <p className="font-bold text-[var(--heading)] leading-tight tracking-tight text-lg whitespace-nowrap">Musga</p>
+              <p className="text-xs text-[var(--muted)] whitespace-nowrap">Gestão de Aulas</p>
             </motion.div>
           )}
         </AnimatePresence>
@@ -104,7 +104,7 @@ export function Sidebar({ collapsed, onToggle, activePage, onNavigate, user }: S
       </nav>
 
       {/* User card & toggle */}
-      <div className="p-3 border-t border-slate-800">
+      <div className="p-3 border-t border-[var(--border)]">
         {/* Mini profile */}
         <AnimatePresence initial={false}>
           {!collapsed && (
@@ -112,7 +112,7 @@ export function Sidebar({ collapsed, onToggle, activePage, onNavigate, user }: S
               initial={{ opacity: 0, height: 0 }}
               animate={{ opacity: 1, height: 'auto' }}
               exit={{ opacity: 0, height: 0 }}
-              className="mb-3 p-3 rounded-xl bg-linear-to-r from-slate-800 to-slate-800/50 border border-slate-700/50"
+              className="mb-3 p-3 rounded-xl bg-[var(--surface-soft)] border border-[var(--border)]"
             >
               <div className="flex items-center gap-3">
                 <div
@@ -129,10 +129,10 @@ export function Sidebar({ collapsed, onToggle, activePage, onNavigate, user }: S
                 </div>
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-1.5">
-                    <p className="text-sm font-medium text-white truncate">{user.name || 'Usuario'}</p>
-                    <Music size={11} className="text-(--accent-300) shrink-0" />
+                    <p className="text-sm font-medium text-[var(--heading)] truncate">{user.name || 'Usuario'}</p>
+                    <Music size={11} style={{ color: 'var(--accent-600)' }} className="shrink-0" />
                   </div>
-                  <p className="text-xs text-slate-400 truncate">{user.role === 'teacher' ? 'Professor' : 'Aluno'}</p>
+                  <p className="text-xs text-[var(--muted)] truncate">{user.role === 'teacher' ? 'Professor' : 'Aluno'}</p>
                 </div>
               </div>
             </motion.div>
@@ -143,7 +143,7 @@ export function Sidebar({ collapsed, onToggle, activePage, onNavigate, user }: S
         <button
           onClick={onToggle}
           className={cn(
-            'flex items-center justify-center gap-2 w-full rounded-xl h-10 text-slate-400 hover:text-white hover:bg-slate-800 transition-all duration-200',
+            'flex items-center justify-center gap-2 w-full rounded-xl h-10 text-[var(--muted)] hover:text-[var(--text)] hover:bg-[var(--hover-bg)] transition-all duration-200',
             collapsed && 'w-10 mx-auto',
           )}
           title={collapsed ? 'Expandir' : 'Recolher'}
@@ -190,10 +190,11 @@ function NavButton({ item, active, collapsed, onClick }: NavButtonProps) {
       className={cn(
         'relative flex items-center gap-3 rounded-xl transition-all duration-200 w-full text-left overflow-hidden group',
         'px-3 h-12',
-        active 
-          ? 'bg-white/10 text-white' 
-          : 'text-slate-400 hover:text-white hover:bg-white/5',
+        active
+          ? 'text-[var(--heading)]'
+          : 'text-[var(--muted)] hover:text-[var(--text)] hover:bg-[var(--hover-bg)]',
       )}
+      style={active ? { backgroundColor: 'var(--accent-icon-bg)' } : {}}
       title={collapsed ? item.label : undefined}
     >
       {/* Active indicator */}
@@ -207,22 +208,24 @@ function NavButton({ item, active, collapsed, onClick }: NavButtonProps) {
       )}
 
       {/* Glow effect on hover */}
-      <div 
-        className="absolute inset-0 opacity-0 group-hover:opacity-10 transition-opacity duration-300 rounded-xl"
-        style={{ backgroundColor: item.color }}
+      <div
+        className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-300 rounded-xl"
+        style={{ backgroundColor: `color-mix(in srgb, ${item.color} 8%, transparent)` }}
       />
 
       {/* Icon with color */}
-      <div 
-        className={cn(
-          'flex items-center justify-center w-9 h-9 rounded-xl transition-all duration-200 shrink-0',
-          active ? 'bg-white/10' : 'bg-slate-800 group-hover:bg-slate-700',
-        )}
-        style={{ 
-          boxShadow: active ? `0 0 20px ${item.color}30` : 'none',
+      <div
+        className="flex items-center justify-center w-9 h-9 rounded-xl transition-all duration-200 shrink-0"
+        style={{
+          backgroundColor: active
+            ? `color-mix(in srgb, ${item.color} 20%, var(--surface))`
+            : 'var(--accent-icon-bg)',
+          boxShadow: active
+            ? `0 0 16px color-mix(in srgb, ${item.color} 40%, transparent)`
+            : 'none',
         }}
       >
-        <span style={{ color: active ? item.color : 'currentColor' }}>
+        <span style={{ color: item.color }}>
           {item.icon}
         </span>
       </div>

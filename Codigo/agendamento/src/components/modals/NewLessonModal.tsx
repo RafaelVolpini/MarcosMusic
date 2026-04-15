@@ -90,8 +90,8 @@ export function NewLessonModal({
     onClose();
   };
 
-  const inputClass = 'w-full border border-slate-200 rounded-xl px-3 py-2 text-sm text-slate-800 focus:outline-none focus:ring-2 focus:ring-[var(--accent-100)] bg-white';
-  const labelClass = 'text-xs font-medium text-slate-500 mb-1 block';
+  const inputClass = 'w-full border border-[var(--input-border)] rounded-xl px-3 py-2 text-sm text-[var(--text)] focus:outline-none focus:ring-2 focus:ring-[var(--accent-100)] bg-[var(--input-bg)]';
+  const labelClass = 'text-xs font-medium text-[var(--muted)] mb-1 block';
 
   return (
     <AnimatePresence>
@@ -111,16 +111,16 @@ export function NewLessonModal({
             transition={{ type: 'spring', stiffness: 360, damping: 30 }}
             className="fixed inset-0 z-50 flex items-center justify-center pointer-events-none px-4"
           >
-            <div className="app-surface bg-white rounded-3xl shadow-2xl w-full max-w-md pointer-events-auto overflow-hidden">
+            <div className="app-surface rounded-3xl shadow-2xl w-full max-w-md pointer-events-auto overflow-hidden">
               {/* Header */}
-              <div className="flex items-center justify-between px-6 py-5 border-b border-slate-100">
+              <div className="flex items-center justify-between px-6 py-5 border-b border-[var(--border)]">
                 <div className="flex items-center gap-2">
                   <div className="w-8 h-8 bg-(--accent-50) rounded-xl flex items-center justify-center">
                     <Plus size={16} className="text-(--accent-600)" />
                   </div>
-                  <h2 className="text-base font-bold text-slate-900">Nova Aula</h2>
+                  <h2 className="text-base font-bold text-[var(--heading)]">Nova Aula</h2>
                 </div>
-                <button onClick={onClose} className="w-8 h-8 flex items-center justify-center rounded-xl text-slate-400 hover:text-slate-600 hover:bg-slate-100">
+                <button onClick={onClose} className="w-8 h-8 flex items-center justify-center rounded-xl text-[var(--muted)] hover:text-[var(--text)] hover:bg-[var(--hover-bg)]">
                   <X size={16} />
                 </button>
               </div>
@@ -175,11 +175,11 @@ export function NewLessonModal({
                   </div>
                   <div>
                     <label className={labelClass}>Fim (automático)</label>
-                    <input type="time" value={endTime} readOnly disabled className={`${inputClass} bg-slate-50 text-slate-500`} />
+                    <input type="time" value={endTime} readOnly disabled className={`${inputClass} bg-[var(--surface-soft)] text-[var(--muted)]`} />
                   </div>
                 </div>
 
-                <p className="text-[11px] text-slate-400 -mt-2">Todas as aulas possuem duração fixa de 50 minutos.</p>
+                <p className="text-[11px] text-[var(--muted)] -mt-2">Todas as aulas possuem duração fixa de 50 minutos.</p>
 
                 {availableTimesForDate.length === 0 && (
                   <p className="text-xs text-amber-600 bg-amber-50 border border-amber-200 rounded-lg px-3 py-2">
@@ -194,7 +194,7 @@ export function NewLessonModal({
               </div>
 
               {/* Footer */}
-              <div className="px-6 py-4 border-t border-slate-100 flex items-center gap-2 justify-end">
+              <div className="px-6 py-4 border-t border-[var(--border)] flex items-center gap-2 justify-end">
                 <Button variant="secondary" onClick={onClose}>Cancelar</Button>
                 <Button onClick={handleSubmit}>Criar Aula</Button>
               </div>

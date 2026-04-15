@@ -89,23 +89,23 @@ export function Dashboard({ lessons, students, onNavigate }: DashboardProps) {
         >
           <Card className="p-5">
             <div className="flex items-center justify-between mb-4">
-              <h3 className="text-sm font-bold text-slate-800">Próximas Aulas</h3>
-              <button onClick={() => onNavigate('agenda')} className="text-xs text-indigo-600 hover:text-indigo-700 font-semibold transition-colors">
+              <h3 className="text-sm font-bold text-[var(--heading)]">Próximas Aulas</h3>
+              <button onClick={() => onNavigate('agenda')} className="text-xs text-[var(--accent-600)] hover:text-[var(--accent-700)] font-semibold transition-colors">
                 Ver agenda →
               </button>
             </div>
             <div className="space-y-2">
               {upcomingLessons.map(lesson => (
-                <div key={lesson.id} className="flex items-center gap-3 p-3 rounded-xl hover:bg-slate-50 transition-colors">
+                <div key={lesson.id} className="flex items-center gap-3 p-3 rounded-xl hover:bg-[var(--hover-bg)] transition-colors">
                   <div className="w-1 h-10 rounded-full shrink-0" style={{ backgroundColor: lesson.color }} />
                   <Avatar name={lesson.studentName} size="sm" />
                   <div className="flex-1 min-w-0">
-                    <p className="text-sm font-medium text-slate-800 truncate">{lesson.studentName}</p>
-                    <p className="text-xs text-slate-400">{lesson.instrument}</p>
+                    <p className="text-sm font-medium text-[var(--heading)] truncate">{lesson.studentName}</p>
+                    <p className="text-xs text-[var(--muted)]">{lesson.instrument}</p>
                   </div>
                   <div className="text-right shrink-0">
-                    <p className="text-xs font-semibold text-slate-700">{formatTime(lesson.startTime)}</p>
-                    <p className="text-xs text-slate-400">
+                    <p className="text-xs font-semibold text-[var(--text)]">{formatTime(lesson.startTime)}</p>
+                    <p className="text-xs text-[var(--muted)]">
                       {new Date(lesson.date).toLocaleDateString('pt-BR', { day: 'numeric', month: 'short' })}
                     </p>
                   </div>
@@ -115,7 +115,7 @@ export function Dashboard({ lessons, students, onNavigate }: DashboardProps) {
                 </div>
               ))}
               {upcomingLessons.length === 0 && (
-                <p className="text-sm text-slate-400 text-center py-6">Nenhuma aula agendada</p>
+                <p className="text-sm text-[var(--muted)] text-center py-6">Nenhuma aula agendada</p>
               )}
             </div>
           </Card>
@@ -128,30 +128,30 @@ export function Dashboard({ lessons, students, onNavigate }: DashboardProps) {
         >
           {/* Alerts */}
           <Card className="p-5">
-            <h3 className="text-sm font-bold text-slate-800 mb-3">Alertas</h3>
+            <h3 className="text-sm font-bold text-[var(--heading)] mb-3">Alertas</h3>
             <div className="space-y-2">
               {todayLessons.filter(l => l.status === 'cancelled').map(l => (
-                <div key={l.id} className="flex items-start gap-2 p-2.5 bg-linear-to-r from-rose-50 to-pink-50 rounded-xl border border-rose-100">
+                <div key={l.id} className="flex items-start gap-2 p-2.5 rounded-xl border bg-rose-50 border-rose-100 dark:bg-rose-950/40 dark:border-rose-900/50">
                   <AlertCircle size={14} className="text-rose-500 shrink-0 mt-0.5" />
                   <div>
-                    <p className="text-xs font-semibold text-slate-800">{l.studentName}</p>
-                    <p className="text-xs text-rose-600 font-medium">Aula cancelada hoje</p>
+                    <p className="text-xs font-semibold text-[var(--heading)]">{l.studentName}</p>
+                    <p className="text-xs text-rose-600 dark:text-rose-400 font-medium">Aula cancelada hoje</p>
                   </div>
                 </div>
               ))}
               {todayLessons.filter(l => l.status === 'rescheduled').map(l => (
-                <div key={l.id} className="flex items-start gap-2 p-2.5 bg-linear-to-r from-amber-50 to-orange-50 rounded-xl border border-amber-100">
+                <div key={l.id} className="flex items-start gap-2 p-2.5 rounded-xl border bg-amber-50 border-amber-100 dark:bg-amber-950/40 dark:border-amber-900/50">
                   <Clock size={14} className="text-amber-500 shrink-0 mt-0.5" />
                   <div>
-                    <p className="text-xs font-semibold text-slate-800">{l.studentName}</p>
-                    <p className="text-xs text-amber-600 font-medium">Aula reagendada</p>
+                    <p className="text-xs font-semibold text-[var(--heading)]">{l.studentName}</p>
+                    <p className="text-xs text-amber-600 dark:text-amber-400 font-medium">Aula reagendada</p>
                   </div>
                 </div>
               ))}
               {todayLessons.filter(l => l.status === 'cancelled' || l.status === 'rescheduled').length === 0 && (
-                <div className="flex items-center gap-2 p-2.5 bg-linear-to-r from-emerald-50 to-teal-50 rounded-xl border border-emerald-100">
+                <div className="flex items-center gap-2 p-2.5 rounded-xl border bg-emerald-50 border-emerald-100 dark:bg-emerald-950/40 dark:border-emerald-900/50">
                   <CheckCircle size={14} className="text-emerald-500" />
-                  <p className="text-xs text-emerald-700 font-semibold">Agenda sem alertas no momento</p>
+                  <p className="text-xs text-emerald-700 dark:text-emerald-400 font-semibold">Agenda sem alertas no momento</p>
                 </div>
               )}
             </div>
@@ -159,14 +159,14 @@ export function Dashboard({ lessons, students, onNavigate }: DashboardProps) {
 
           {/* Recent Students */}
           <Card className="p-5">
-            <h3 className="text-sm font-bold text-slate-800 mb-3">Alunos Recentes</h3>
+            <h3 className="text-sm font-bold text-[var(--heading)] mb-3">Alunos Recentes</h3>
             <div className="space-y-2">
               {students.slice(0, 4).map(s => (
-                <div key={s.id} className="flex items-center gap-3 p-2 rounded-lg hover:bg-slate-50 transition-colors">
+                <div key={s.id} className="flex items-center gap-3 p-2 rounded-lg hover:bg-[var(--hover-bg)] transition-colors">
                   <Avatar name={s.name} size="sm" />
                   <div className="flex-1 min-w-0">
-                    <p className="text-xs font-semibold text-slate-800 truncate">{s.name}</p>
-                    <p className="text-xs text-slate-400">{s.instrument}</p>
+                    <p className="text-xs font-semibold text-[var(--heading)] truncate">{s.name}</p>
+                    <p className="text-xs text-[var(--muted)]">{s.instrument}</p>
                   </div>
                   <Badge variant={s.level === 'advanced' ? 'success' : s.level === 'intermediate' ? 'warning' : 'default'} className="text-[10px]">
                     {s.level === 'beginner' ? 'Inic.' : s.level === 'intermediate' ? 'Inter.' : 'Avanç.'}

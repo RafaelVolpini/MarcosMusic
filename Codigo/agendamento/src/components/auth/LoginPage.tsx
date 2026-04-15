@@ -21,34 +21,45 @@ export function LoginPage({ onLoginSuccess }: LoginPageProps) {
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
 
-  const handleSubmit = (event: React.FormEvent<HTMLFormElement>) => {
+  const [loading, setLoading] = useState(false);
+
+  const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
+    setLoading(true);
 
     if (mode === 'login') {
       if (!loginEmail.trim() || !loginPassword.trim()) {
         setError('Preencha e-mail e senha para continuar.');
+        setLoading(false);
         return;
       }
 
-      const user = login(loginEmail, loginPassword);
-      if (!user) {
-        setError('E-mail ou senha invalidos.');
-        return;
+      try {
+        const user = await login(loginEmail, loginPassword);
+        if (!user) {
+          setError('E-mail ou senha invalidos.');
+          setLoading(false);
+          return;
+        }
+        setError('');
+        setSuccess('');
+        onLoginSuccess(user);
+      } catch {
+        setError('Erro ao conectar com o servidor.');
+      } finally {
+        setLoading(false);
       }
-
-      setError('');
-      setSuccess('');
-      onLoginSuccess(user);
       return;
     }
 
     if (!firstName.trim() || !lastName.trim() || !registerEmail.trim() || !phone.trim() || !registerPassword.trim()) {
       setError('Preencha nome, sobrenome, e-mail, telefone e senha para cadastrar.');
+      setLoading(false);
       return;
     }
 
     try {
-      registerUser({
+      await registerUser({
         firstName,
         lastName,
         email: registerEmail,
@@ -68,8 +79,9 @@ export function LoginPage({ onLoginSuccess }: LoginPageProps) {
         : 'Nao foi possivel concluir o cadastro.';
       setError(message);
       setSuccess('');
+    } finally {
+      setLoading(false);
     }
-
   };
 
   const switchMode = (nextMode: 'login' | 'register') => {
@@ -133,7 +145,7 @@ export function LoginPage({ onLoginSuccess }: LoginPageProps) {
                   type="button"
                   onClick={() => switchMode('login')}
                   className={`rounded-lg px-3 py-2 text-sm font-semibold transition ${
-                    mode === 'login' ? 'bg-white shadow-sm' : ''
+                    mode === 'login' ? 'bg-[var(--surface)] shadow-sm' : ''
                   }`}
                   style={{ color: mode === 'login' ? 'var(--text)' : 'var(--muted)' }}
                 >
@@ -143,7 +155,7 @@ export function LoginPage({ onLoginSuccess }: LoginPageProps) {
                   type="button"
                   onClick={() => switchMode('register')}
                   className={`rounded-lg px-3 py-2 text-sm font-semibold transition ${
-                    mode === 'register' ? 'bg-white shadow-sm' : ''
+                    mode === 'register' ? 'bg-[var(--surface)] shadow-sm' : ''
                   }`}
                   style={{ color: mode === 'register' ? 'var(--text)' : 'var(--muted)' }}
                 >
@@ -158,7 +170,7 @@ export function LoginPage({ onLoginSuccess }: LoginPageProps) {
                       <div>
                         <label className="mb-1.5 block text-xs font-semibold uppercase tracking-wide" style={{ color: 'var(--muted)' }}>Nome</label>
                         <div className="relative">
-                          <User size={14} className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
+                          <User size={14} className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-[var(--muted)]" />
                           <input
                             className={`${inputCls} pl-9`}
                             style={{ borderColor: 'var(--border)', color: 'var(--text)', backgroundColor: 'var(--surface)' }}
@@ -171,7 +183,7 @@ export function LoginPage({ onLoginSuccess }: LoginPageProps) {
                       <div>
                         <label className="mb-1.5 block text-xs font-semibold uppercase tracking-wide" style={{ color: 'var(--muted)' }}>Sobrenome</label>
                         <div className="relative">
-                          <User size={14} className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
+                          <User size={14} className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-[var(--muted)]" />
                           <input
                             className={`${inputCls} pl-9`}
                             style={{ borderColor: 'var(--border)', color: 'var(--text)', backgroundColor: 'var(--surface)' }}
@@ -186,7 +198,7 @@ export function LoginPage({ onLoginSuccess }: LoginPageProps) {
                     <div>
                       <label className="mb-1.5 block text-xs font-semibold uppercase tracking-wide" style={{ color: 'var(--muted)' }}>Telefone</label>
                       <div className="relative">
-                        <Phone size={14} className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
+                        <Phone size={14} className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-[var(--muted)]" />
                         <input
                           className={`${inputCls} pl-9`}
                           style={{ borderColor: 'var(--border)', color: 'var(--text)', backgroundColor: 'var(--surface)' }}
@@ -202,7 +214,7 @@ export function LoginPage({ onLoginSuccess }: LoginPageProps) {
                 <div>
                   <label className="mb-1.5 block text-xs font-semibold uppercase tracking-wide" style={{ color: 'var(--muted)' }}>E-mail</label>
                   <div className="relative">
-                    <Mail size={14} className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
+                    <Mail size={14} className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-[var(--muted)]" />
                     <input
                       className={`${inputCls} pl-9`}
                       style={{ borderColor: 'var(--border)', color: 'var(--text)', backgroundColor: 'var(--surface)' }}
@@ -217,7 +229,7 @@ export function LoginPage({ onLoginSuccess }: LoginPageProps) {
                 <div>
                   <label className="mb-1.5 block text-xs font-semibold uppercase tracking-wide" style={{ color: 'var(--muted)' }}>Senha</label>
                   <div className="relative">
-                    <Lock size={14} className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
+                    <Lock size={14} className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-[var(--muted)]" />
                     <input
                       className={`${inputCls} pl-9`}
                       style={{ borderColor: 'var(--border)', color: 'var(--text)', backgroundColor: 'var(--surface)' }}
@@ -237,8 +249,8 @@ export function LoginPage({ onLoginSuccess }: LoginPageProps) {
                   <p className="rounded-xl border border-emerald-200 bg-emerald-50 px-3 py-2 text-xs text-emerald-700">{success}</p>
                 )}
 
-                <Button type="submit" className="mt-2 w-full justify-center">
-                  {mode === 'login' ? 'Entrar e continuar' : 'Cadastrar e continuar'}
+                <Button type="submit" className="mt-2 w-full justify-center" disabled={loading}>
+                  {loading ? 'Aguarde...' : mode === 'login' ? 'Entrar e continuar' : 'Cadastrar e continuar'}
                 </Button>
               </form>
             </motion.div>
