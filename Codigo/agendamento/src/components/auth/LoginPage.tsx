@@ -127,7 +127,7 @@ export function LoginPage({ onLoginSuccess }: LoginPageProps) {
             <div className="relative z-10">
               <div className="inline-flex items-center gap-2 rounded-xl bg-white/10 px-3 py-2 text-sm font-semibold backdrop-blur-sm">
                 <Music2 size={16} />
-                Musga Agenda
+                marcos-music
               </div>
               <h1 className="mt-8 max-w-sm text-4xl font-black leading-tight">
                 Seu estudio organizado, aula por aula.
@@ -149,7 +149,7 @@ export function LoginPage({ onLoginSuccess }: LoginPageProps) {
                 <div className="rounded-xl p-2" style={{ backgroundColor: 'var(--accent-100)', color: 'var(--accent-600)' }}>
                   <Music2 size={16} />
                 </div>
-                <span className="text-sm font-semibold" style={{ color: 'var(--text)' }}>Musga Agenda</span>
+                <span className="text-sm font-semibold" style={{ color: 'var(--text)' }}>marcos-music</span>
               </div>
 
               <h2 className="text-2xl font-black" style={{ color: 'var(--text)' }}>Entrar</h2>

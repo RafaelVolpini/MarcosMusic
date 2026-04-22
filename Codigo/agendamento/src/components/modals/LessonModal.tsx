@@ -320,7 +320,7 @@ export function LessonModal({ lesson, currentUser, onClose, onUpdate, onDelete, 
                   </div>
                 ) : !editing ? (
                   <>
-                    {canModify && (
+                    {currentUser.role === 'teacher' && (
                       <Button variant="secondary" size="sm" onClick={() => setEditing(true)}>
                         Editar
                       </Button>

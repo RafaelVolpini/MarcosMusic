@@ -1,11 +1,12 @@
 import { useState, useCallback, useEffect } from 'react';
-import { ChevronLeft, ChevronRight, Plus, MousePointerClick } from 'lucide-react';
+import { ChevronLeft, ChevronRight, MousePointerClick } from 'lucide-react';
 import type { Lesson, WeeklyAvailability } from '../../types';
 import type { AuthUser } from '../../lib/auth';
 import {
   getWeekDays, formatDateISO, isToday,
   timeToMinutes, cn,
 } from '../../utils';
+import { CalendarCellOverlay } from './CalendarCellOverlay';
 
 // ─── Constants ───────────────────────────────────────────────────────────────
 
@@ -166,14 +167,6 @@ export function CalendarView({
         </div>
 
         <div className="hidden lg:flex items-center gap-3 ml-1 text-[11px] text-[var(--muted)]">
-          <span className="inline-flex items-center gap-1.5">
-            <span className="w-2 h-2 rounded-full bg-[var(--accent-500)]" />
-            Disponível
-          </span>
-          <span className="inline-flex items-center gap-1.5">
-            <span className="w-2 h-2 rounded-full bg-rose-500" />
-            Indisponível
-          </span>
           {(!currentUser || currentUser.role === 'teacher') && (
             <span className="inline-flex items-center gap-1 text-[var(--muted)] italic">
               <MousePointerClick size={11} />
@@ -235,7 +228,7 @@ export function CalendarView({
                     key={`cell-${hour}-${di}`}
                     className={cn(
                       'relative border-b border-l border-[var(--border)] group',
-                      unavailable && 'cursor-not-allowed',
+                      unavailable ? 'cursor-not-allowed' : 'cursor-pointer',
                     )}
                     style={{ height: CELL_HEIGHT }}
                     title={unavailable ? 'Horario indisponivel para agendamento' : 'Horario disponivel para agendamento'}
@@ -243,7 +236,6 @@ export function CalendarView({
                     onDrop={() => handleDrop(dateStr)}
                     onClick={(e) => {
                       if (unavailable) return;
-                      if (currentUser && currentUser.role !== 'teacher') return;
                       const rect = e.currentTarget.getBoundingClientRect();
                       const relY = e.clientY - rect.top;
                       const mins = hour * 60 + Math.floor(relY / CELL_HEIGHT * 60);
@@ -255,16 +247,8 @@ export function CalendarView({
                       onNewLesson(dateStr, selectedTime);
                     }}
                   >
-                    {/* Hover highlight — só para professores */}
-                    {!unavailable && (!currentUser || currentUser.role === 'teacher') && (
-                      <>
-                        <div className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-100 cursor-pointer bg-[var(--accent-icon-bg)]" />
-                        <Plus
-                          size={14}
-                          className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 opacity-0 group-hover:opacity-40 transition-opacity pointer-events-none text-[var(--accent-600)]"
-                        />
-                      </>
-                    )}
+                    {/* Hover overlay */}
+                    <CalendarCellOverlay visible={!unavailable} />
 
                     {!dayLessons.length && (
                       <span

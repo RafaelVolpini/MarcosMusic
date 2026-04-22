@@ -84,7 +84,7 @@ export function ProfileSetupPage({ user, onComplete }: ProfileSetupPageProps) {
             <div className="rounded-xl p-2" style={{ backgroundColor: 'var(--accent-100)', color: 'var(--accent-600)' }}>
               <Music2 size={16} />
             </div>
-            <span className="text-sm font-semibold" style={{ color: 'var(--text)' }}>Musga Agenda</span>
+            <span className="text-sm font-semibold" style={{ color: 'var(--text)' }}>marcos-music</span>
           </div>
 
           <h2 className="text-2xl font-black" style={{ color: 'var(--text)' }}>Complete seu perfil</h2>
