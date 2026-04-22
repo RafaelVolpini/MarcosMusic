@@ -1,48 +1,154 @@
 package com.marcos.music.service;
 
-import com.marcos.music.dto.AlunoDTO;
+import com.marcos.music.dto.Aluno.AlunoDTO;
 import com.marcos.music.entity.*;
 import com.marcos.music.repository.*;
+import com.marcos.music.repository.Aula.AulaAlunoRepository;
+
+import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Objects;
 import java.util.UUID;
 
 @Service
 public class AlunoService {
 
-    private final AlunoRepository alunoRepository;
+    private final AlunoRepository repository;
     private final AuthService authService;
+    private final AulaService aulaService;
+    private final UsuarioRepository usuarioRepository;
+    private final AulaAlunoRepository aulaAlunoRepository;
 
-    public AlunoService(AlunoRepository alunoRepository, AuthService authService) {
-        this.alunoRepository = alunoRepository;
+    private final static String PASS = "123456"; //trocar senha padrão
+
+    public AlunoService(
+        AlunoRepository repository, 
+        AuthService authService,
+        @Lazy AulaService aulaService,
+        UsuarioRepository usuarioRepository,
+        AulaAlunoRepository aulaAlunoRepository
+    ) {
+        this.repository = repository;
         this.authService = authService;
+        this.aulaService = aulaService;
+        this.usuarioRepository = usuarioRepository;
+        this.aulaAlunoRepository =aulaAlunoRepository;
     }
 
     public Aluno criarAluno(AlunoDTO dto) {
-        if(dto.getId() != null){
-            Aluno aluno = new Aluno(dto);
-            return alunoRepository.save(aluno);
-        }
-        
-        Usuario user = authService.criarUsuario(dto.getEmail(), "123456", Role.USER); //trocar senha padrão
+        if (dto.getId() != null) {
+            Aluno aluno = repository.findById(dto.getId())
+                    .orElseThrow(() -> new RuntimeException("Aluno não encontrado"));
 
-        dto.setId(user.getId());
+            aluno.setNome(dto.getNome());
+            aluno.setTelefone(dto.getTelefone());
+            aluno.setStatus(dto.getStatus() != null ? dto.getStatus() : true);
+            aluno.setTermos(dto.getTermos() != null ? dto.getTermos() : false);
+
+            List<Long> idsDTO = dto.getHorarios() == null ? List.of() :
+                    dto.getHorarios().stream()
+                            .map(AulaAluno::getId)
+                            .filter(Objects::nonNull)
+                            .toList();
+
+            if (!idsDTO.isEmpty()) {
+                List<AulaAluno> deletados = aulaService.findDeletedsHorarios(dto.getId(), idsDTO);
+                for (AulaAluno aa : deletados) {
+                    aulaService.deletePorHorario(aa);
+                }
+            }
+
+            if (aluno.getHorarios() == null) {
+                aluno.setHorarios(new ArrayList<>());
+            } else {
+                aluno.getHorarios().clear();
+            }
+
+            if (dto.getHorarios() != null) {
+                for (AulaAluno h : dto.getHorarios()) {
+                    h.setAluno(aluno); // 🔥 ESSENCIAL
+                    aluno.getHorarios().add(h);
+                }
+            }
+
+            aluno = repository.save(aluno);
+
+            if (dto.getHorarios() != null) {
+                for (AulaAluno a : dto.getHorarios()) {
+                    if (a.getId() == null) {
+                        aulaService.gerarPorHorario(a);
+                    }
+                }
+            }
+
+            Usuario u = usuarioRepository.findById(aluno.getId())
+                    .orElseThrow(() -> new RuntimeException("Usuario não encontrado"));
+
+            u.setEmail(dto.getEmail());
+            usuarioRepository.save(u);
+
+            return aluno;
+        }
+
+        Usuario user = authService.criarUsuario(dto.getEmail(), PASS, Role.USER);
 
         Aluno aluno = new Aluno(dto);
-        return alunoRepository.save(aluno);
+
+        aluno.setUsuario(user); 
+
+        aluno = repository.save(aluno);
+
+        if (dto.getHorarios() != null) {
+            for (AulaAluno h : dto.getHorarios()) {
+                h.setAluno(aluno);
+                aulaAlunoRepository.save(h);
+            }
+        }
+
+        if (dto.getHorarios() != null) {
+            for (AulaAluno a : dto.getHorarios()) {
+                aulaService.gerarPorHorario(a);
+            }
+        }
+
+        return aluno;
     }
 
     public Aluno aceitarTermos(UUID userId) {
-        Aluno aluno = alunoRepository.findById(userId)
+        Aluno aluno = repository.findById(userId)
                 .orElseThrow(() -> new RuntimeException("Aluno não encontrado"));
 
         aluno.setTermos(true);
-        return alunoRepository.save(aluno);
+        return repository.save(aluno);
+    }
+
+    public Aluno swapStatus(UUID uid){
+        Aluno aluno = repository.findById(uid)
+                    .orElseThrow(() -> new RuntimeException("Aluno não encontrado"));
+
+        aluno.setStatus(!aluno.getStatus());
+
+        return repository.save(aluno);
     }
 
     public boolean jaAceitouTermos(UUID userId) {
-        return alunoRepository.findById(userId)
+        return repository.findById(userId)
                 .map(Aluno::getTermos)
                 .orElse(false);
+    }
+
+    public void adicionarReposicao(Aluno a, Integer creditos){
+        a.setReposicoes(a.getReposicoes() + creditos);
+
+        repository.save(a);
+    }
+
+    public void adicionarReposicao(Aluno a){
+        a.setReposicoes(a.getReposicoes() + 1);
+
+        repository.save(a);
     }
 }

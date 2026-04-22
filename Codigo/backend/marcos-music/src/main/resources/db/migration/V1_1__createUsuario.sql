@@ -4,3 +4,5 @@ CREATE TABLE usuario (
     password VARCHAR(255) NOT NULL,
     role VARCHAR(50) NOT NULL
 );
+
+CREATE UNIQUE INDEX idx_usuario_email ON usuario(email);

@@ -1,16 +1,13 @@
 CREATE TABLE aluno (
     id UNIQUEIDENTIFIER PRIMARY KEY,
     
-    cpf VARCHAR(14) NOT NULL,
-    endereco VARCHAR(255),
-    data_nascimento DATE,
-    telefone VARCHAR(20),
-
+    nome VARCHAR(255) NOT NULL,
+    telefone CHAR(11),
+    status TINYINT NOT NULL,
+    reposicoes INT DEFAULT 0,
     termos BIT NOT NULL DEFAULT 0,
 
     CONSTRAINT fk_aluno_usuario
         FOREIGN KEY (id) REFERENCES usuario(id)
         ON DELETE CASCADE
 );
-
-CREATE UNIQUE INDEX idx_aluno_cpf ON aluno(cpf);

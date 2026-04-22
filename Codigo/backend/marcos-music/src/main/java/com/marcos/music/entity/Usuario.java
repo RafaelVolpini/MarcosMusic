@@ -1,15 +1,20 @@
 package com.marcos.music.entity;
 
 import jakarta.persistence.*;
+import lombok.AllArgsConstructor;
 import lombok.Getter;
+import lombok.NoArgsConstructor;
 import lombok.Setter;
 
 import java.util.UUID;
 
-import com.marcos.music.dto.AlunoDTO;
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.marcos.music.dto.Aluno.AlunoDTO;
 
 @Getter
 @Setter
+@NoArgsConstructor
+@AllArgsConstructor
 @Entity
 @Table(name = "usuario")
 public class Usuario {
@@ -26,4 +31,13 @@ public class Usuario {
 
     @Enumerated(EnumType.STRING)
     private Role role;
+
+    @OneToOne(mappedBy = "usuario", fetch = FetchType.LAZY)
+    @JsonIgnore
+    private Aluno aluno;
+
+    public Usuario(AlunoDTO dto, UUID id){
+        this.id = id;
+        this.email = dto.getEmail();
+    }
 }

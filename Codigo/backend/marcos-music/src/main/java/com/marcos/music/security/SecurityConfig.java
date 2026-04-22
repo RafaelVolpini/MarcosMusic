@@ -33,7 +33,8 @@ public class SecurityConfig {
             .csrf(csrf -> csrf.disable())
             .authorizeHttpRequests(auth -> auth
                 .requestMatchers("/auth/**").permitAll()
-                .requestMatchers("/aluno/**").permitAll() // tirar apos testes de roles melhores
+                .requestMatchers("/aluno/**").permitAll()
+                .requestMatchers("/aula/**").permitAll()  // tirar apos testes de roles melhores
                 .requestMatchers("/swagger-ui/**", "/v3/api-docs/**", "/swagger-ui.html").permitAll()
                 .anyRequest().authenticated()
             );

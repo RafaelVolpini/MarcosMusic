@@ -1,0 +1,44 @@
+package com.marcos.music.entity;
+
+import jakarta.persistence.*;
+import java.time.LocalDateTime;
+
+import org.springframework.cglib.core.Local;
+
+import lombok.AllArgsConstructor;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
+
+@Entity
+@Getter
+@Setter
+@NoArgsConstructor
+@AllArgsConstructor
+@Table(name = "aula")
+public class Aula {
+
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Long id;
+
+    @Column(name = "data_inicio", nullable = false)
+    private LocalDateTime dataInicio;
+
+    @Column(name = "data_fim", nullable = false)
+    private LocalDateTime dataFim;
+
+    @Column(name = "flag_cancelada")
+    private Boolean flagCancelada = false;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "id_aluno", nullable = false)
+    private Aluno aluno;
+
+    public Aula(LocalDateTime dataInicio, LocalDateTime dataFim, Aluno aluno){
+        this.dataInicio = dataInicio;
+        this.dataFim = dataFim;
+        this.aluno = aluno;
+    }
+
+}

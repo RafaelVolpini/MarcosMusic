@@ -6,10 +6,11 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 
-import java.time.LocalDate;
+import java.util.List;
 import java.util.UUID;
 
-import com.marcos.music.dto.AlunoDTO;
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.marcos.music.dto.Aluno.AlunoDTO;
 
 @Entity
 @Getter
@@ -22,24 +23,36 @@ public class Aluno {
     @Id
     private UUID id;
 
-    private String cpf;
+    @OneToOne
+    @MapsId
+    @JoinColumn(name = "id")
+    private Usuario usuario;
 
-    private String endereco;
+    @Column(nullable = false, length = 255)
+    private String nome;
 
-    @Column(name = "data_nascimento")
-    private LocalDate dataNascimento;
-
+    @Column(length = 11)
     private String telefone;
 
+    @Column(nullable = false)
+    private Boolean status = true;
+
+    @Column(nullable = false)
+    private Integer reposicoes = 0;
+
     @Column(name = "termos")
-    private Boolean termos;
+    private Boolean termos = false;
+
+
+    @OneToMany(mappedBy = "aluno", cascade = CascadeType.ALL, orphanRemoval = true)
+    @JsonIgnore
+    private List<AulaAluno> horarios;
 
     public Aluno (AlunoDTO dto){
         this.id = dto.getId();
-        this.cpf = dto.getCpf();
-        this.endereco = dto.getEndereco();
-        this.dataNascimento = dto.getDataNascimento();
+        this.nome = dto.getNome();
         this.telefone = dto.getTelefone();
-        this.termos = dto.getTermos();
+        this.termos = dto.getTermos() != null ? dto.getTermos() : false;
+        this.status = dto.getStatus() != null ? dto.getStatus() : true;
     }
 }

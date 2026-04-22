@@ -10,6 +10,7 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
+import java.util.UUID;
 
 @Service
 public class AuthService {
@@ -94,5 +95,9 @@ public class AuthService {
         user.setPassword(encoder.encode(password));
         user.setRole(role);
         return repository.save(user);
+    }
+
+    public UUID getIdFromToken(String id){
+        return jwtService.getUserIdFromToken(id);
     }
 }
