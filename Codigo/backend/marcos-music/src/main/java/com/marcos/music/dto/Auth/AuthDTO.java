@@ -8,4 +8,8 @@ import lombok.Setter;
 public class AuthDTO {
     private String email;
     private String password;
+    // campos extras usados apenas no registro
+    private String nome;
+    private String sobrenome;
+    private String telefone;
 }

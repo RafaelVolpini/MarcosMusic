@@ -86,7 +86,12 @@ function App() {
 
   const handleLoginSuccess = (user: AuthUser) => {
     setSessionUser(user);
-    setContractAccepted(hasAcceptedContract(user.email));
+    // Teachers (ADMIN) never need to accept student contract
+    if (user.role === 'teacher') {
+      setContractAccepted(true);
+    } else {
+      setContractAccepted(hasAcceptedContract(user.email));
+    }
   };
 
   const handleContractAccepted = (_acceptance: ContractAcceptance) => {

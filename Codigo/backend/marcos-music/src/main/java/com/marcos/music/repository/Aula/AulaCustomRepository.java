@@ -2,12 +2,15 @@ package com.marcos.music.repository.Aula;
 
 import java.util.ArrayList;
 import java.util.List;
+import jakarta.persistence.criteria.Join;
+import jakarta.persistence.criteria.JoinType;
 import jakarta.persistence.criteria.Predicate;
 
 import org.springframework.stereotype.Repository;
 
 import com.marcos.music.dto.Aula.CalendarFilterDTO;
 import com.marcos.music.dto.Aula.CalendarResponseDTO;
+import com.marcos.music.entity.Aluno;
 import com.marcos.music.entity.Aula;
 
 import jakarta.persistence.EntityManager;
@@ -30,12 +33,17 @@ public class AulaCustomRepository {
         List<Predicate> predicates = new ArrayList<>();
 
         Root<Aula> root = query.from(Aula.class);
+        Join<Aula, Aluno> aluno = root.join("aluno", JoinType.LEFT);
 
         query.select(cb.construct(
                 CalendarResponseDTO.class,
                 root.get("id"),
                 root.get("dataInicio"),
-                root.get("dataFim")
+                root.get("dataFim"),
+                aluno.get("id"),
+                aluno.get("nome"),
+                root.get("flagCancelada"),
+                root.get("presencaConfirmada")
         ));
 
         if (f.getDataInicio() != null && f.getDataFim() == null) {

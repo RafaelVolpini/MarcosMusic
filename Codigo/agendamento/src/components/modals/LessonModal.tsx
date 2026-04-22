@@ -8,7 +8,7 @@ import {
 } from 'lucide-react';
 import type { Lesson } from '../../types';
 import type { AuthUser } from '../../lib/auth';
-import { formatTime, formatDuration, generateMeetLink } from '../../utils';
+import { formatTime, formatDuration, generateMeetLink, timeToMinutes, minutesToTime } from '../../utils';
 import { Button } from '../ui/Button';
 import { Badge } from '../ui/Badge';
 import { Avatar } from '../ui/Avatar';
@@ -19,6 +19,8 @@ interface LessonModalProps {
   onClose: () => void;
   onUpdate: (lesson: Lesson) => void;
   onDelete: (lessonId: string) => void;
+  onReschedule?: (lessonId: string, dataInicio: string, dataFim: string) => Promise<void>;
+  onConfirmPresence?: (lessonId: string) => Promise<void>;
 }
 
 const TYPE_LABELS: Record<string, string> = {
@@ -35,13 +37,16 @@ const STATUS_BADGE: Record<string, { variant: 'success' | 'info' | 'danger' | 'w
   rescheduled: { variant: 'warning', label: 'Reagendada' },
 };
 
-export function LessonModal({ lesson, currentUser, onClose, onUpdate, onDelete }: LessonModalProps) {
+export function LessonModal({ lesson, currentUser, onClose, onUpdate, onDelete, onReschedule, onConfirmPresence }: LessonModalProps) {
   const [notes, setNotes] = useState('');
   const [meetLink, setMeetLink] = useState('');
   const [attendanceConfirmed, setAttendanceConfirmed] = useState(false);
   const [reminderMinutesBefore, setReminderMinutesBefore] = useState(30);
   const [editing, setEditing] = useState(false);
   const [confirmDelete, setConfirmDelete] = useState(false);
+  const [rescheduling, setRescheduling] = useState(false);
+  const [rescheduleDate, setRescheduleDate] = useState('');
+  const [rescheduleTime, setRescheduleTime] = useState('');
 
   useEffect(() => {
     if (!lesson) return;
@@ -51,6 +56,9 @@ export function LessonModal({ lesson, currentUser, onClose, onUpdate, onDelete }
     setReminderMinutesBefore(lesson.reminderMinutesBefore ?? 30);
     setEditing(false);
     setConfirmDelete(false);
+    setRescheduling(false);
+    setRescheduleDate(lesson.date);
+    setRescheduleTime(lesson.startTime);
   }, [lesson]);
 
   if (!lesson) return null;
@@ -58,6 +66,29 @@ export function LessonModal({ lesson, currentUser, onClose, onUpdate, onDelete }
   const statusInfo = STATUS_BADGE[lesson.status];
   const duration = formatDuration(lesson.startTime, lesson.endTime);
   const canManageMeet = currentUser.role === 'teacher';
+  const LESSON_DURATION_MINUTES = 50;
+
+  // Permissão: admin (teacher) pode tudo; aluno só pode agir na própria aula
+  const isOwner = currentUser.role === 'student' && (
+    (currentUser.id != null && lesson.studentId === currentUser.id) ||
+    lesson.studentName.trim().toLowerCase() === currentUser.name.trim().toLowerCase()
+  );
+  const canModify = currentUser.role === 'teacher' || isOwner;
+  const ALL_HOURS = Array.from({ length: 17 }, (_, i) => `${String(i + 7).padStart(2, '0')}:00`);
+
+  const handleRescheduleConfirm = async () => {
+    if (!rescheduleDate || !rescheduleTime) return;
+    const endTime = minutesToTime(timeToMinutes(rescheduleTime) + LESSON_DURATION_MINUTES);
+    const dataInicio = `${rescheduleDate}T${rescheduleTime}:00`;
+    const dataFim = `${rescheduleDate}T${endTime}:00`;
+    await onReschedule?.(lesson.id, dataInicio, dataFim);
+    setRescheduling(false);
+  };
+
+  const handleConfirmPresenceClick = () => {
+    onConfirmPresence?.(lesson.id);
+    setAttendanceConfirmed(true);
+  };
 
   const handleGenerateMeet = () => {
     if (!canManageMeet) return;
@@ -260,31 +291,79 @@ export function LessonModal({ lesson, currentUser, onClose, onUpdate, onDelete }
               </div>
 
               {/* Footer actions */}
-              <div className="px-6 py-4 border-t border-[var(--border)] flex items-center gap-2">
-                {!editing ? (
-                  <>
-                    <Button variant="secondary" size="sm" onClick={() => setEditing(true)}>
-                      Editar
-                    </Button>
-                    <Button variant="ghost" size="sm" onClick={handleSendReminder} disabled={!lesson.studentPhone}>
-                      <Bell size={13} />
-                      Lembrar no WhatsApp
-                    </Button>
-                    <Button variant="ghost" size="sm">
-                      <RefreshCw size={13} />
-                      Reagendar
-                    </Button>
-                    {!confirmDelete ? (
-                      <Button variant="ghost" size="sm" className="text-rose-500 hover:bg-rose-50 ml-auto" onClick={() => setConfirmDelete(true)}>
-                        <XCircle size={13} />
-                        Cancelar aula
+              <div className="px-6 py-4 border-t border-[var(--border)] flex items-center gap-2 flex-wrap">
+                {rescheduling ? (
+                  <div className="flex flex-col gap-3 w-full">
+                    <p className="text-sm font-semibold text-[var(--heading)]">Novo horário</p>
+                    <div className="flex gap-2">
+                      <input
+                        type="date"
+                        value={rescheduleDate}
+                        onChange={e => setRescheduleDate(e.target.value)}
+                        className="flex-1 border border-[var(--input-border)] rounded-xl px-3 py-2 text-sm text-[var(--text)] bg-[var(--input-bg)] focus:outline-none focus:ring-2 focus:ring-[var(--accent-100)]"
+                      />
+                      <select
+                        value={rescheduleTime}
+                        onChange={e => setRescheduleTime(e.target.value)}
+                        className="flex-1 border border-[var(--input-border)] rounded-xl px-3 py-2 text-sm text-[var(--text)] bg-[var(--input-bg)] focus:outline-none focus:ring-2 focus:ring-[var(--accent-100)]"
+                      >
+                        {ALL_HOURS.map(h => <option key={h} value={h}>{h}</option>)}
+                      </select>
+                    </div>
+                    <div className="flex gap-2 justify-end">
+                      <Button variant="ghost" size="sm" onClick={() => setRescheduling(false)}>Cancelar</Button>
+                      <Button size="sm" onClick={handleRescheduleConfirm}>
+                        <CheckCircle size={13} />
+                        Confirmar reagendamento
                       </Button>
-                    ) : (
-                      <div className="ml-auto flex items-center gap-2">
-                        <span className="text-xs text-[var(--muted)]">Tem certeza?</span>
-                        <Button variant="danger" size="sm" onClick={() => onDelete(lesson.id)}>Sim, cancelar</Button>
-                        <Button variant="ghost" size="sm" onClick={() => setConfirmDelete(false)}>Não</Button>
-                      </div>
+                    </div>
+                  </div>
+                ) : !editing ? (
+                  <>
+                    {canModify && (
+                      <Button variant="secondary" size="sm" onClick={() => setEditing(true)}>
+                        Editar
+                      </Button>
+                    )}
+                    {currentUser.role === 'teacher' && (
+                      <Button variant="ghost" size="sm" onClick={handleSendReminder} disabled={!lesson.studentPhone}>
+                        <Bell size={13} />
+                        Lembrar no WhatsApp
+                      </Button>
+                    )}
+                    {lesson.status !== 'cancelled' && canModify && (
+                      <Button variant="ghost" size="sm" onClick={() => setRescheduling(true)}>
+                        <RefreshCw size={13} />
+                        Reagendar
+                      </Button>
+                    )}
+                    {lesson.status === 'scheduled' && !attendanceConfirmed && canModify && (
+                      <Button variant="ghost" size="sm" className="text-emerald-600 hover:bg-emerald-50" onClick={handleConfirmPresenceClick}>
+                        <CheckCircle size={13} />
+                        Confirmar presença
+                      </Button>
+                    )}
+                    {lesson.status === 'scheduled' && attendanceConfirmed && (
+                      <span className="text-xs text-emerald-600 flex items-center gap-1">
+                        <CheckCircle size={12} /> Presença confirmada
+                      </span>
+                    )}
+                    {!canModify && (
+                      <span className="text-xs text-[var(--muted)] italic">Somente visualização</span>
+                    )}
+                    {canModify && (
+                      !confirmDelete ? (
+                        <Button variant="ghost" size="sm" className="text-rose-500 hover:bg-rose-50 ml-auto" onClick={() => setConfirmDelete(true)}>
+                          <XCircle size={13} />
+                          Cancelar aula
+                        </Button>
+                      ) : (
+                        <div className="ml-auto flex items-center gap-2">
+                          <span className="text-xs text-[var(--muted)]">Tem certeza?</span>
+                          <Button variant="danger" size="sm" onClick={() => onDelete(lesson.id)}>Sim, cancelar</Button>
+                          <Button variant="ghost" size="sm" onClick={() => setConfirmDelete(false)}>Não</Button>
+                        </div>
+                      )
                     )}
                   </>
                 ) : (

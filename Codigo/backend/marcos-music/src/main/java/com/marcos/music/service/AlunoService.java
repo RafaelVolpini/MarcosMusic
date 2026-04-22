@@ -12,6 +12,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
 @Service
 public class AlunoService {
@@ -95,7 +96,12 @@ public class AlunoService {
 
         Usuario user = authService.criarUsuario(dto.getEmail(), PASS, Role.USER);
 
-        Aluno aluno = new Aluno(dto);
+        Aluno aluno = new Aluno();
+        aluno.setId(user.getId());
+        aluno.setNome(dto.getNome());
+        aluno.setTelefone(dto.getTelefone());
+        aluno.setTermos(dto.getTermos() != null ? dto.getTermos() : false);
+        aluno.setStatus(dto.getStatus() != null ? dto.getStatus() : true);
 
         aluno.setUsuario(user); 
 
@@ -150,5 +156,23 @@ public class AlunoService {
         a.setReposicoes(a.getReposicoes() + 1);
 
         repository.save(a);
+    }
+
+    public List<AlunoDTO> listarTodos() {
+        return repository.findAll().stream()
+                .map(aluno -> {
+                    AlunoDTO dto = new AlunoDTO();
+                    dto.setId(aluno.getId());
+                    dto.setNome(aluno.getNome());
+                    dto.setTelefone(aluno.getTelefone());
+                    dto.setStatus(aluno.getStatus());
+                    dto.setReposicoes(aluno.getReposicoes());
+                    dto.setTermos(aluno.getTermos());
+                    if (aluno.getUsuario() != null) {
+                        dto.setEmail(aluno.getUsuario().getEmail());
+                    }
+                    return dto;
+                })
+                .collect(Collectors.toList());
     }
 }

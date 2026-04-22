@@ -8,6 +8,7 @@ import com.marcos.music.service.AulaService;
 
 import org.springframework.web.bind.annotation.*;
 
+import java.util.List;
 import java.util.UUID;
 
 
@@ -26,6 +27,11 @@ public class AlunoController {
     @PostMapping("/salvar")
     public Aluno salvar(@RequestBody AlunoDTO dto){
         return service.criarAluno(dto);
+    }
+
+    @GetMapping
+    public List<AlunoDTO> listarTodos() {
+        return service.listarTodos();
     }
 
     @PostMapping("/{userId}/aceitar-termos")

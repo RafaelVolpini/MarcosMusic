@@ -32,9 +32,9 @@ public class SecurityConfig {
         http.cors(cors -> cors.configurationSource(corsConfigurationSource()))
             .csrf(csrf -> csrf.disable())
             .authorizeHttpRequests(auth -> auth
-                .requestMatchers("/auth/**").permitAll()
-                .requestMatchers("/aluno/**").permitAll()
-                .requestMatchers("/aula/**").permitAll()  // tirar apos testes de roles melhores
+                .requestMatchers("/auth/**", "/auth").permitAll()
+                .requestMatchers("/aluno/**", "/aluno").permitAll()
+                .requestMatchers("/aula/**", "/aula").permitAll()  // tirar apos testes de roles melhores
                 .requestMatchers("/swagger-ui/**", "/v3/api-docs/**", "/swagger-ui.html").permitAll()
                 .anyRequest().authenticated()
             );

@@ -1,4 +1,5 @@
 export interface AuthUser {
+  id?: string;
   role: 'teacher' | 'student';
   firstName: string;
   lastName: string;
@@ -83,34 +84,19 @@ export async function registerUser(input: {
   const res = await fetch(`${BACKEND_URL}/auth/register`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ email: input.email.trim().toLowerCase(), password: input.password }),
+    body: JSON.stringify({
+      email: input.email.trim().toLowerCase(),
+      password: input.password,
+      nome: input.firstName.trim(),
+      sobrenome: input.lastName.trim(),
+      telefone: input.phone.trim(),
+    }),
   });
 
   if (!res.ok) {
     const msg = await res.text().catch(() => 'Erro ao registrar');
     throw new Error(msg || 'Erro ao registrar');
   }
-
-  // O backend devolve o token diretamente como string
-  const token = await res.text();
-
-  const user: AuthUser = {
-    role: 'student',
-    firstName: input.firstName.trim(),
-    lastName: input.lastName.trim(),
-    name: `${input.firstName.trim()} ${input.lastName.trim()}`.trim(),
-    email: input.email.trim().toLowerCase(),
-    phone: input.phone.trim(),
-    token,
-  };
-
-  saveProfile(user.email, {
-    firstName: user.firstName,
-    lastName: user.lastName,
-    phone: user.phone,
-  });
-
-  saveSession(user);
 }
 
 // ─── Login ───────────────────────────────────────────────────────────────────
@@ -119,6 +105,10 @@ interface LoginResponse {
   token: string;
   termos: boolean | null;
   ultimoLogin: string | null;
+  nome: string | null;
+  telefone: string | null;
+  role: string | null;
+  id: string | null;
 }
 
 export async function login(emailInput: string, passwordInput: string): Promise<AuthUser | null> {
@@ -135,20 +125,25 @@ export async function login(emailInput: string, passwordInput: string): Promise<
 
   const data: LoginResponse = await res.json();
 
-  // Deriva papel: professor tem email fixo
-  const role: AuthUser['role'] = email === 'marcos@musga.com' ? 'teacher' : 'student';
+  // Papel: usa o role retornado pelo backend; fallback para email fixo
+  const backendRole = data.role?.toUpperCase();
+  const role: AuthUser['role'] = backendRole === 'ADMIN' ? 'teacher' : 'student';
 
+  // Nome: usa o nome do Aluno retornado pelo backend; fallback para perfil local
   const profile = getProfile(email);
-  const firstName = role === 'teacher' ? 'Marcos' : (profile?.firstName?.trim() || 'Aluno');
-  const lastName  = role === 'teacher' ? 'Mello'  : (profile?.lastName?.trim() || '');
+  const nomeBackend = data.nome?.trim() || '';
+  const parts = nomeBackend.split(' ');
+  const firstName = parts[0] || profile?.firstName?.trim() || (role === 'teacher' ? 'Marcos' : 'Aluno');
+  const lastName  = parts.slice(1).join(' ') || profile?.lastName?.trim() || (role === 'teacher' ? 'Mello' : '');
 
   const user: AuthUser = {
+    id: data.id ?? undefined,
     role,
     firstName,
     lastName,
-    name: `${firstName} ${lastName}`.trim(),
+    name: nomeBackend || `${firstName} ${lastName}`.trim(),
     email,
-    phone: profile?.phone?.trim() || '',
+    phone: data.telefone?.trim() || profile?.phone?.trim() || '',
     token: data.token,
     termos: data.termos ?? false,
   };
@@ -170,6 +165,12 @@ export async function acceptContract(email: string): Promise<ContractAcceptance>
 
   if (!res.ok) {
     throw new Error('Falha ao registrar aceitação dos termos');
+  }
+
+  // Persiste termos=true na sessão para que recargas/hasAcceptedContract funcionem
+  const current = getUser();
+  if (current) {
+    saveSession({ ...current, termos: true });
   }
 
   return { email: normalizedEmail, acceptedAt: new Date().toISOString() };

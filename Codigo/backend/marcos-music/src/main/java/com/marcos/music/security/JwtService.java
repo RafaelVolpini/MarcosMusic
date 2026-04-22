@@ -40,4 +40,13 @@ public class JwtService {
 
         return UUID.fromString(claims.get("id").toString());
     }
+
+    public String getEmailFromToken(String token) {
+        return Jwts.parserBuilder()
+                .setSigningKey(SECRET.getBytes())
+                .build()
+                .parseClaimsJws(token)
+                .getBody()
+                .getSubject();
+    }
 }

@@ -85,17 +85,14 @@ export function ContractGate({ user, onAccepted }: ContractGateProps) {
     setConfirming(true);
     try {
       const record = await acceptContract(user.email);
-      // Atualiza a sessão com termos=true
-      const current = getUser();
-      if (current) {
-        current.termos = true;
-        sessionStorage.setItem(SESSION_KEY, JSON.stringify(current));
-      }
       setConfirmation(record);
     } catch {
-      // Silencia erro de rede; o backend pode estar offline
-      const fallback: ContractAcceptance = { email: user.email, acceptedAt: new Date().toISOString() };
-      setConfirmation(fallback);
+      // Backend offline — persiste localmente e continua
+      const current = getUser();
+      if (current) {
+        sessionStorage.setItem(SESSION_KEY, JSON.stringify({ ...current, termos: true }));
+      }
+      setConfirmation({ email: user.email, acceptedAt: new Date().toISOString() });
     } finally {
       setConfirming(false);
     }

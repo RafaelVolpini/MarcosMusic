@@ -16,6 +16,10 @@ public class LoginResponse {
     private String token;
     private Boolean termos;
     private LocalDateTime ultimoLogin;
+    private String nome;
+    private String telefone;
+    private String role;
+    private java.util.UUID id;
 
     public LoginResponse(String token) {
         this.token = token;

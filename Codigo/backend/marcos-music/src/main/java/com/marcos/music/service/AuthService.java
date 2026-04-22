@@ -3,7 +3,7 @@ package com.marcos.music.service;
 import com.marcos.music.dto.Auth.LoginResponse;
 import com.marcos.music.entity.*;
 import com.marcos.music.repository.AlunoRepository;
-import com.marcos.music.repository.LoginHistoryRepository;
+import com.marcos.music.repository.TermsHistoryRepository;
 import com.marcos.music.repository.UsuarioRepository;
 import com.marcos.music.security.JwtService;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -17,13 +17,13 @@ public class AuthService {
 
     private final UsuarioRepository repository;
     private final AlunoRepository alunoRepository;
-    private final LoginHistoryRepository loginHistoryRepository;
+    private final TermsHistoryRepository loginHistoryRepository;
     private final PasswordEncoder encoder;
     private final JwtService jwtService;
 
     public AuthService(UsuarioRepository repository, PasswordEncoder encoder,
                        JwtService jwtService, AlunoRepository alunoRepository,
-                       LoginHistoryRepository loginHistoryRepository) {
+                       TermsHistoryRepository loginHistoryRepository) {
         this.repository = repository;
         this.encoder = encoder;
         this.jwtService = jwtService;
@@ -31,13 +31,19 @@ public class AuthService {
         this.loginHistoryRepository = loginHistoryRepository;
     }
 
-    public String register(String email, String password, Role role) {
+    public String register(String email, String password, Role role, String nome, String telefone) {
         Usuario user = criarUsuario(email, password, role);
 
-        // Cria registro aluno com termos=false (dados pessoais preenchidos depois)
+        // Auto-cria registro Aluno com os dados fornecidos no cadastro
         Aluno aluno = new Aluno();
-        aluno.setId(user.getId());
+        aluno.setUsuario(user);  // @MapsId vai usar user.getId() como PK do Aluno
+        String nomeFinal = (nome != null && !nome.isBlank()) ? nome.trim()
+                : (email.contains("@") ? email.substring(0, email.indexOf('@')) : email);
+        aluno.setNome(nomeFinal);
+        aluno.setTelefone(telefone != null ? telefone.trim() : null);
         aluno.setTermos(false);
+        aluno.setStatus(true);
+        aluno.setReposicoes(0);
         alunoRepository.save(aluno);
 
         return jwtService.generateToken(user);
@@ -53,17 +59,23 @@ public class AuthService {
 
         String jwt = jwtService.generateToken(user);
 
-        Boolean termos = alunoRepository.findById(user.getId())
-                .map(Aluno::getTermos)
-                .orElse(null);
+        Aluno aluno = alunoRepository.findById(user.getId()).orElse(null);
+        Boolean termos = aluno != null ? aluno.getTermos() : null;
+        String nome = aluno != null ? aluno.getNome() : null;
+        String telefone = aluno != null ? aluno.getTelefone() : null;
 
         LocalDateTime agora = LocalDateTime.now();
 
         // Registra o login na tabela login_history
-        LoginHistory history = new LoginHistory(user, agora, termos != null && termos);
+        TermsHistory history = new TermsHistory(user, agora, termos != null && termos);
         loginHistoryRepository.save(history);
 
-        return new LoginResponse(jwt, termos, agora);
+        LoginResponse resp = new LoginResponse(jwt, termos, agora);
+        resp.setNome(nome);
+        resp.setTelefone(telefone);
+        resp.setRole(user.getRole() != null ? user.getRole().name() : "USER");
+        resp.setId(user.getId());
+        return resp;
     }
 
     /**
@@ -75,17 +87,13 @@ public class AuthService {
         Usuario usuario = repository.findByEmail(email)
                 .orElseThrow(() -> new RuntimeException("Usuário não encontrado"));
 
-        // Atualiza termos no Aluno (cria se necessário)
-        Aluno aluno = alunoRepository.findById(usuario.getId()).orElseGet(() -> {
-            Aluno novo = new Aluno();
-            novo.setId(usuario.getId());
-            novo.setTermos(false);
-            return novo;
+        // Atualiza termos no Aluno somente se o registro já existir
+        alunoRepository.findById(usuario.getId()).ifPresent(aluno -> {
+            aluno.setTermos(true);
+            alunoRepository.save(aluno);
         });
-        aluno.setTermos(true);
-        alunoRepository.save(aluno);
 
-        LoginHistory history = new LoginHistory(usuario, LocalDateTime.now(), true);
+        TermsHistory history = new TermsHistory(usuario, LocalDateTime.now(), true);
         loginHistoryRepository.save(history);
     }
 

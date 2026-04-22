@@ -1,6 +1,7 @@
 package com.marcos.music.dto.Aula;
 
 import java.time.LocalDateTime;
+import java.util.UUID;
 
 import lombok.AllArgsConstructor;
 import lombok.Getter;
@@ -15,4 +16,8 @@ public class CalendarResponseDTO {
     private Long id;
     private LocalDateTime dataInicio;
     private LocalDateTime dataFim;
+    private UUID idAluno;
+    private String nomeAluno;
+    private Boolean flagCancelada;
+    private Boolean presencaConfirmada;
 }

@@ -20,7 +20,17 @@ public class AuthController {
     @PostMapping("/register")
     public ResponseEntity<?> register(@RequestBody AuthDTO request) {
         try {
-            String token = service.register(request.getEmail(), request.getPassword(), Role.ADMIN);
+            // Papel: admin apenas para o e-mail do professor; todos os outros são USER
+            Role role = "marcos@musga.com".equalsIgnoreCase(request.getEmail()) ? Role.ADMIN : Role.USER;
+            // Monta nome completo a partir dos campos opcionais
+            String nomeCompleto = null;
+            if (request.getNome() != null && !request.getNome().isBlank()) {
+                nomeCompleto = request.getNome().trim();
+                if (request.getSobrenome() != null && !request.getSobrenome().isBlank()) {
+                    nomeCompleto += " " + request.getSobrenome().trim();
+                }
+            }
+            String token = service.register(request.getEmail(), request.getPassword(), role, nomeCompleto, request.getTelefone());
             return ResponseEntity.ok(token);
         } catch (Exception e) {
             return ResponseEntity.status(409).body("E-mail já cadastrado");

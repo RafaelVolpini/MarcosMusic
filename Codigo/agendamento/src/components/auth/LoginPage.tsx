@@ -11,16 +11,17 @@ interface LoginPageProps {
 
 export function LoginPage({ onLoginSuccess }: LoginPageProps) {
   const [mode, setMode] = useState<'login' | 'register'>('login');
-  const [firstName, setFirstName] = useState('');
-  const [lastName, setLastName] = useState('');
-  const [phone, setPhone] = useState('');
   const [loginEmail, setLoginEmail] = useState('');
-  const [registerEmail, setRegisterEmail] = useState('');
   const [loginPassword, setLoginPassword] = useState('');
-  const [registerPassword, setRegisterPassword] = useState('');
+  // campos de cadastro
+  const [regFirstName, setRegFirstName] = useState('');
+  const [regLastName, setRegLastName] = useState('');
+  const [regPhone, setRegPhone] = useState('');
+  const [regEmail, setRegEmail] = useState('');
+  const [regPassword, setRegPassword] = useState('');
+  const [regConfirmPassword, setRegConfirmPassword] = useState('');
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
-
   const [loading, setLoading] = useState(false);
 
   const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
@@ -52,25 +53,41 @@ export function LoginPage({ onLoginSuccess }: LoginPageProps) {
       return;
     }
 
-    if (!firstName.trim() || !lastName.trim() || !registerEmail.trim() || !phone.trim() || !registerPassword.trim()) {
-      setError('Preencha nome, sobrenome, e-mail, telefone e senha para cadastrar.');
+    // ─── Validação do formulário de cadastro ────────────────────
+    if (!regFirstName.trim() || !regLastName.trim()) {
+      setError('Preencha nome e sobrenome.');
+      setLoading(false);
+      return;
+    }
+    if (!regEmail.trim() || !regPassword.trim()) {
+      setError('Preencha e-mail e senha.');
+      setLoading(false);
+      return;
+    }
+    if (regPassword !== regConfirmPassword) {
+      setError('As senhas não coincidem.');
       setLoading(false);
       return;
     }
 
     try {
       await registerUser({
-        firstName,
-        lastName,
-        email: registerEmail,
-        phone,
-        password: registerPassword,
+        firstName: regFirstName,
+        lastName: regLastName,
+        email: regEmail,
+        phone: regPhone,
+        password: regPassword,
       });
 
       setMode('login');
-      setLoginEmail(registerEmail.trim().toLowerCase());
+      setLoginEmail(regEmail.trim().toLowerCase());
       setLoginPassword('');
-      setRegisterPassword('');
+      setRegFirstName('');
+      setRegLastName('');
+      setRegPhone('');
+      setRegEmail('');
+      setRegPassword('');
+      setRegConfirmPassword('');
       setError('');
       setSuccess('Cadastro realizado com sucesso. Agora faca login para entrar.');
     } catch (registrationError) {
@@ -164,9 +181,40 @@ export function LoginPage({ onLoginSuccess }: LoginPageProps) {
               </div>
 
               <form onSubmit={handleSubmit} className="mt-6 space-y-4">
-                {mode === 'register' && (
+                {mode === 'login' ? (
                   <>
-                    <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+                    <div>
+                      <label className="mb-1.5 block text-xs font-semibold uppercase tracking-wide" style={{ color: 'var(--muted)' }}>E-mail</label>
+                      <div className="relative">
+                        <Mail size={14} className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-[var(--muted)]" />
+                        <input
+                          className={`${inputCls} pl-9`}
+                          style={{ borderColor: 'var(--border)', color: 'var(--text)', backgroundColor: 'var(--surface)' }}
+                          type="email"
+                          value={loginEmail}
+                          onChange={(e) => setLoginEmail(e.target.value)}
+                          placeholder="voce@email.com"
+                        />
+                      </div>
+                    </div>
+                    <div>
+                      <label className="mb-1.5 block text-xs font-semibold uppercase tracking-wide" style={{ color: 'var(--muted)' }}>Senha</label>
+                      <div className="relative">
+                        <Lock size={14} className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-[var(--muted)]" />
+                        <input
+                          className={`${inputCls} pl-9`}
+                          style={{ borderColor: 'var(--border)', color: 'var(--text)', backgroundColor: 'var(--surface)' }}
+                          type="password"
+                          value={loginPassword}
+                          onChange={(e) => setLoginPassword(e.target.value)}
+                          placeholder="********"
+                        />
+                      </div>
+                    </div>
+                  </>
+                ) : (
+                  <>
+                    <div className="grid grid-cols-2 gap-3">
                       <div>
                         <label className="mb-1.5 block text-xs font-semibold uppercase tracking-wide" style={{ color: 'var(--muted)' }}>Nome</label>
                         <div className="relative">
@@ -174,27 +222,25 @@ export function LoginPage({ onLoginSuccess }: LoginPageProps) {
                           <input
                             className={`${inputCls} pl-9`}
                             style={{ borderColor: 'var(--border)', color: 'var(--text)', backgroundColor: 'var(--surface)' }}
-                            value={firstName}
-                            onChange={(e) => setFirstName(e.target.value)}
-                            placeholder="Seu nome"
+                            type="text"
+                            value={regFirstName}
+                            onChange={(e) => setRegFirstName(e.target.value)}
+                            placeholder="João"
                           />
                         </div>
                       </div>
                       <div>
                         <label className="mb-1.5 block text-xs font-semibold uppercase tracking-wide" style={{ color: 'var(--muted)' }}>Sobrenome</label>
-                        <div className="relative">
-                          <User size={14} className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-[var(--muted)]" />
-                          <input
-                            className={`${inputCls} pl-9`}
-                            style={{ borderColor: 'var(--border)', color: 'var(--text)', backgroundColor: 'var(--surface)' }}
-                            value={lastName}
-                            onChange={(e) => setLastName(e.target.value)}
-                            placeholder="Seu sobrenome"
-                          />
-                        </div>
+                        <input
+                          className={inputCls}
+                          style={{ borderColor: 'var(--border)', color: 'var(--text)', backgroundColor: 'var(--surface)' }}
+                          type="text"
+                          value={regLastName}
+                          onChange={(e) => setRegLastName(e.target.value)}
+                          placeholder="Silva"
+                        />
                       </div>
                     </div>
-
                     <div>
                       <label className="mb-1.5 block text-xs font-semibold uppercase tracking-wide" style={{ color: 'var(--muted)' }}>Telefone</label>
                       <div className="relative">
@@ -202,44 +248,57 @@ export function LoginPage({ onLoginSuccess }: LoginPageProps) {
                         <input
                           className={`${inputCls} pl-9`}
                           style={{ borderColor: 'var(--border)', color: 'var(--text)', backgroundColor: 'var(--surface)' }}
-                          value={phone}
-                          onChange={(e) => setPhone(e.target.value)}
-                          placeholder="(11) 99999-9999"
+                          type="tel"
+                          value={regPhone}
+                          onChange={(e) => setRegPhone(e.target.value)}
+                          placeholder="(31) 99999-9999"
+                        />
+                      </div>
+                    </div>
+                    <div>
+                      <label className="mb-1.5 block text-xs font-semibold uppercase tracking-wide" style={{ color: 'var(--muted)' }}>E-mail</label>
+                      <div className="relative">
+                        <Mail size={14} className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-[var(--muted)]" />
+                        <input
+                          className={`${inputCls} pl-9`}
+                          style={{ borderColor: 'var(--border)', color: 'var(--text)', backgroundColor: 'var(--surface)' }}
+                          type="email"
+                          value={regEmail}
+                          onChange={(e) => setRegEmail(e.target.value)}
+                          placeholder="voce@email.com"
+                        />
+                      </div>
+                    </div>
+                    <div>
+                      <label className="mb-1.5 block text-xs font-semibold uppercase tracking-wide" style={{ color: 'var(--muted)' }}>Senha</label>
+                      <div className="relative">
+                        <Lock size={14} className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-[var(--muted)]" />
+                        <input
+                          className={`${inputCls} pl-9`}
+                          style={{ borderColor: 'var(--border)', color: 'var(--text)', backgroundColor: 'var(--surface)' }}
+                          type="password"
+                          value={regPassword}
+                          onChange={(e) => setRegPassword(e.target.value)}
+                          placeholder="********"
+                        />
+                      </div>
+                    </div>
+                    <div>
+                      <label className="mb-1.5 block text-xs font-semibold uppercase tracking-wide" style={{ color: 'var(--muted)' }}>Confirmar Senha</label>
+                      <div className="relative">
+                        <Lock size={14} className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-[var(--muted)]" />
+                        <input
+                          className={`${inputCls} pl-9`}
+                          style={{ borderColor: 'var(--border)', color: 'var(--text)', backgroundColor: 'var(--surface)' }}
+                          type="password"
+                          value={regConfirmPassword}
+                          onChange={(e) => setRegConfirmPassword(e.target.value)}
+                          placeholder="********"
                         />
                       </div>
                     </div>
                   </>
                 )}
-
-                <div>
-                  <label className="mb-1.5 block text-xs font-semibold uppercase tracking-wide" style={{ color: 'var(--muted)' }}>E-mail</label>
-                  <div className="relative">
-                    <Mail size={14} className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-[var(--muted)]" />
-                    <input
-                      className={`${inputCls} pl-9`}
-                      style={{ borderColor: 'var(--border)', color: 'var(--text)', backgroundColor: 'var(--surface)' }}
-                      type="email"
-                      value={mode === 'login' ? loginEmail : registerEmail}
-                      onChange={(e) => mode === 'login' ? setLoginEmail(e.target.value) : setRegisterEmail(e.target.value)}
-                      placeholder="voce@email.com"
-                    />
-                  </div>
-                </div>
-
-                <div>
-                  <label className="mb-1.5 block text-xs font-semibold uppercase tracking-wide" style={{ color: 'var(--muted)' }}>Senha</label>
-                  <div className="relative">
-                    <Lock size={14} className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-[var(--muted)]" />
-                    <input
-                      className={`${inputCls} pl-9`}
-                      style={{ borderColor: 'var(--border)', color: 'var(--text)', backgroundColor: 'var(--surface)' }}
-                      type="password"
-                      value={mode === 'login' ? loginPassword : registerPassword}
-                      onChange={(e) => mode === 'login' ? setLoginPassword(e.target.value) : setRegisterPassword(e.target.value)}
-                      placeholder="********"
-                    />
-                  </div>
-                </div>
 
                 {error && (
                   <p className="rounded-xl border border-rose-200 bg-rose-50 px-3 py-2 text-xs text-rose-600">{error}</p>

@@ -10,15 +10,22 @@ import java.util.UUID;
 
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+import org.springframework.transaction.annotation.Transactional;
 
 import com.marcos.music.dto.Aula.CalendarFilterDTO;
 import com.marcos.music.dto.Aula.CalendarResponseDTO;
+import com.marcos.music.dto.Aula.CriarAulaDTO;
 import com.marcos.music.dto.Aula.HorarioValidatorDTO;
+import com.marcos.music.entity.Aluno;
 import com.marcos.music.entity.Aula;
 import com.marcos.music.entity.AulaAluno;
+import com.marcos.music.entity.Usuario;
+import com.marcos.music.repository.AlunoRepository;
 import com.marcos.music.repository.Aula.AulaAlunoRepository;
 import com.marcos.music.repository.Aula.AulaCustomRepository;
 import com.marcos.music.repository.Aula.AulaRepository;
+import com.marcos.music.repository.UsuarioRepository;
 
 
 @Service
@@ -27,33 +34,57 @@ public class AulaService {
     private final AulaAlunoRepository aulaAlunoRepository;
     private final AlunoService alunoService;
     private final AulaCustomRepository aulaCustomRepository;
+    private final UsuarioRepository usuarioRepository;
+    private final AlunoRepository alunoRepository;
 
 
     public AulaService(
         AulaRepository repository,
         AulaAlunoRepository aulaAlunoRepository,
         @Lazy AlunoService alunoService,
-        AulaCustomRepository aulaCustomRepository
+        AulaCustomRepository aulaCustomRepository,
+        UsuarioRepository usuarioRepository,
+        AlunoRepository alunoRepository
     ){
         this.repository = repository;
         this.aulaAlunoRepository = aulaAlunoRepository;
         this.alunoService = alunoService;
         this.aulaCustomRepository = aulaCustomRepository;
+        this.usuarioRepository = usuarioRepository;
+        this.alunoRepository = alunoRepository;
     }
 
     public Aula salvar(Aula a) throws RuntimeException{
-        try {
-            if (a.getId() == null && repository.validarData(a.getDataInicio(), a.getDataFim())) {
-                throw new RuntimeException("Já existe uma aula nesse horário");
-            }
-            return repository.save(a);
-        } catch (RuntimeException e) {
-            throw new RuntimeException();
+        if (a.getId() == null && repository.validarData(a.getDataInicio(), a.getDataFim())) {
+            throw new RuntimeException("Já existe uma aula nesse horário");
         }
+        return repository.save(a);
     }
 
     public List<CalendarResponseDTO> buscar(CalendarFilterDTO f){
         return aulaCustomRepository.buscar(f);
+    }
+
+    public Aula criar(String email, CriarAulaDTO dto) {
+        Aluno aluno;
+        if (dto.getStudentId() != null && !dto.getStudentId().isBlank()) {
+            // Professor criando aula para um aluno específico
+            UUID studentUUID;
+            try {
+                studentUUID = UUID.fromString(dto.getStudentId());
+            } catch (IllegalArgumentException e) {
+                throw new RuntimeException("studentId inválido: " + dto.getStudentId());
+            }
+            aluno = alunoRepository.findById(studentUUID)
+                    .orElseThrow(() -> new RuntimeException("Aluno não encontrado"));
+        } else {
+            // Aluno criando sua própria aula via JWT
+            Usuario usuario = usuarioRepository.findByEmail(email)
+                    .orElseThrow(() -> new RuntimeException("Usuário não encontrado"));
+            aluno = alunoRepository.findById(usuario.getId())
+                    .orElseThrow(() -> new RuntimeException("Aluno não encontrado"));
+        }
+        return salvar(new Aula(dto.getDataInicio(), dto.getDataFim(), aluno));
     }
 
     public List<Aula> gerarPorHorario(AulaAluno e) throws RuntimeException{
@@ -92,6 +123,7 @@ public class AulaService {
         return as;
     }
 
+    @Transactional
     public Aula cancelar(Long id) throws RuntimeException{
         try{
             Aula a = repository.findById(id)
@@ -122,6 +154,26 @@ public class AulaService {
 
     public Boolean validarHorarioSemana(HorarioValidatorDTO dto){
         return !aulaAlunoRepository.existsConflitoHorario(dto.getDia(), dto.getHorarioInicio(), dto.getHorarioFim());
+    }
+
+    @Transactional
+    public Aula reagendar(Long id, LocalDateTime novaDataInicio, LocalDateTime novaDataFim) {
+        Aula a = repository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Aula n\u00e3o encontrada"));
+        if (Boolean.TRUE.equals(a.getFlagCancelada())) {
+            throw new RuntimeException("N\u00e3o \u00e9 poss\u00edvel reagendar uma aula cancelada");
+        }
+        a.setDataInicio(novaDataInicio);
+        a.setDataFim(novaDataFim);
+        return repository.save(a);
+    }
+
+    @Transactional
+    public Aula confirmarPresenca(Long id) {
+        Aula a = repository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Aula n\u00e3o encontrada"));
+        a.setPresencaConfirmada(true);
+        return repository.save(a);
     }
 
     public List<AulaAluno> findDeletedsHorarios(UUID idAluno, List<Long> ids){

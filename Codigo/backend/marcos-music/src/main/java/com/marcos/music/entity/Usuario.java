@@ -9,7 +9,6 @@ import lombok.Setter;
 import java.util.UUID;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
-import com.marcos.music.dto.Aluno.AlunoDTO;
 
 @Getter
 @Setter
@@ -36,8 +35,4 @@ public class Usuario {
     @JsonIgnore
     private Aluno aluno;
 
-    public Usuario(AlunoDTO dto, UUID id){
-        this.id = id;
-        this.email = dto.getEmail();
-    }
 }

@@ -31,6 +31,9 @@ public class Aula {
     @Column(name = "flag_cancelada")
     private Boolean flagCancelada = false;
 
+    @Column(name = "presenca_confirmada")
+    private Boolean presencaConfirmada = false;
+
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "id_aluno", nullable = false)
     private Aluno aluno;

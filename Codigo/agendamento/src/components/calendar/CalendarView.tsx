@@ -1,16 +1,16 @@
-import { useState, useCallback } from 'react';
-import { ChevronLeft, ChevronRight, Plus } from 'lucide-react';
+import { useState, useCallback, useEffect } from 'react';
+import { ChevronLeft, ChevronRight, Plus, MousePointerClick } from 'lucide-react';
 import type { Lesson, WeeklyAvailability } from '../../types';
+import type { AuthUser } from '../../lib/auth';
 import {
   getWeekDays, formatDateISO, isToday,
-  timeToMinutes, cn, getDayKeyFromISODate,
+  timeToMinutes, cn,
 } from '../../utils';
-import { Button } from '../ui/Button';
 
 // ─── Constants ───────────────────────────────────────────────────────────────
 
 const HOUR_START = 7;
-const HOUR_END = 24;
+const HOUR_END = 23;
 const HOURS = Array.from({ length: HOUR_END - HOUR_START }, (_, i) => HOUR_START + i);
 const CELL_HEIGHT = 64; // px per hour
 
@@ -23,19 +23,30 @@ type CalendarView = 'week' | 'day';
 interface CalendarProps {
   lessons: Lesson[];
   availability: WeeklyAvailability;
+  currentUser?: AuthUser;
   onLessonClick: (lesson: Lesson) => void;
   onNewLesson: (date: string, time: string) => void;
   onLessonMove: (lessonId: string, newDate: string, newStartTime: string) => void;
+  /** Chamado toda vez que a semana/dia visível muda. Recebe [dataInicio, dataFim] ISO. */
+  onWeekChange?: (dataInicio: string, dataFim: string) => void;
 }
 
 // ─── Main Calendar ───────────────────────────────────────────────────────────
 
+function isOwnLesson(lesson: Lesson, currentUser?: AuthUser): boolean {
+  if (!currentUser || currentUser.role === 'teacher') return true;
+  if (currentUser.id != null && lesson.studentId === currentUser.id) return true;
+  return lesson.studentName.trim().toLowerCase() === currentUser.name.trim().toLowerCase();
+}
+
 export function CalendarView({
   lessons,
   availability,
+  currentUser,
   onLessonClick,
   onNewLesson,
   onLessonMove,
+  onWeekChange,
 }: CalendarProps) {
   const [view, setView] = useState<CalendarView>('week');
   const [currentDate, setCurrentDate] = useState(new Date());
@@ -44,22 +55,38 @@ export function CalendarView({
 
   const weekDays = getWeekDays(currentDate);
 
+  const notifyWeekChange = (date: Date, currentView: CalendarView) => {
+    if (!onWeekChange) return;
+    if (currentView === 'week') {
+      const days = getWeekDays(date);
+      onWeekChange(formatDateISO(days[0]) + 'T00:00:00', formatDateISO(days[6]) + 'T23:59:59');
+    } else {
+      onWeekChange(formatDateISO(date) + 'T00:00:00', formatDateISO(date) + 'T23:59:59');
+    }
+  };
+
+  // Notifica a semana inicial ao montar
+  useEffect(() => { notifyWeekChange(currentDate, view); }, []); // eslint-disable-line react-hooks/exhaustive-deps
+
   const navigate = (dir: 1 | -1) => {
     const d = new Date(currentDate);
     if (view === 'week') d.setDate(d.getDate() + dir * 7);
     else d.setDate(d.getDate() + dir);
     setCurrentDate(d);
+    notifyWeekChange(d, view);
   };
 
-  const goToday = () => setCurrentDate(new Date());
+  const goToday = () => {
+    const d = new Date();
+    setCurrentDate(d);
+    notifyWeekChange(d, view);
+  };
 
   const displayDays = view === 'week' ? weekDays : [currentDate];
 
-  const isAvailable = useCallback((dateISO: string, time: string) => {
-    const dayKey = getDayKeyFromISODate(dateISO);
-    const hourSlot = `${time.slice(0, 2)}:00`;
-    return availability[dayKey].includes(hourSlot);
-  }, [availability]);
+  const isAvailable = useCallback((_dateISO: string, _time: string) => {
+    return true;
+  }, []);
 
   const headerLabel = view === 'week'
     ? `${weekDays[0].toLocaleDateString('pt-BR', { day: 'numeric', month: 'short' })} – ${weekDays[6].toLocaleDateString('pt-BR', { day: 'numeric', month: 'short', year: 'numeric' })}`
@@ -138,11 +165,6 @@ export function CalendarView({
           ))}
         </div>
 
-        <Button size="sm" onClick={() => onNewLesson(formatDateISO(currentDate), '09:00')}>
-          <Plus size={14} />
-          Nova Aula
-        </Button>
-
         <div className="hidden lg:flex items-center gap-3 ml-1 text-[11px] text-[var(--muted)]">
           <span className="inline-flex items-center gap-1.5">
             <span className="w-2 h-2 rounded-full bg-[var(--accent-500)]" />
@@ -152,6 +174,12 @@ export function CalendarView({
             <span className="w-2 h-2 rounded-full bg-rose-500" />
             Indisponível
           </span>
+          {(!currentUser || currentUser.role === 'teacher') && (
+            <span className="inline-flex items-center gap-1 text-[var(--muted)] italic">
+              <MousePointerClick size={11} />
+              Clique em um horário para agendar
+            </span>
+          )}
         </div>
       </div>
 
@@ -215,6 +243,7 @@ export function CalendarView({
                     onDrop={() => handleDrop(dateStr)}
                     onClick={(e) => {
                       if (unavailable) return;
+                      if (currentUser && currentUser.role !== 'teacher') return;
                       const rect = e.currentTarget.getBoundingClientRect();
                       const relY = e.clientY - rect.top;
                       const mins = hour * 60 + Math.floor(relY / CELL_HEIGHT * 60);
@@ -226,9 +255,15 @@ export function CalendarView({
                       onNewLesson(dateStr, selectedTime);
                     }}
                   >
-                    {/* Hover highlight */}
-                    {!unavailable && (
-                      <div className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-100 cursor-pointer bg-[var(--accent-icon-bg)]" />
+                    {/* Hover highlight — só para professores */}
+                    {!unavailable && (!currentUser || currentUser.role === 'teacher') && (
+                      <>
+                        <div className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-100 cursor-pointer bg-[var(--accent-icon-bg)]" />
+                        <Plus
+                          size={14}
+                          className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 opacity-0 group-hover:opacity-40 transition-opacity pointer-events-none text-[var(--accent-600)]"
+                        />
+                      </>
                     )}
 
                     {!dayLessons.length && (
@@ -253,16 +288,28 @@ export function CalendarView({
                     )}
 
                     {/* Lessons */}
-                    {dayLessons.map(lesson => (
-                      <LessonBlock
-                        key={lesson.id}
-                        lesson={lesson}
-                        hourStart={hour}
-                        isUnavailable={!isAvailable(dateStr, lesson.startTime)}
-                        onClick={(e) => { e.stopPropagation(); onLessonClick(lesson); }}
-                        onDragStart={(e) => handleDragStart(lesson, e)}
-                      />
-                    ))}
+                    {dayLessons.map(lesson => {
+                      const own = isOwnLesson(lesson, currentUser);
+                      if (!own) {
+                        return (
+                          <ReservedBlock
+                            key={lesson.id}
+                            lesson={lesson}
+                            hourStart={hour}
+                          />
+                        );
+                      }
+                      return (
+                        <LessonBlock
+                          key={lesson.id}
+                          lesson={lesson}
+                          hourStart={hour}
+                          isUnavailable={!isAvailable(dateStr, lesson.startTime)}
+                          onClick={(e) => { e.stopPropagation(); onLessonClick(lesson); }}
+                          onDragStart={(e) => handleDragStart(lesson, e)}
+                        />
+                      );
+                    })}
                   </div>
                 );
               })}
@@ -274,7 +321,6 @@ export function CalendarView({
   );
 }
 
-// ─── Lesson Block ─────────────────────────────────────────────────────────────
 
 interface LessonBlockProps {
   lesson: Lesson;
@@ -340,6 +386,48 @@ function LessonBlock({ lesson, hourStart, isUnavailable, onClick, onDragStart }:
           <span className="text-[9px] bg-rose-100 text-rose-600 font-semibold px-1 rounded">CONFLITO</span>
         </span>
       )}
+    </div>
+  );
+}
+
+// ─── Reserved Block (aula de outro aluno) ─────────────────────────────────────
+
+interface ReservedBlockProps {
+  lesson: Lesson;
+  hourStart: number;
+}
+
+function ReservedBlock({ lesson, hourStart }: ReservedBlockProps) {
+  const startMins = timeToMinutes(lesson.startTime);
+  const endMins = timeToMinutes(lesson.endTime);
+  const durationMins = endMins - startMins;
+  const offsetMins = startMins - hourStart * 60;
+
+  const top = (offsetMins / 60) * CELL_HEIGHT;
+  const height = Math.max((durationMins / 60) * CELL_HEIGHT - 2, 20);
+
+  return (
+    <div
+      title={`Horário reservado · ${lesson.startTime} – ${lesson.endTime}`}
+      className="absolute left-1 right-1 rounded-lg overflow-hidden select-none z-10 cursor-default"
+      style={{ top: `${top}px`, height: `${height}px` }}
+    >
+      {/* Fundo listrado */}
+      <div
+        className="absolute inset-0 rounded-lg opacity-70"
+        style={{
+          backgroundImage: 'repeating-linear-gradient(135deg, transparent, transparent 4px, rgba(0,0,0,0.06) 4px, rgba(0,0,0,0.06) 8px)',
+          backgroundColor: 'var(--surface-soft)',
+          border: '1px dashed var(--border)',
+        }}
+      />
+      {/* Bolinha + label */}
+      <div className="relative flex items-center gap-1 px-1.5 h-full">
+        <span className="w-2 h-2 rounded-full shrink-0 bg-rose-400" />
+        {height > 28 && (
+          <span className="text-[10px] font-semibold text-[var(--muted)] truncate">Reservado</span>
+        )}
+      </div>
     </div>
   );
 }

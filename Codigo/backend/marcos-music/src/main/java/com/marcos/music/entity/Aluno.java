@@ -10,7 +10,7 @@ import java.util.List;
 import java.util.UUID;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
-import com.marcos.music.dto.Aluno.AlunoDTO;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 
 @Entity
 @Getter
@@ -18,6 +18,7 @@ import com.marcos.music.dto.Aluno.AlunoDTO;
 @NoArgsConstructor
 @AllArgsConstructor
 @Table(name = "aluno")
+@JsonIgnoreProperties({"hibernateLazyInitializer", "handler"})
 public class Aluno {
 
     @Id
@@ -31,7 +32,7 @@ public class Aluno {
     @Column(nullable = false, length = 255)
     private String nome;
 
-    @Column(length = 11)
+    @Column(length = 20)
     private String telefone;
 
     @Column(nullable = false)
@@ -48,11 +49,4 @@ public class Aluno {
     @JsonIgnore
     private List<AulaAluno> horarios;
 
-    public Aluno (AlunoDTO dto){
-        this.id = dto.getId();
-        this.nome = dto.getNome();
-        this.telefone = dto.getTelefone();
-        this.termos = dto.getTermos() != null ? dto.getTermos() : false;
-        this.status = dto.getStatus() != null ? dto.getStatus() : true;
-    }
 }
