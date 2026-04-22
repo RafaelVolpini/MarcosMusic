@@ -113,6 +113,11 @@ body {
 #root {
   width: 100%;
   height: 100vh;
+}
+
+/* App shell (authenticated area) keeps overflow locked to enable the sidebar layout */
+.app-shell-locked {
+  height: 100vh;
   overflow: hidden;
 }
 
