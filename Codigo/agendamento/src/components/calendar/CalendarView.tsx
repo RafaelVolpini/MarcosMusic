@@ -101,11 +101,11 @@ export function CalendarView({
     e.dataTransfer.effectAllowed = 'move';
   }, []);
 
-  const handleDragOver = useCallback((date: string, e: React.DragEvent) => {
+  const handleDragOver = useCallback((date: string, hour: number, e: React.DragEvent) => {
     e.preventDefault();
     const rect = (e.currentTarget as HTMLElement).getBoundingClientRect();
-    const relY = e.clientY - rect.top;
-    const totalMins = HOUR_START * 60 + Math.floor(relY / CELL_HEIGHT * 60);
+    const relY = Math.max(0, e.clientY - rect.top);
+    const totalMins = hour * 60 + Math.floor((relY / CELL_HEIGHT) * 60);
     const snapped = Math.round(totalMins / 60) * 60;
     const h = Math.floor(snapped / 60);
     const m = snapped % 60;
@@ -149,6 +149,15 @@ export function CalendarView({
         <h2 className="text-sm font-bold text-[var(--heading)] capitalize flex-1">{headerLabel}</h2>
 
         {/* View toggle */}
+        <div className="hidden lg:flex items-center gap-3 ml-1 text-[11px] text-[var(--muted)]">
+          {(!currentUser || currentUser.role === 'teacher') && (
+            <span className="inline-flex items-center gap-1 text-[var(--muted)] italic">
+              <MousePointerClick size={11} />
+              Clique em um horário para agendar
+            </span>
+          )}
+        </div>
+
         <div className="flex items-center bg-[var(--surface-soft)] border border-[var(--border)] rounded-xl p-0.5">
           {(['week', 'day'] as CalendarView[]).map(v => (
             <button
@@ -164,15 +173,6 @@ export function CalendarView({
               {v === 'week' ? 'Semana' : 'Dia'}
             </button>
           ))}
-        </div>
-
-        <div className="hidden lg:flex items-center gap-3 ml-1 text-[11px] text-[var(--muted)]">
-          {(!currentUser || currentUser.role === 'teacher') && (
-            <span className="inline-flex items-center gap-1 text-[var(--muted)] italic">
-              <MousePointerClick size={11} />
-              Clique em um horário para agendar
-            </span>
-          )}
         </div>
       </div>
 
@@ -232,23 +232,26 @@ export function CalendarView({
                     )}
                     style={{ height: CELL_HEIGHT }}
                     title={unavailable ? 'Horario indisponivel para agendamento' : 'Horario disponivel para agendamento'}
-                    onDragOver={(e) => handleDragOver(dateStr, e)}
+                    onDragOver={(e) => handleDragOver(dateStr, hour, e)}
                     onDrop={() => handleDrop(dateStr)}
                     onClick={(e) => {
                       if (unavailable) return;
-                      const rect = e.currentTarget.getBoundingClientRect();
-                      const relY = e.clientY - rect.top;
-                      const mins = hour * 60 + Math.floor(relY / CELL_HEIGHT * 60);
-                      const snapped = Math.round(mins / 60) * 60;
-                      const h = Math.floor(snapped / 60);
-                      const m = snapped % 60;
-                      const selectedTime = `${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}`;
+                      const selectedTime = `${String(hour).padStart(2, '0')}:00`;
                       if (!isAvailable(dateStr, selectedTime)) return;
                       onNewLesson(dateStr, selectedTime);
                     }}
                   >
                     {/* Hover overlay */}
                     <CalendarCellOverlay visible={!unavailable} />
+
+                    {/* Drag capture overlay — garante que o drop sempre aterrissa na célula */}
+                    {dragging && (
+                      <div
+                        className="absolute inset-0 z-30"
+                        onDragOver={(e) => handleDragOver(dateStr, hour, e)}
+                        onDrop={() => handleDrop(dateStr)}
+                      />
+                    )}
 
                     {!dayLessons.length && (
                       <span
@@ -341,11 +344,11 @@ function LessonBlock({ lesson, hourStart, isUnavailable, onClick, onDragStart }:
       style={{
         top: `${top}px`,
         height: `${height}px`,
-        backgroundColor: 'var(--surface)',
-        borderColor: isUnavailable ? '#fda4af' : 'var(--border)',
+        backgroundColor: 'var(--accent-50)',
+        borderColor: isUnavailable ? '#fda4af' : 'var(--accent-100)',
       }}
     >
-      <div className="absolute left-0 inset-y-0 w-1" style={{ backgroundColor: lesson.color }} />
+      <div className="absolute left-0 inset-y-0 w-1" style={{ backgroundColor: 'var(--accent-500)' }} />
 
       <p className="text-[11px] font-semibold text-[var(--heading)] truncate leading-tight pl-1">
         {lesson.studentName}

@@ -8,6 +8,7 @@ import { buscarAulas, cancelarAula, criarAula, reagendarAula, confirmarPresenca 
 import { listarAlunos } from '../../services/alunoService';
 import type { AlunoResumoDTO } from '../../services/alunoService';
 import { toLesson } from '../../adapters/aulaAdapter';
+import { timeToMinutes, minutesToTime } from '../../utils';
 
 interface AgendaPageProps {
   lessons: Lesson[];
@@ -129,6 +130,22 @@ export function AgendaPage({
     setSelectedLesson(null);
   };
 
+  const handleMoveLesson = useCallback(async (id: string, newDate: string, newStartTime: string) => {
+    const lesson = apiLessons?.find(l => l.id === id);
+    if (!lesson) return;
+    const durationMins = timeToMinutes(lesson.endTime) - timeToMinutes(lesson.startTime);
+    const newEndTime = minutesToTime(timeToMinutes(newStartTime) + durationMins);
+    const dataInicio = `${newDate}T${newStartTime}:00`;
+    const dataFim = `${newDate}T${newEndTime}:00`;
+    try {
+      const dto = await reagendarAula(id, dataInicio, dataFim);
+      const updated = toLesson(dto);
+      setApiLessons(prev => prev?.map(l => l.id === id ? updated : l) ?? null);
+    } catch (err) {
+      alert(err instanceof Error ? err.message : 'Erro ao reagendar aula.');
+    }
+  }, [apiLessons]);
+
   const handleConfirmPresence = async (id: string) => {
     const dto = await confirmarPresenca(id);
     const updated = toLesson(dto);
@@ -155,7 +172,7 @@ export function AgendaPage({
         currentUser={currentUser}
         onLessonClick={setSelectedLesson}
         onNewLesson={(date, time) => setNewLessonModal({ date, time })}
-        onLessonMove={onMoveLesson}
+        onLessonMove={handleMoveLesson}
         onWeekChange={handleWeekChange}
       />
 

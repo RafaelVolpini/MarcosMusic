@@ -46,6 +46,8 @@ public class AulaCustomRepository {
                 root.get("presencaConfirmada")
         ));
 
+        predicates.add(cb.equal(root.get("flagCancelada"), false));
+
         if (f.getDataInicio() != null && f.getDataFim() == null) {
             predicates.add(cb.greaterThanOrEqualTo(root.get("dataInicio"), f.getDataInicio()));
         }

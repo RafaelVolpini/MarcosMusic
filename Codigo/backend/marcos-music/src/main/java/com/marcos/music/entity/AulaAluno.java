@@ -1,5 +1,6 @@
 package com.marcos.music.entity;
 
+import java.time.LocalDateTime;
 import java.time.LocalTime;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
@@ -31,4 +32,17 @@ public class AulaAluno {
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "id_aluno", nullable = false)
     private Aluno aluno;
+
+    /** Momento em que esta entrada de log foi registrada. */
+    @Column(name = "data_registro")
+    private LocalDateTime dataRegistro;
+
+    /** Ação que originou este registro: AGENDADO, CANCELADO, REAGENDADO. */
+    @Column(length = 30)
+    private String acao;
+
+    /** Aula específica relacionada a este log (null para entradas de template). */
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "id_aula")
+    private Aula aula;
 }

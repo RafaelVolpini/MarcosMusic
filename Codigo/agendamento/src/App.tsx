@@ -54,7 +54,7 @@ function App() {
   const [contractAccepted, setContractAccepted] = useState<boolean>(false);
   const [activePage, setActivePage] = useState<Page>('dashboard');
   const [collapsed, setCollapsed] = useState(false);
-  const [lessons, setLessons] = useState<Lesson[]>(mockLessons);
+  const [lessons, setLessons] = useState<Lesson[]>([]);
   const [availability, setAvailability] = useState<WeeklyAvailability>(INITIAL_AVAILABILITY);
 
   const studentFromEmail = sessionUser?.role === 'student'

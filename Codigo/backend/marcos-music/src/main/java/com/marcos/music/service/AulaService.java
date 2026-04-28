@@ -84,7 +84,9 @@ public class AulaService {
             aluno = alunoRepository.findById(usuario.getId())
                     .orElseThrow(() -> new RuntimeException("Aluno não encontrado"));
         }
-        return salvar(new Aula(dto.getDataInicio(), dto.getDataFim(), aluno));
+        Aula nova = salvar(new Aula(dto.getDataInicio(), dto.getDataFim(), aluno));
+        logAula(nova, "AGENDADO");
+        return nova;
     }
 
     public List<Aula> gerarPorHorario(AulaAluno e) throws RuntimeException{
@@ -144,6 +146,7 @@ public class AulaService {
             alunoService.adicionarReposicao(a.getAluno());
 
             repository.save(a);
+            logAula(a, "CANCELADO");
 
             return a;
         } catch (RuntimeException e){
@@ -165,7 +168,9 @@ public class AulaService {
         }
         a.setDataInicio(novaDataInicio);
         a.setDataFim(novaDataFim);
-        return repository.save(a);
+        Aula salva = repository.save(a);
+        logAula(salva, "REAGENDADO");
+        return salva;
     }
 
     @Transactional
@@ -184,6 +189,18 @@ public class AulaService {
     public Aula findDeletedAula(UUID idAluno, LocalDateTime dataInicio, LocalDateTime dataFim){
         if(idAluno != null && dataInicio != null && dataFim != null) return repository.findByAlunoIdAndDataInicioAndDataFim(idAluno, dataInicio, dataFim).get();
         return null;
+    }
+
+    private void logAula(Aula aula, String acao) {
+        AulaAluno log = new AulaAluno();
+        log.setAluno(aula.getAluno());
+        log.setDia(aula.getDataInicio().getDayOfWeek().getValue());
+        log.setHorarioInicio(aula.getDataInicio().toLocalTime());
+        log.setHorarioFim(aula.getDataFim().toLocalTime());
+        log.setAula(aula);
+        log.setAcao(acao);
+        log.setDataRegistro(LocalDateTime.now());
+        aulaAlunoRepository.save(log);
     }
 
     private List<LocalDate> gerarDatasHojeFimPeriodo(Integer dia) {

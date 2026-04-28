@@ -141,7 +141,7 @@ export function LessonModal({ lesson, currentUser, onClose, onUpdate, onDelete, 
               {/* Header with color accent */}
               <div
                 className="h-2 rounded-t-3xl"
-                style={{ backgroundColor: lesson.color }}
+                style={{ background: 'linear-gradient(90deg, var(--accent-gradient-from), var(--accent-gradient-to))' }}
               />
               <div className="px-6 py-5 border-b border-[var(--border)]">
                 <div className="flex items-start justify-between">
