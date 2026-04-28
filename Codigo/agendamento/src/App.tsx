@@ -12,6 +12,7 @@ import { LessonAlertsPage } from './components/pages/PaymentsPage';
 import { SettingsPage } from './components/pages/SettingsPage';
 import { LoginPage } from './components/auth/LoginPage';
 import { ContractGate } from './components/auth/ContractGate';
+import { LandingPage } from './components/pages/LandingPage';
 import type { Page, Lesson, WeeklyAvailability } from './types';
 import {
   mockLessons, mockStudents, mockTeachers,
@@ -49,7 +50,10 @@ const INITIAL_AVAILABILITY: WeeklyAvailability = {
   sun: [],
 };
 
+type AppState = 'landing' | 'login' | 'app';
+
 function App() {
+  const [appState, setAppState] = useState<AppState>('landing');
   const [sessionUser, setSessionUser] = useState<AuthUser | null>(null);
   const [contractAccepted, setContractAccepted] = useState<boolean>(false);
   const [activePage, setActivePage] = useState<Page>('dashboard');
@@ -86,6 +90,7 @@ function App() {
 
   const handleLoginSuccess = (user: AuthUser) => {
     setSessionUser(user);
+    setAppState('app');
     // Teachers (ADMIN) never need to accept student contract
     if (user.role === 'teacher') {
       setContractAccepted(true);
@@ -103,6 +108,7 @@ function App() {
     setSessionUser(null);
     setContractAccepted(false);
     setActivePage('dashboard');
+    setAppState('landing');
   };
 
   const allowedPages: Page[] = sessionUser?.role === 'teacher'
@@ -285,7 +291,11 @@ function App() {
     }
   };
 
-  if (!sessionUser) {
+  if (appState === 'landing') {
+    return <LandingPage onEnterLogin={() => setAppState('login')} />;
+  }
+
+  if (appState === 'login' || !sessionUser) {
     return <LoginPage onLoginSuccess={handleLoginSuccess} />;
   }
 
