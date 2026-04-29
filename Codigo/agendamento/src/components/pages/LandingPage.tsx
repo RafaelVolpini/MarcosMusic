@@ -64,33 +64,33 @@ const SCHOOL_OFFERINGS = [
 const SOFTWARE_FEATURES = [
   {
     icon: <Calendar size={20} />,
-    title: 'Agendamento Inteligente',
-    desc: 'Calendário visual interativo com arrastar e soltar para organizar as aulas.',
+    title: 'Agendamento Flexível',
+    desc: 'Calendário interativo para você escolher ou visualizar os melhores horários para suas aulas.',
   },
   {
     icon: <RefreshCw size={20} />,
     title: 'Reagendamento Fácil',
-    desc: 'Solicite e confirme remarcações em poucos cliques, sem idas e vindas.',
+    desc: 'Imprevistos acontecem. Solicite remarcações online em poucos cliques.',
   },
   {
     icon: <CheckCircle2 size={20} />,
-    title: 'Controle de Presença',
-    desc: 'Confirme presença diretamente pela plataforma, com histórico completo.',
+    title: 'Histórico de Presença',
+    desc: 'Acompanhe suas aulas e o seu desenvolvimento diretamente pela plataforma.',
   },
   {
     icon: <Video size={20} />,
-    title: 'Vídeo-aulas',
-    desc: 'Biblioteca de conteúdo gravado para revisar a qualquer hora.',
+    title: 'Material de Apoio',
+    desc: 'Biblioteca de conteúdo gravado para você revisar as aulas a qualquer hora.',
   },
   {
     icon: <Bell size={20} />,
     title: 'Lembretes Automáticos',
-    desc: 'Notificações configuráveis para nunca perder uma aula.',
+    desc: 'Receba notificações configuráveis para nunca perder uma aula.',
   },
   {
     icon: <Users size={20} />,
     title: 'Portal do Aluno',
-    desc: 'Cada aluno acessa apenas seu próprio calendário e conteúdo.',
+    desc: 'Uma área particular onde você acessa seu próprio calendário e evolução.',
   },
 ];
 
@@ -135,7 +135,7 @@ export function LandingPage({ onEnterLogin }: LandingPageProps) {
               <Music2 size={16} />
             </div>
             <span className="text-sm font-black tracking-tight" style={{ color: 'var(--text)' }}>
-              Musga Agenda
+              Escola de Música do Musga
             </span>
           </div>
 
@@ -174,7 +174,7 @@ export function LandingPage({ onEnterLogin }: LandingPageProps) {
               color: 'var(--accent-700)',
             }}
           >
-            <Music2 size={12} /> Escola de Música do Marcos
+            <Music2 size={12} /> Escola de Música do Musga
           </div>
         </motion.div>
 
@@ -424,7 +424,7 @@ export function LandingPage({ onEnterLogin }: LandingPageProps) {
       </section>
 
       {/* ══════════════════════════════════════════════
-          O QUE O SOFTWARE OFERECE
+          BENEFÍCIOS DA TECNOLOGIA PARA O ALUNO
       ══════════════════════════════════════════════ */}
       <section
         className="border-y py-16"
@@ -432,13 +432,12 @@ export function LandingPage({ onEnterLogin }: LandingPageProps) {
       >
         <div className="mx-auto max-w-6xl px-6">
           <motion.div {...fadeUp(0)} className="mb-10 text-center">
-            <SectionLabel>Plataforma</SectionLabel>
+            <SectionLabel>Área do Aluno</SectionLabel>
             <h2 className="mt-3 text-3xl font-black" style={{ color: 'var(--heading)' }}>
-              O que o software oferece
+              Tecnologia a favor do seu ensino
             </h2>
             <p className="mx-auto mt-2 max-w-md text-sm" style={{ color: 'var(--muted)' }}>
-              A Musga Agenda foi construída para tornar a gestão das aulas simples e transparente
-              tanto para o professor quanto para os alunos.
+              Ao se tornar um aluno da nossa escola, você ganha acesso exclusivo a um painel digital prático para acompanhar e gerenciar 100% da sua jornada musical.
             </p>
           </motion.div>
 
@@ -520,7 +519,7 @@ export function LandingPage({ onEnterLogin }: LandingPageProps) {
             >
               <Music2 size={13} />
             </div>
-            <span className="text-sm font-black" style={{ color: 'var(--text)' }}>Musga Agenda</span>
+            <span className="text-sm font-black" style={{ color: 'var(--text)' }}>Escola de Música do Musga</span>
           </div>
 
           <div className="flex items-center gap-4 text-xs" style={{ color: 'var(--muted)' }}>

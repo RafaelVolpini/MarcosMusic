@@ -20,6 +20,7 @@ import {
 } from './data/mockData';
 import {
   logout,
+  getUser,
   hasAcceptedContract,
   type AuthUser,
   type ContractAcceptance,
@@ -60,6 +61,28 @@ function App() {
   const [collapsed, setCollapsed] = useState(false);
   const [lessons, setLessons] = useState<Lesson[]>([]);
   const [availability, setAvailability] = useState<WeeklyAvailability>(INITIAL_AVAILABILITY);
+
+  // Tenta restaurar a sessão ao carregar a página
+  useEffect(() => {
+    const savedUser = getUser();
+    if (savedUser) {
+      setSessionUser(savedUser);
+      setAppState('app');
+      
+      // Se for professor, já aceitou contrato. Se for aluno, verifica o campo termos.
+      if (savedUser.role === 'teacher' || savedUser.termos === true) {
+        setContractAccepted(true);
+      }
+    }
+  }, []);
+
+  // Detecta se voltamos do Google OAuth para manter na Agenda
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    if (params.has('google')) {
+      setActivePage('agenda');
+    }
+  }, []);
 
   const studentFromEmail = sessionUser?.role === 'student'
     ? mockStudents.find((student) => student.email.trim().toLowerCase() === sessionUser.email.trim().toLowerCase())
@@ -268,6 +291,7 @@ function App() {
             onDeleteLesson={handleDeleteLesson}
             onCreateLesson={handleCreateLesson}
             onMoveLesson={handleMoveLesson}
+            onNavigate={setActivePage}
           />
         );
       case 'students':

@@ -1,5 +1,5 @@
 import { useState, useCallback, useEffect } from 'react';
-import { ChevronLeft, ChevronRight, MousePointerClick } from 'lucide-react';
+import { ChevronLeft, ChevronRight, MousePointerClick, RefreshCw } from 'lucide-react';
 import type { Lesson, WeeklyAvailability } from '../../types';
 import type { AuthUser } from '../../lib/auth';
 import {
@@ -28,6 +28,7 @@ interface CalendarProps {
   onLessonClick: (lesson: Lesson) => void;
   onNewLesson: (date: string, time: string) => void;
   onLessonMove: (lessonId: string, newDate: string, newStartTime: string) => void;
+  onSyncCalendar?: () => void;
   /** Chamado toda vez que a semana/dia visível muda. Recebe [dataInicio, dataFim] ISO. */
   onWeekChange?: (dataInicio: string, dataFim: string) => void;
 }
@@ -47,6 +48,7 @@ export function CalendarView({
   onLessonClick,
   onNewLesson,
   onLessonMove,
+  onSyncCalendar,
   onWeekChange,
 }: CalendarProps) {
   const [view, setView] = useState<CalendarView>('week');
@@ -157,6 +159,15 @@ export function CalendarView({
             </span>
           )}
         </div>
+
+        {onSyncCalendar && (
+          <button
+            onClick={onSyncCalendar}
+            className="ml-2 flex items-center gap-2 rounded-lg border border-[var(--border)] px-3 h-8 text-xs font-semibold text-[var(--text)] hover:bg-[var(--hover-bg)] transition-colors"
+          >
+            <RefreshCw size={12} /> Sincronizar Google
+          </button>
+        )}
 
         <div className="flex items-center bg-[var(--surface-soft)] border border-[var(--border)] rounded-xl p-0.5">
           {(['week', 'day'] as CalendarView[]).map(v => (

@@ -11,6 +11,7 @@ export default defineConfig({
       '/aula':  { target: 'http://localhost:8080', changeOrigin: true },
       '/aluno': { target: 'http://localhost:8080', changeOrigin: true },
       '/auth':  { target: 'http://localhost:8080', changeOrigin: true },
+      '/google':  { target: 'http://localhost:8080', changeOrigin: true },
     },
   },
 })
