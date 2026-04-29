@@ -219,3 +219,16 @@
 1. Sistema identifica regras do contrato do aluno.
 2. Avalia limite de faltas, reposições e prazos.
 3. Retorna decisão para o caso de uso chamador.
+
+### UC-15 — Verificar disponibilidade de horários
+**Ator principal:** Sistema  
+**Objetivo:** Verificar se um horário está disponível para reagendamento.  
+**Pré-condições:** Existe solicitação de remarcação.  
+**Pós-condições:** Horário validado como disponível ou indisponível.  
+
+**Fluxo principal:**
+1. Sistema recebe solicitação de remarcação.
+2. Verifica horários disponíveis.
+3. Retorna resultado para o caso chamador.
+
+---
