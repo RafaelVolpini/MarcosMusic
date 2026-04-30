@@ -9,7 +9,7 @@ import {
   MessageCircle,
   Settings,
   ChevronLeft,
-  Gamepad2,
+  UserCircle,
 } from 'lucide-react';
 import type { ReactNode } from 'react';
 import type { Page } from '../../types';
@@ -27,14 +27,14 @@ interface NavItem {
 
 const NAV_ITEMS: NavItem[] = [
   { id: 'dashboard',    label: 'Dashboard',       icon: <Disc3 size={20} />,           color: 'var(--accent-500)', roles: ['teacher'] },
-  { id: 'aboutMe',      label: 'Sobre Mim',       icon: <Gamepad2 size={20} />,        color: 'var(--accent-500)', roles: ['teacher', 'student'] },
   { id: 'agenda',       label: 'Agenda',          icon: <CalendarDays size={20} />,    color: 'var(--accent-500)', roles: ['teacher', 'student'] },
   { id: 'students',     label: 'Alunos',          icon: <Users size={20} />,           color: 'var(--accent-500)', roles: ['teacher'] },
   { id: 'rooms',        label: 'Calendario',      icon: <CalendarClock size={20} />,   color: 'var(--accent-500)', roles: ['teacher'] },
   { id: 'rescheduling', label: 'Reagendamentos',  icon: <RefreshCw size={20} />,       color: 'var(--accent-500)', roles: ['teacher', 'student'] },
   { id: 'video',        label: 'Aulas Online',    icon: <Music size={20} />,           color: 'var(--accent-500)', roles: ['teacher', 'student'] },
   { id: 'lessonAlerts', label: 'Alertar Aula',    icon: <MessageCircle size={20} />,   color: 'var(--accent-500)', roles: ['teacher'] },
-  { id: 'settings',     label: 'Configurações',   icon: <Settings size={20} />,        color: 'var(--accent-500)', roles: ['teacher'] },
+  { id: 'settings',     label: 'Configurações',   icon: <Settings size={20} />,        color: 'var(--accent-500)', roles: ['teacher', 'student'] },
+  { id: 'profile',      label: 'Meu Perfil',      icon: <UserCircle size={20} />,      color: 'var(--accent-500)', roles: ['student'] },
 ];
 
 interface SidebarProps {
@@ -81,7 +81,7 @@ export function Sidebar({ collapsed, onToggle, activePage, onNavigate, user }: S
               transition={{ duration: 0.2 }}
               className="overflow-hidden"
             >
-              <p className="font-bold text-[var(--heading)] leading-tight tracking-tight text-lg whitespace-nowrap">Musga</p>
+              <p className="font-bold text-[var(--heading)] leading-tight tracking-tight text-lg whitespace-nowrap">Music Plataform</p>
               <p className="text-xs text-[var(--muted)] whitespace-nowrap">Gestão de Aulas</p>
             </motion.div>
           )}

@@ -1,20 +1,20 @@
 import { getToken } from '../lib/auth';
-
-export interface AlunoResumoDTO {
-  id: string;
-  nome: string | null;
-  email: string | null;
-  telefone: string | null;
-  status: boolean;
-}
+import type { Aluno } from '../types';
 
 function authHeaders(): HeadersInit {
   const token = getToken();
   return token ? { Authorization: `Bearer ${token}` } : {};
 }
 
-export async function listarAlunos(): Promise<AlunoResumoDTO[]> {
+export async function listarAlunos(): Promise<Aluno[]> {
   const res = await fetch('/aluno', { method: 'GET', headers: authHeaders() });
   if (!res.ok) throw new Error(`Erro ${res.status}`);
-  return res.json() as Promise<AlunoResumoDTO[]>;
+  const data = await res.json() as Array<{ id: string; nome: string | null; email: string | null; telefone: string | null; status: boolean }>;
+  return data.map(d => ({
+    id: d.id,
+    nome: d.nome ?? d.email ?? 'Aluno',
+    email: d.email ?? '',
+    telefone: d.telefone ?? '',
+    ativo: d.status !== false,
+  }));
 }

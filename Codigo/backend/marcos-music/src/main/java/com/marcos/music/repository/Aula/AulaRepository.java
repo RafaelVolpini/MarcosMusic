@@ -1,6 +1,7 @@
 package com.marcos.music.repository.Aula;
 
 import java.time.LocalDateTime;
+import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -12,6 +13,8 @@ import com.marcos.music.entity.Aula;
 
 public interface AulaRepository extends JpaRepository<Aula, Long>{
     Optional<Aula> findByAlunoIdAndDataInicioAndDataFim(UUID alunoId, LocalDateTime dataInicio, LocalDateTime dataFim);
+
+    List<Aula> findByFlagCanceladaFalse();
 
     @Query("""
         SELECT CASE WHEN COUNT(a) > 0 THEN true ELSE false END

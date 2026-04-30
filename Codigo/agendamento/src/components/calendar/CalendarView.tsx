@@ -4,7 +4,7 @@ import type { Lesson, WeeklyAvailability } from '../../types';
 import type { AuthUser } from '../../lib/auth';
 import {
   getWeekDays, formatDateISO, isToday,
-  timeToMinutes, cn,
+  timeToMinutes, cn, getDayKeyFromISODate,
 } from '../../utils';
 import { CalendarCellOverlay } from './CalendarCellOverlay';
 
@@ -24,6 +24,7 @@ type CalendarView = 'week' | 'day';
 interface CalendarProps {
   lessons: Lesson[];
   availability: WeeklyAvailability;
+  availabilityReposicao: WeeklyAvailability;
   currentUser?: AuthUser;
   onLessonClick: (lesson: Lesson) => void;
   onNewLesson: (date: string, time: string) => void;
@@ -43,6 +44,7 @@ function isOwnLesson(lesson: Lesson, currentUser?: AuthUser): boolean {
 export function CalendarView({
   lessons,
   availability,
+  availabilityReposicao,
   currentUser,
   onLessonClick,
   onNewLesson,
@@ -85,9 +87,11 @@ export function CalendarView({
 
   const displayDays = view === 'week' ? weekDays : [currentDate];
 
-  const isAvailable = useCallback((_dateISO: string, _time: string) => {
-    return true;
-  }, []);
+  const isAvailable = useCallback((dateISO: string, time: string) => {
+    const dayKey = getDayKeyFromISODate(dateISO);
+    const hourSlot = `${time.slice(0, 2)}:00`;
+    return availability[dayKey].includes(hourSlot) || availabilityReposicao[dayKey].includes(hourSlot);
+  }, [availability, availabilityReposicao]);
 
   const headerLabel = view === 'week'
     ? `${weekDays[0].toLocaleDateString('pt-BR', { day: 'numeric', month: 'short' })} – ${weekDays[6].toLocaleDateString('pt-BR', { day: 'numeric', month: 'short', year: 'numeric' })}`
@@ -115,7 +119,11 @@ export function CalendarView({
 
   const handleDrop = useCallback((date: string) => {
     if (dragging && dragOver && dragOver.date === date && isAvailable(date, dragOver.time)) {
-      onLessonMove(dragging.lesson.id, date, dragOver.time);
+      const sameDate = dragging.lesson.date === dragOver.date;
+      const sameTime = dragging.lesson.startTime === dragOver.time;
+      if (!sameDate || !sameTime) {
+        onLessonMove(dragging.lesson.id, date, dragOver.time);
+      }
     }
     setDragging(null);
     setDragOver(null);
@@ -216,7 +224,16 @@ export function CalendarView({
               {displayDays.map((day, di) => {
                 const dateStr = formatDateISO(day);
                 const cellTime = `${String(hour).padStart(2, '0')}:00`;
-                const unavailable = !isAvailable(dateStr, cellTime);
+
+                // Passado: dia anterior ao hoje, ou mesma hora já passou
+                const now = new Date();
+                const todayStr = formatDateISO(now);
+                const isPast = dateStr < todayStr || (dateStr === todayStr && hour < now.getHours());
+
+                // Indisponível só vale para datas a partir de hoje
+                const unavailable = !isPast && !isAvailable(dateStr, cellTime);
+                const blocked = isPast || unavailable;
+
                 const dayLessons = lessons.filter(l =>
                   l.date === dateStr &&
                   timeToMinutes(l.startTime) >= hour * 60 &&
@@ -228,24 +245,58 @@ export function CalendarView({
                     key={`cell-${hour}-${di}`}
                     className={cn(
                       'relative border-b border-l border-[var(--border)] group',
-                      unavailable ? 'cursor-not-allowed' : 'cursor-pointer',
+                      blocked ? 'cursor-not-allowed' : 'cursor-pointer',
                     )}
                     style={{ height: CELL_HEIGHT }}
-                    title={unavailable ? 'Horario indisponivel para agendamento' : 'Horario disponivel para agendamento'}
-                    onDragOver={(e) => handleDragOver(dateStr, hour, e)}
-                    onDrop={() => handleDrop(dateStr)}
-                    onClick={(e) => {
-                      if (unavailable) return;
-                      const selectedTime = `${String(hour).padStart(2, '0')}:00`;
-                      if (!isAvailable(dateStr, selectedTime)) return;
-                      onNewLesson(dateStr, selectedTime);
+                    onDragOver={blocked ? undefined : (e) => handleDragOver(dateStr, hour, e)}
+                    onDrop={blocked ? undefined : () => handleDrop(dateStr)}
+                    onClick={() => {
+                      if (blocked) return;
+                      onNewLesson(dateStr, cellTime);
                     }}
                   >
-                    {/* Hover overlay */}
-                    <CalendarCellOverlay visible={!unavailable} />
+                    {/* Passado: listras sutis usando --text (funciona em claro e escuro) */}
+                    {isPast && (
+                      <div
+                        className="absolute inset-0 pointer-events-none z-[1]"
+                        style={{
+                          background: 'repeating-linear-gradient(135deg, color-mix(in srgb, var(--text) 3%, transparent) 0px, color-mix(in srgb, var(--text) 3%, transparent) 5px, color-mix(in srgb, var(--text) 6%, transparent) 5px, color-mix(in srgb, var(--text) 6%, transparent) 6px)',
+                        }}
+                      />
+                    )}
+
+                    {/* Indisponível (futuro): listras accent, visível em claro e escuro */}
+                    {unavailable && (
+                      <div
+                        className="absolute inset-0 pointer-events-none z-0 flex items-center justify-center"
+                        style={{
+                          background: 'repeating-linear-gradient(135deg, color-mix(in srgb, var(--accent-500) 15%, transparent) 0px, color-mix(in srgb, var(--accent-500) 15%, transparent) 6px, color-mix(in srgb, var(--accent-500) 28%, transparent) 6px, color-mix(in srgb, var(--accent-500) 28%, transparent) 7px)',
+                        }}
+                      >
+                        <span
+                          className="text-[9px] font-bold uppercase tracking-widest select-none text-center leading-tight px-1.5 py-0.5 rounded pointer-events-none"
+                          style={{
+                            color: 'var(--accent-600)',
+                            backgroundColor: 'color-mix(in srgb, var(--surface) 88%, transparent)',
+                            position: 'relative',
+                            zIndex: 1,
+                          }}
+                        >
+                          Horário<br />indisponível
+                        </span>
+                      </div>
+                    )}
+
+                    {/* Tooltip contextual no hover — só quando não há aulas (evita sobreposição com card) */}
+                    {dayLessons.length === 0 && (
+                      <CellStateTooltip state={isPast ? 'past' : unavailable ? 'unavailable' : 'available'} />
+                    )}
+
+                    {/* Hover overlay — só células disponíveis */}
+                    <CalendarCellOverlay visible={!blocked} />
 
                     {/* Drag capture overlay — garante que o drop sempre aterrissa na célula */}
-                    {dragging && (
+                    {dragging && !blocked && (
                       <div
                         className="absolute inset-0 z-30"
                         onDragOver={(e) => handleDragOver(dateStr, hour, e)}
@@ -253,17 +304,8 @@ export function CalendarView({
                       />
                     )}
 
-                    {!dayLessons.length && (
-                      <span
-                        className={cn(
-                          'absolute top-1.5 right-1.5 w-2 h-2 rounded-full pointer-events-none',
-                          unavailable ? 'bg-rose-500' : 'bg-[var(--accent-500)]',
-                        )}
-                      />
-                    )}
-
                     {/* Drop indicator */}
-                    {dragOver?.date === dateStr && dragging && (
+                    {dragOver?.date === dateStr && dragging && !blocked && (
                       <div
                         className="absolute left-1 right-1 h-12 border-2 border-dashed rounded-lg opacity-60"
                         style={{
@@ -291,6 +333,8 @@ export function CalendarView({
                           key={lesson.id}
                           lesson={lesson}
                           hourStart={hour}
+                          isPast={isPast}
+                          blurContent={isPast && !!currentUser && currentUser.role !== 'teacher'}
                           isUnavailable={!isAvailable(dateStr, lesson.startTime)}
                           onClick={(e) => { e.stopPropagation(); onLessonClick(lesson); }}
                           onDragStart={(e) => handleDragStart(lesson, e)}
@@ -309,15 +353,57 @@ export function CalendarView({
 }
 
 
+// ─── Cell State Tooltip ──────────────────────────────────────────────────────
+
+function CellStateTooltip({ state }: { state: 'available' | 'unavailable' | 'past' }) {
+  const configs = {
+    available: {
+      label: 'Disponível',
+      bg: 'color-mix(in srgb, #22c55e 12%, var(--surface))',
+      border: '#16a34a',
+      color: '#16a34a',
+    },
+    unavailable: {
+      label: 'Indisponível',
+      bg: 'color-mix(in srgb, var(--accent-500) 14%, var(--surface))',
+      border: 'var(--accent-500)',
+      color: 'var(--accent-600)',
+    },
+    past: {
+      label: 'Encerrado',
+      bg: 'var(--surface-soft)',
+      border: 'var(--border)',
+      color: 'var(--muted)',
+    },
+  } as const;
+
+  const c = configs[state];
+
+  return (
+    <div className="absolute top-1/2 -translate-y-1/2 left-full ml-1 pointer-events-none z-50 opacity-0 group-hover:opacity-100 transition-opacity duration-150 flex items-center">
+      {/* seta apontando para a esquerda */}
+      <div style={{ width: 0, height: 0, borderTop: '5px solid transparent', borderBottom: '5px solid transparent', borderRight: `6px solid ${c.border}` }} />
+      <div
+        className="px-2 py-0.5 rounded text-[9px] font-bold uppercase tracking-wider border shadow-md whitespace-nowrap"
+        style={{ backgroundColor: c.bg, borderColor: c.border, color: c.color }}
+      >
+        {c.label}
+      </div>
+    </div>
+  );
+}
+
 interface LessonBlockProps {
   lesson: Lesson;
   hourStart: number;
   isUnavailable: boolean;
+  isPast?: boolean;
+  blurContent?: boolean;
   onClick: (e: React.MouseEvent) => void;
   onDragStart: (e: React.DragEvent) => void;
 }
 
-function LessonBlock({ lesson, hourStart, isUnavailable, onClick, onDragStart }: LessonBlockProps) {
+function LessonBlock({ lesson, hourStart, isUnavailable, isPast, blurContent, onClick, onDragStart }: LessonBlockProps) {
   const startMins = timeToMinutes(lesson.startTime);
   const endMins = timeToMinutes(lesson.endTime);
   const durationMins = endMins - startMins;
@@ -332,20 +418,23 @@ function LessonBlock({ lesson, hourStart, isUnavailable, onClick, onDragStart }:
 
   return (
     <div
-      draggable
-      onDragStart={onDragStart}
+      draggable={!isPast}
+      onDragStart={isPast ? undefined : onDragStart}
       onClick={onClick}
       className={cn(
-        'absolute left-1 right-1 rounded-lg px-2 py-1.5 cursor-pointer overflow-hidden select-none',
-        'border z-20 transition-all duration-150 hover:shadow-sm hover:z-30',
+        'absolute left-1 right-1 rounded-lg px-2 py-1.5 overflow-hidden select-none',
+        'border z-20 transition-all duration-150',
+        blurContent
+          ? 'cursor-default blur-[1.5px] opacity-50'
+          : 'cursor-pointer hover:shadow-sm hover:z-30',
         isCompleted && 'opacity-70',
         isUnavailable && 'ring-1 ring-rose-300',
       )}
       style={{
         top: `${top}px`,
         height: `${height}px`,
-        backgroundColor: 'var(--accent-50)',
-        borderColor: isUnavailable ? '#fda4af' : 'var(--accent-100)',
+        backgroundColor: 'color-mix(in srgb, var(--accent-500) 18%, var(--surface))',
+        borderColor: isUnavailable ? '#fda4af' : 'color-mix(in srgb, var(--accent-500) 40%, var(--surface))',
       }}
     >
       <div className="absolute left-0 inset-y-0 w-1" style={{ backgroundColor: 'var(--accent-500)' }} />

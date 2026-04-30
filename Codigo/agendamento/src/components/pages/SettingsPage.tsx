@@ -45,7 +45,7 @@ export function SettingsPage() {
   const { settings, setSettings, resetSettings, activeBundle, resolvedMode } = useThemeSettings();
   const [activeSection, setActiveSection] = useState('general');
   const [showAdvanced, setShowAdvanced] = useState(false);
-  const [schoolName, setSchoolName] = useState('Musga - Escola de Música');
+  const [schoolName, setSchoolName] = useState('Marcos-Music-Plataform');
   const [notifLessons, setNotifLessons] = useState(true);
   const [notifPayments, setNotifPayments] = useState(true);
   const [notifMessages, setNotifMessages] = useState(false);

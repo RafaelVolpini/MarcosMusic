@@ -2,7 +2,7 @@ import type { ReactNode } from 'react';
 import { useEffect, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
-  X, User, GraduationCap, Building2, Clock, FileText,
+  X, User, Clock, FileText,
   Video, ExternalLink, CheckCircle, XCircle, Bell,
   RefreshCw, Music,
 } from 'lucide-react';
@@ -167,26 +167,13 @@ export function LessonModal({ lesson, currentUser, onClose, onUpdate, onDelete, 
               {/* Body */}
               <div className="px-6 py-4 space-y-4 max-h-[60vh] overflow-y-auto">
 
-                {/* Student & Teacher */}
+                {/* Student & Time */}
                 <div className="grid grid-cols-2 gap-4">
                   <InfoRow icon={<User size={14} />} label="Aluno">
                     <div className="flex items-center gap-2">
                       <Avatar name={lesson.studentName} size="sm" />
                       <span className="text-sm font-medium text-[var(--heading)]">{lesson.studentName}</span>
                     </div>
-                  </InfoRow>
-                  <InfoRow icon={<GraduationCap size={14} />} label="Professor">
-                    <div className="flex items-center gap-2">
-                      <div className="w-5 h-5 rounded-full shrink-0" style={{ backgroundColor: lesson.color }} />
-                      <span className="text-sm font-medium text-[var(--heading)]">{lesson.teacherName}</span>
-                    </div>
-                  </InfoRow>
-                </div>
-
-                {/* Room & Time */}
-                <div className="grid grid-cols-2 gap-4">
-                  <InfoRow icon={<Building2 size={14} />} label="Sala">
-                    <span className="text-sm text-[var(--heading)]">{lesson.roomName}</span>
                   </InfoRow>
                   <InfoRow icon={<Clock size={14} />} label="Horário">
                     <span className="text-sm text-[var(--heading)]">

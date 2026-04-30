@@ -8,7 +8,6 @@ import type { AuthUser } from '../../lib/auth';
 
 const PAGE_LABELS: Record<Page, string> = {
   dashboard: 'Dashboard',
-  aboutMe: 'Sobre Mim',
   agenda: 'Agenda',
   students: 'Alunos',
   rooms: 'Calendario de Disponibilidade',

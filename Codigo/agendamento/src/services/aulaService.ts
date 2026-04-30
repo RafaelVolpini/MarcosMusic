@@ -1,4 +1,5 @@
 import { getToken } from '../lib/auth';
+import type { WeeklyAvailability } from '../types';
 
 // ─── DTOs espelhados do backend ──────────────────────────────────────────────
 
@@ -152,4 +153,56 @@ export async function validarHorario(dto: HorarioValidatorDTO): Promise<boolean>
     if (err instanceof Error) throw err;
     throw new Error('Não foi possível validar o horário. Tente novamente.');
   }
+}
+
+// ─── Disponibilidade ─────────────────────────────────────────────────────────
+
+export interface DisponibilidadeResponseDTO {
+  id: number;
+  diaSemana: string;
+  horario: string;
+  disponivel: boolean;
+  reposicao: boolean;
+  aulaMarcada: boolean;
+  aulaId: number | null;
+  alunoId: string | null;
+  alunoNome: string | null;
+  flagCancelada: boolean;
+}
+
+/**
+ * GET /disponibilidade
+ * Lista todos os slots de disponibilidade cadastrados no banco.
+ */
+export async function buscarDisponibilidade(): Promise<DisponibilidadeResponseDTO[]> {
+  const res = await fetch('/disponibilidade', { headers: authHeaders() });
+  return handleResponse<DisponibilidadeResponseDTO[]>(res);
+}
+
+/**
+ * POST /disponibilidade/salvar
+ * Salva (upsert) a disponibilidade semanal completa do professor.
+ */
+export async function salvarDisponibilidade(
+  availability: WeeklyAvailability,
+  availabilityReposicao: WeeklyAvailability,
+): Promise<DisponibilidadeResponseDTO[]> {
+  const res = await fetch('/disponibilidade/salvar', {
+    method: 'POST',
+    headers: authHeaders(),
+    body: JSON.stringify({ availability, availabilityReposicao }),
+  });
+  return handleResponse<DisponibilidadeResponseDTO[]>(res);
+}
+
+/**
+ * PATCH /disponibilidade/{id}/cancelar
+ * Cancela a aula vinculada a um slot de disponibilidade.
+ */
+export async function cancelarSlotDisponibilidade(id: number): Promise<DisponibilidadeResponseDTO> {
+  const res = await fetch(`/disponibilidade/${id}/cancelar`, {
+    method: 'PATCH',
+    headers: authHeaders(),
+  });
+  return handleResponse<DisponibilidadeResponseDTO>(res);
 }

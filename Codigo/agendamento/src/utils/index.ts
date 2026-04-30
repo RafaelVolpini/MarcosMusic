@@ -1,5 +1,6 @@
 import { clsx, type ClassValue } from 'clsx';
 import { twMerge } from 'tailwind-merge';
+import type { DayKey } from '../types';
 
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
@@ -87,7 +88,7 @@ export function generateMeetLink(): string {
   return `https://meet.google.com/${seg(3)}-${seg(4)}-${seg(3)}`;
 }
 
-export function getDayKeyFromISODate(dateISO: string): 'mon' | 'tue' | 'wed' | 'thu' | 'fri' | 'sat' | 'sun' {
+export function getDayKeyFromISODate(dateISO: string): DayKey {
   const day = new Date(`${dateISO}T00:00:00`).getDay();
-  return (['sun', 'mon', 'tue', 'wed', 'thu', 'fri', 'sat'][day] as 'mon' | 'tue' | 'wed' | 'thu' | 'fri' | 'sat' | 'sun');
+  return (['dom', 'seg', 'ter', 'qua', 'qui', 'sex', 'sab'][day] as DayKey);
 }

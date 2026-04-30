@@ -1,7 +1,7 @@
 import { useMemo, useState } from 'react';
 import { motion } from 'framer-motion';
 import { MessageCircle, Phone, PenSquare } from 'lucide-react';
-import type { Lesson, Student } from '../../types';
+import type { Lesson, Aluno } from '../../types';
 import { Card } from '../ui/Card';
 import { Badge } from '../ui/Badge';
 import { Avatar } from '../ui/Avatar';
@@ -10,7 +10,7 @@ import { formatTime } from '../../utils';
 
 interface LessonAlertsPageProps {
   lessons: Lesson[];
-  students: Student[];
+  students: Aluno[];
 }
 
 const onlyDigits = (value: string) => value.replace(/\D/g, '');
@@ -32,13 +32,13 @@ const getLessonDateLabel = (lessonDateISO: string) => {
 const MESSAGE_TEMPLATE_DEFAULT =
   'Olá, {nome}! Passando para lembrar da sua aula de {instrumento} na {data}, às {hora}, na {sala}. Até já!';
 
-const applyTemplate = (template: string, lesson: Lesson, student: Student) => {
+const applyTemplate = (template: string, lesson: Lesson, aluno: Aluno) => {
   const vars: Record<string, string> = {
-    nome: student.name,
+    nome: aluno.nome,
     instrumento: lesson.instrument,
     data: getLessonDateLabel(lesson.date),
     hora: formatTime(lesson.startTime),
-    sala: lesson.roomName,
+    sala: '',
   };
 
   return template.replace(/\{(nome|instrumento|data|hora|sala)\}/g, (_, key: string) => vars[key] ?? '');
@@ -58,8 +58,8 @@ export function LessonAlertsPage({ lessons, students }: LessonAlertsPageProps) {
   const visibleLessons = testMode ? fallbackLessons : upcomingLessons;
 
   const firstWithPhone = visibleLessons.find(lesson => {
-    const student = students.find(s => s.id === lesson.studentId);
-    return Boolean(student?.phone);
+    const aluno = students.find(s => s.id === lesson.studentId);
+    return Boolean(aluno?.telefone);
   });
 
   const [selectedLessonId, setSelectedLessonId] = useState(firstWithPhone?.id ?? visibleLessons[0]?.id ?? '');
@@ -80,12 +80,12 @@ export function LessonAlertsPage({ lessons, students }: LessonAlertsPageProps) {
     : '';
 
   const lessonsWithPhone = visibleLessons.filter(lesson => {
-    const student = students.find(s => s.id === lesson.studentId);
-    return Boolean(student?.phone);
+    const aluno = students.find(s => s.id === lesson.studentId);
+    return Boolean(aluno?.telefone);
   });
 
-  const handleSendWhatsApp = (student: Student, messageText: string) => {
-    const phone = normalizeBRPhone(student.phone);
+  const handleSendWhatsApp = (aluno: Aluno, messageText: string) => {
+    const phone = normalizeBRPhone(aluno.telefone);
     const url = `https://wa.me/${phone}?text=${encodeURIComponent(messageText)}`;
     window.open(url, '_blank', 'noopener,noreferrer');
   };
@@ -102,8 +102,8 @@ export function LessonAlertsPage({ lessons, students }: LessonAlertsPageProps) {
           </div>
           <div className="divide-y divide-[var(--border)]">
             {visibleLessons.map((lesson, i) => {
-              const student = students.find(s => s.id === lesson.studentId);
-              const hasPhone = Boolean(student?.phone);
+              const aluno = students.find(s => s.id === lesson.studentId);
+              const hasPhone = Boolean(aluno?.telefone);
               const isSelected = lesson.id === selectedLessonId;
 
               return (
@@ -119,7 +119,7 @@ export function LessonAlertsPage({ lessons, students }: LessonAlertsPageProps) {
                   <Avatar name={lesson.studentName} size="sm" />
                   <div className="flex-1 min-w-0">
                     <p className="text-sm font-medium text-[var(--heading)]">{lesson.studentName}</p>
-                    <p className="text-xs text-[var(--muted)]">{lesson.instrument} • {lesson.roomName}</p>
+                    <p className="text-xs text-[var(--muted)]">{lesson.instrument}</p>
                   </div>
                   <div className="text-right">
                     <p className="text-xs font-medium text-[var(--text)]">
@@ -171,7 +171,7 @@ export function LessonAlertsPage({ lessons, students }: LessonAlertsPageProps) {
 
             <Button
               className="w-full"
-              disabled={!selectedLesson || !selectedStudent?.phone || !previewMessage.trim()}
+              disabled={!selectedLesson || !selectedStudent?.telefone || !previewMessage.trim()}
               onClick={() => {
                 if (selectedLesson && selectedStudent) {
                   handleSendWhatsApp(selectedStudent, previewMessage);
@@ -182,7 +182,7 @@ export function LessonAlertsPage({ lessons, students }: LessonAlertsPageProps) {
               Enviar mensagem personalizada no WhatsApp
             </Button>
 
-            {selectedStudent && !selectedStudent.phone && (
+            {selectedStudent && !selectedStudent.telefone && (
               <p className="text-xs text-amber-600">Aluno sem telefone cadastrado.</p>
             )}
           </div>

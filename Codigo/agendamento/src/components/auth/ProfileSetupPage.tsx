@@ -1,6 +1,6 @@
 import { useState } from 'react';
-import { motion } from 'framer-motion';
-import { Music2, User, Phone } from 'lucide-react';
+import { motion, AnimatePresence } from 'framer-motion';
+import { User, Phone, Mail, CheckCircle2, Music2, ShieldCheck } from 'lucide-react';
 import { Button } from '../ui/Button';
 import type { AuthUser } from '../../lib/auth';
 import { getToken } from '../../lib/auth';
@@ -10,16 +10,29 @@ const SESSION_KEY = 'musga:auth:session';
 interface ProfileSetupPageProps {
   user: AuthUser;
   onComplete: (updatedUser: AuthUser) => void;
+  /** Quando true, renderiza como página interna (sem tela cheia). */
+  inApp?: boolean;
 }
 
-export function ProfileSetupPage({ user, onComplete }: ProfileSetupPageProps) {
-  const [nome, setNome] = useState('');
-  const [telefone, setTelefone] = useState('');
+export function ProfileSetupPage({ user, onComplete, inApp = false }: ProfileSetupPageProps) {
+  const [nome, setNome] = useState(user.name ?? '');
+  const [telefone, setTelefone] = useState(user.phone ?? '');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+  const [saved, setSaved] = useState(false);
+
+  const initials = nome.trim()
+    ? nome.trim().split(' ').map(p => p[0]).slice(0, 2).join('').toUpperCase()
+    : user.email.slice(0, 2).toUpperCase();
+
+  const filled = [nome.trim(), telefone.trim()].filter(Boolean).length;
+  const total = 2;
+  const pct = Math.round((filled / total) * 100);
 
   const inputCls =
-    'w-full rounded-xl border px-3 py-2 text-sm outline-none transition focus:border-transparent focus:ring-2 focus:ring-(--accent-100)';
+    'w-full rounded-xl border px-3 py-2.5 text-sm outline-none transition focus:border-transparent focus:ring-2 focus:ring-[var(--accent-300)]';
+  const inputStyle = { borderColor: 'var(--border)', color: 'var(--text)', backgroundColor: 'var(--input-bg, var(--surface))' };
+  const labelCls = 'mb-1.5 block text-xs font-semibold uppercase tracking-wide';
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -29,6 +42,7 @@ export function ProfileSetupPage({ user, onComplete }: ProfileSetupPageProps) {
     }
     setLoading(true);
     setError('');
+    setSaved(false);
 
     try {
       const token = getToken();
@@ -50,7 +64,6 @@ export function ProfileSetupPage({ user, onComplete }: ProfileSetupPageProps) {
 
       if (!res.ok) throw new Error('Erro ao salvar perfil');
 
-      // Update session with new name/phone
       const parts = nome.trim().split(' ');
       const firstName = parts[0] ?? '';
       const lastName = parts.slice(1).join(' ');
@@ -62,13 +75,163 @@ export function ProfileSetupPage({ user, onComplete }: ProfileSetupPageProps) {
         phone: telefone.trim(),
       };
       sessionStorage.setItem(SESSION_KEY, JSON.stringify(updatedUser));
-      onComplete(updatedUser);
+
+      if (inApp) {
+        setSaved(true);
+        setTimeout(() => setSaved(false), 3000);
+        onComplete(updatedUser);
+      } else {
+        onComplete(updatedUser);
+      }
     } catch {
       setError('Não foi possível salvar o perfil. Tente novamente.');
     } finally {
       setLoading(false);
     }
   };
+
+  const form = (
+    <form onSubmit={handleSubmit} className="space-y-5">
+      {/* Avatar + completion */}
+      <div className="flex items-center gap-4 p-4 rounded-2xl" style={{ backgroundColor: 'var(--surface-soft)', border: '1px solid var(--border)' }}>
+        <div
+          className="w-16 h-16 rounded-2xl flex items-center justify-center text-xl font-black text-white shrink-0 shadow-lg select-none"
+          style={{ background: 'linear-gradient(135deg, var(--accent-gradient-from), var(--accent-gradient-to))' }}
+        >
+          {initials}
+        </div>
+        <div className="flex-1 min-w-0">
+          <p className="text-sm font-bold truncate" style={{ color: 'var(--heading)' }}>
+            {nome.trim() || 'Seu nome'}
+          </p>
+          <p className="text-xs truncate mt-0.5" style={{ color: 'var(--muted)' }}>{user.email}</p>
+          <div className="mt-2 flex items-center gap-2">
+            <div className="flex-1 h-1.5 rounded-full overflow-hidden" style={{ backgroundColor: 'var(--border)' }}>
+              <motion.div
+                className="h-full rounded-full"
+                style={{ background: 'linear-gradient(90deg, var(--accent-gradient-from), var(--accent-gradient-to))' }}
+                initial={{ width: 0 }}
+                animate={{ width: `${pct}%` }}
+                transition={{ duration: 0.4 }}
+              />
+            </div>
+            <span className="text-[11px] font-semibold shrink-0" style={{ color: 'var(--accent-600)' }}>{pct}%</span>
+          </div>
+        </div>
+      </div>
+
+      {/* Email (read-only) */}
+      <div>
+        <label className={labelCls} style={{ color: 'var(--muted)' }}>E-mail</label>
+        <div className="relative">
+          <Mail size={14} className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2" style={{ color: 'var(--muted)' }} />
+          <input
+            className={`${inputCls} pl-9 opacity-60 cursor-not-allowed`}
+            style={{ ...inputStyle, borderColor: 'var(--border)' }}
+            value={user.email}
+            readOnly
+            tabIndex={-1}
+          />
+          <ShieldCheck size={14} className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2" style={{ color: 'var(--accent-500)' }} />
+        </div>
+        <p className="mt-1 text-[11px]" style={{ color: 'var(--muted)' }}>O e-mail não pode ser alterado.</p>
+      </div>
+
+      {/* Divider */}
+      <div className="flex items-center gap-3">
+        <div className="flex-1 h-px" style={{ backgroundColor: 'var(--border)' }} />
+        <span className="text-[11px] font-semibold uppercase tracking-wider" style={{ color: 'var(--muted)' }}>Dados pessoais</span>
+        <div className="flex-1 h-px" style={{ backgroundColor: 'var(--border)' }} />
+      </div>
+
+      {/* Nome */}
+      <div>
+        <label className={labelCls} style={{ color: 'var(--muted)' }}>Nome completo *</label>
+        <div className="relative">
+          <User size={14} className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2" style={{ color: 'var(--muted)' }} />
+          <input
+            className={`${inputCls} pl-9`}
+            style={inputStyle}
+            value={nome}
+            onChange={(e) => setNome(e.target.value)}
+            placeholder="Seu nome completo"
+            autoFocus={!inApp}
+          />
+        </div>
+      </div>
+
+      {/* Telefone */}
+      <div>
+        <label className={labelCls} style={{ color: 'var(--muted)' }}>Telefone</label>
+        <div className="relative">
+          <Phone size={14} className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2" style={{ color: 'var(--muted)' }} />
+          <input
+            className={`${inputCls} pl-9`}
+            style={inputStyle}
+            value={telefone}
+            onChange={(e) => setTelefone(e.target.value)}
+            placeholder="(11) 99999-9999"
+          />
+        </div>
+      </div>
+
+      {/* Error */}
+      <AnimatePresence>
+        {error && (
+          <motion.p
+            initial={{ opacity: 0, y: -4 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -4 }}
+            className="rounded-xl border border-rose-200 bg-rose-50 px-3 py-2 text-xs text-rose-600"
+          >
+            {error}
+          </motion.p>
+        )}
+      </AnimatePresence>
+
+      {/* Success */}
+      <AnimatePresence>
+        {saved && (
+          <motion.div
+            initial={{ opacity: 0, y: -4 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -4 }}
+            className="flex items-center gap-2 rounded-xl border px-3 py-2.5"
+            style={{ backgroundColor: 'var(--accent-50)', borderColor: 'var(--accent-100)', color: 'var(--accent-700)' }}
+          >
+            <CheckCircle2 size={14} />
+            <span className="text-xs font-semibold">Perfil salvo com sucesso!</span>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      <Button type="submit" className="w-full justify-center" disabled={loading}>
+        {loading ? 'Salvando...' : (inApp ? 'Salvar alterações' : 'Continuar')}
+      </Button>
+    </form>
+  );
+
+  if (inApp) {
+    return (
+      <div className="page-padding">
+        <div className="max-w-lg">
+          <div className="mb-6">
+            <h1 className="text-2xl font-black" style={{ color: 'var(--heading)' }}>Meu Perfil</h1>
+            <p className="mt-1 text-sm" style={{ color: 'var(--muted)' }}>Gerencie suas informações pessoais.</p>
+          </div>
+          <motion.div
+            initial={{ opacity: 0, y: 12 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.2 }}
+            className="app-surface rounded-3xl border p-8 shadow-sm"
+            style={{ borderColor: 'var(--border)' }}
+          >
+            {form}
+          </motion.div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="app-shell relative min-h-screen w-full overflow-y-auto p-4 sm:p-8">
@@ -86,54 +249,8 @@ export function ProfileSetupPage({ user, onComplete }: ProfileSetupPageProps) {
             </div>
             <span className="text-sm font-semibold" style={{ color: 'var(--text)' }}>marcos-music</span>
           </div>
-
-          <h2 className="text-2xl font-black" style={{ color: 'var(--text)' }}>Complete seu perfil</h2>
-          <p className="mt-1 text-sm mb-6" style={{ color: 'var(--muted)' }}>
-            Informe seu nome e telefone para continuar.
-          </p>
-
-          <form onSubmit={handleSubmit} className="space-y-4">
-            <div>
-              <label className="mb-1.5 block text-xs font-semibold uppercase tracking-wide" style={{ color: 'var(--muted)' }}>
-                Nome completo *
-              </label>
-              <div className="relative">
-                <User size={14} className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-[var(--muted)]" />
-                <input
-                  className={`${inputCls} pl-9`}
-                  style={{ borderColor: 'var(--border)', color: 'var(--text)', backgroundColor: 'var(--surface)' }}
-                  value={nome}
-                  onChange={(e) => setNome(e.target.value)}
-                  placeholder="Seu nome completo"
-                  autoFocus
-                />
-              </div>
-            </div>
-
-            <div>
-              <label className="mb-1.5 block text-xs font-semibold uppercase tracking-wide" style={{ color: 'var(--muted)' }}>
-                Telefone
-              </label>
-              <div className="relative">
-                <Phone size={14} className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-[var(--muted)]" />
-                <input
-                  className={`${inputCls} pl-9`}
-                  style={{ borderColor: 'var(--border)', color: 'var(--text)', backgroundColor: 'var(--surface)' }}
-                  value={telefone}
-                  onChange={(e) => setTelefone(e.target.value)}
-                  placeholder="(11) 99999-9999"
-                />
-              </div>
-            </div>
-
-            {error && (
-              <p className="rounded-xl border border-rose-200 bg-rose-50 px-3 py-2 text-xs text-rose-600">{error}</p>
-            )}
-
-            <Button type="submit" className="mt-2 w-full justify-center" disabled={loading}>
-              {loading ? 'Salvando...' : 'Continuar'}
-            </Button>
-          </form>
+          <h2 className="text-2xl font-black mb-6" style={{ color: 'var(--text)' }}>Complete seu perfil</h2>
+          {form}
         </motion.div>
       </div>
     </div>

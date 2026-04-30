@@ -43,7 +43,7 @@ export function ReschedulingPage({ lessons }: ReschedulingPageProps) {
                 <Avatar name={lesson.studentName} size="sm" />
                 <div className="flex-1 min-w-0">
                   <p className="text-sm font-medium text-[var(--heading)]">{lesson.studentName}</p>
-                  <p className="text-xs text-[var(--muted)]">{lesson.instrument} · {lesson.teacherName}</p>
+                  <p className="text-xs text-[var(--muted)]">{lesson.instrument}</p>
                 </div>
                 <div className="text-center hidden sm:block">
                   <p className="text-xs text-[var(--muted)]">Data atual</p>

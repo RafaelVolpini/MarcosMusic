@@ -1,49 +1,32 @@
 import { useState, useEffect, useCallback } from 'react';
-import type { Lesson, Teacher, Room, LessonType, WeeklyAvailability, Student } from '../../types';
+import type { Lesson, LessonType, WeeklyAvailability, Aluno } from '../../types';
 import type { AuthUser } from '../../lib/auth';
 import { CalendarView } from '../calendar/CalendarView';
 import { LessonModal } from '../modals/LessonModal';
 import { NewLessonModal } from '../modals/NewLessonModal';
 import { buscarAulas, cancelarAula, criarAula, reagendarAula, confirmarPresenca } from '../../services/aulaService';
 import { listarAlunos } from '../../services/alunoService';
-import type { AlunoResumoDTO } from '../../services/alunoService';
 import { toLesson } from '../../adapters/aulaAdapter';
 import { timeToMinutes, minutesToTime } from '../../utils';
 
 interface AgendaPageProps {
   lessons: Lesson[];
-  students: Student[];
-  teachers: Teacher[];
-  rooms: Room[];
   availability: WeeklyAvailability;
+  availabilityReposicao: WeeklyAvailability;
   currentUser: AuthUser;
   onUpdateLesson: (lesson: Lesson) => void;
   onDeleteLesson: (id: string) => void;
-  onCreateLesson: (data: {
-    studentId: string;
-    teacherId: string;
-    roomId: string;
-    date: string;
-    startTime: string;
-    endTime: string;
-    type: LessonType;
-    instrument: string;
-    notes: string;
-    meetLink: string;
-    attendanceConfirmed: boolean;
-    reminderMinutesBefore: number;
-  }) => void;
   onMoveLesson: (id: string, date: string, time: string) => void;
 }
 
 export function AgendaPage({
   lessons: lessonsProp,
-  students, teachers, rooms, availability, currentUser,
-  onUpdateLesson, onDeleteLesson, onCreateLesson, onMoveLesson,
+  availability, availabilityReposicao, currentUser,
+  onUpdateLesson, onDeleteLesson, onMoveLesson,
 }: AgendaPageProps) {
   const [selectedLesson, setSelectedLesson] = useState<Lesson | null>(null);
   const [newLessonModal, setNewLessonModal] = useState<{ date: string; time: string } | null>(null);
-  const [apiStudents, setApiStudents] = useState<Student[] | null>(null);
+  const [apiStudents, setApiStudents] = useState<Aluno[]>([]);
 
   // Aulas reais vindas do backend; fallback para as props enquanto não há dados da API
   const [apiLessons, setApiLessons] = useState<Lesson[] | null>(null);
@@ -85,26 +68,9 @@ export function AgendaPage({
   // Busca alunos reais do backend (para o modal de criar aula)
   useEffect(() => {
     listarAlunos()
-      .then((dtos: AlunoResumoDTO[]) => {
-        setApiStudents(dtos.map(dto => ({
-          id: dto.id,
-          name: dto.nome ?? dto.email ?? 'Aluno',
-          email: dto.email ?? '',
-          phone: dto.telefone ?? '',
-          instrument: 'Piano',
-          level: 'beginner' as const,
-          teacherId: '',
-          enrolledAt: '',
-          nextLesson: '',
-          totalLessons: 0,
-          balance: 0,
-          active: dto.status !== false,
-        })));
-      })
-      .catch(() => { /* mantém mock como fallback */ });
+      .then(setApiStudents)
+      .catch(() => { /* mantém lista vazia como fallback */ });
   }, []);
-
-  const effectiveStudents = apiStudents ?? students;
 
   // Usa dados da API quando disponíveis; caso contrário usa prop
   const visibleLessons = apiLessons ?? lessonsProp;
@@ -169,6 +135,7 @@ export function AgendaPage({
       <CalendarView
         lessons={visibleLessons}
         availability={availability}
+        availabilityReposicao={availabilityReposicao}
         currentUser={currentUser}
         onLessonClick={setSelectedLesson}
         onNewLesson={(date, time) => setNewLessonModal({ date, time })}
@@ -191,7 +158,7 @@ export function AgendaPage({
         defaultDate={newLessonModal?.date ?? ''}
         defaultTime={newLessonModal?.time ?? ''}
         lessons={visibleLessons}
-        students={effectiveStudents}
+        students={apiStudents}
         currentUser={currentUser}
         onClose={() => setNewLessonModal(null)}
         onCreate={async (data) => {

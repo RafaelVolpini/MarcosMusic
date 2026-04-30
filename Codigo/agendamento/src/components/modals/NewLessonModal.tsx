@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { X, Plus, Video } from 'lucide-react';
-import type { Lesson, LessonType, Student } from '../../types';
+import type { Lesson, LessonType, Aluno } from '../../types';
 import type { AuthUser } from '../../lib/auth';
 import { generateMeetLink, minutesToTime, timeToMinutes } from '../../utils';
 import { Button } from '../ui/Button';
@@ -15,7 +15,7 @@ interface NewLessonModalProps {
   defaultDate: string;
   defaultTime: string;
   lessons: Lesson[];
-  students: Student[];
+  students: Aluno[];
   currentUser: AuthUser;
   onClose: () => void;
   onCreate: (data: {
@@ -58,14 +58,14 @@ export function NewLessonModal({
       .toLowerCase();
 
   const isTeacher = currentUser.role === 'teacher';
-  const activeStudents = students.filter((student) => student.active !== false);
+  const activeStudents = students.filter((student) => student.ativo !== false);
   const studentFromEmail = currentUser.role === 'student'
     ? activeStudents.find((student) => student.email.trim().toLowerCase() === currentUser.email.trim().toLowerCase())
     : null;
 
   const studentFromFirstName = currentUser.role === 'student'
     ? activeStudents.find((student) => {
-      const studentFirstName = student.name.split(' ')[0] ?? '';
+      const studentFirstName = student.nome.split(' ')[0] ?? '';
       const sessionFirstName = currentUser.firstName || currentUser.name.split(' ')[0] || '';
       return normalizeName(studentFirstName) === normalizeName(sessionFirstName);
     })
@@ -172,7 +172,7 @@ export function NewLessonModal({
                   <label className={labelClass}>Aluno *</label>
                   <select value={studentId} onChange={e => setStudentId(e.target.value)} className={inputClass} disabled={!isTeacher}>
                     {selectableStudents.map((student) => (
-                      <option key={student.id} value={student.id}>{student.name}</option>
+                      <option key={student.id} value={student.id}>{student.nome}</option>
                     ))}
                   </select>
                 </div>
@@ -234,7 +234,7 @@ export function NewLessonModal({
 
                 {selectedStudent && (
                   <p className="text-xs text-[var(--muted)]">
-                    Contato do aluno: {selectedStudent.phone || 'sem telefone cadastrado'}
+                    Contato do aluno: {selectedStudent.telefone || 'sem telefone cadastrado'}
                   </p>
                 )}
 

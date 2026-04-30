@@ -8,9 +8,10 @@ export default defineConfig({
   server: {
     // Proxy para evitar CORS: todas as rotas do backend são redirecionadas ao Spring Boot
     proxy: {
-      '/aula':  { target: 'http://localhost:8080', changeOrigin: true },
-      '/aluno': { target: 'http://localhost:8080', changeOrigin: true },
-      '/auth':  { target: 'http://localhost:8080', changeOrigin: true },
+      '/aula':             { target: 'http://localhost:8080', changeOrigin: true },
+      '/aluno':            { target: 'http://localhost:8080', changeOrigin: true },
+      '/auth':             { target: 'http://localhost:8080', changeOrigin: true },
+      '/disponibilidade':  { target: 'http://localhost:8080', changeOrigin: true },
     },
   },
 })

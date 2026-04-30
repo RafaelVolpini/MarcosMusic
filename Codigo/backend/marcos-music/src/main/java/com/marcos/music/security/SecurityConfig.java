@@ -19,7 +19,7 @@ public class SecurityConfig {
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration config = new CorsConfiguration();
         config.setAllowedOrigins(List.of("http://localhost:5173", "http://localhost:5174", "http://localhost:5175", "http://localhost:5176"));
-        config.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "OPTIONS"));
+        config.setAllowedMethods(List.of("GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"));
         config.setAllowedHeaders(List.of("*"));
         config.setAllowCredentials(true);
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
@@ -35,6 +35,7 @@ public class SecurityConfig {
                 .requestMatchers("/auth/**", "/auth").permitAll()
                 .requestMatchers("/aluno/**", "/aluno").permitAll()
                 .requestMatchers("/aula/**", "/aula").permitAll()  // tirar apos testes de roles melhores
+                .requestMatchers("/disponibilidade/**", "/disponibilidade").permitAll()
                 .requestMatchers("/swagger-ui/**", "/v3/api-docs/**", "/swagger-ui.html").permitAll()
                 .anyRequest().authenticated()
             );

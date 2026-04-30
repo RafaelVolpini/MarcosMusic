@@ -1,37 +1,23 @@
 import { useState } from 'react';
 import { motion } from 'framer-motion';
-import { Search, Plus, BookOpen, Phone, Mail, Music } from 'lucide-react';
-import type { Student } from '../../types';
+import { Search, Plus, Phone, Mail } from 'lucide-react';
+import type { Aluno } from '../../types';
 import { Card } from '../ui/Card';
 import { Badge } from '../ui/Badge';
 import { Avatar } from '../ui/Avatar';
 import { Button } from '../ui/Button';
-import { cn } from '../../utils';
 
 interface StudentsPageProps {
-  students: Student[];
+  students: Aluno[];
 }
-
-const LEVEL_BADGE: Record<string, 'default' | 'warning' | 'success'> = {
-  beginner: 'default',
-  intermediate: 'warning',
-  advanced: 'success',
-};
-const LEVEL_LABEL: Record<string, string> = {
-  beginner: 'Iniciante',
-  intermediate: 'Intermediário',
-  advanced: 'Avançado',
-};
 
 export function StudentsPage({ students }: StudentsPageProps) {
   const [query, setQuery] = useState('');
-  const [levelFilter, setLevelFilter] = useState<string>('all');
 
-  const filtered = students.filter(s => {
-    const matchQ = s.name.toLowerCase().includes(query.toLowerCase()) || s.instrument.toLowerCase().includes(query.toLowerCase());
-    const matchL = levelFilter === 'all' || s.level === levelFilter;
-    return matchQ && matchL;
-  });
+  const filtered = students.filter(s =>
+    s.nome.toLowerCase().includes(query.toLowerCase()) ||
+    s.email.toLowerCase().includes(query.toLowerCase()),
+  );
 
   return (
     <div className="p-6">
@@ -46,21 +32,6 @@ export function StudentsPage({ students }: StudentsPageProps) {
             className="w-full h-10 pl-9 pr-4 bg-[var(--input-bg)] border border-[var(--input-border)] rounded-xl text-sm text-[var(--text)] focus:outline-none focus:ring-2 focus:ring-[var(--accent-500)]/30 placeholder:text-[var(--muted)]"
           />
         </div>
-        <div className="flex items-center gap-1.5 bg-[var(--surface)] border border-[var(--border)] rounded-xl p-1">
-          {['all', 'beginner', 'intermediate', 'advanced'].map(l => (
-            <button
-              key={l}
-              onClick={() => setLevelFilter(l)}
-              className={cn(
-                'px-3 h-7 text-xs font-semibold rounded-lg transition-all',
-                levelFilter === l ? 'text-white' : 'text-[var(--muted)] hover:text-[var(--text)]',
-              )}
-              style={levelFilter === l ? { background: 'linear-gradient(135deg, var(--accent-gradient-from), var(--accent-gradient-to))' } : {}}
-            >
-              {l === 'all' ? 'Todos' : LEVEL_LABEL[l]}
-            </button>
-          ))}
-        </div>
         <Button size="sm">
           <Plus size={14} /> Novo aluno
         </Button>
@@ -68,59 +39,33 @@ export function StudentsPage({ students }: StudentsPageProps) {
 
       {/* Student cards */}
       <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
-        {filtered.map((student, i) => (
+        {filtered.map((aluno, i) => (
           <motion.div
-            key={student.id}
+            key={aluno.id}
             initial={{ opacity: 0, y: 16 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: i * 0.04 }}
           >
             <Card hoverable className="p-5">
               <div className="flex items-start gap-3 mb-4">
-                <Avatar name={student.name} size="lg" />
+                <Avatar name={aluno.nome} size="lg" />
                 <div className="flex-1 min-w-0">
-                  <h3 className="text-sm font-bold text-[var(--heading)] truncate">{student.name}</h3>
-                  <div className="flex items-center gap-1.5 mt-0.5">
-                    <Music size={11} className="text-[var(--accent-500)]" />
-                    <span className="text-xs text-[var(--muted)]">{student.instrument}</span>
-                  </div>
-                  <Badge variant={LEVEL_BADGE[student.level]} className="mt-1.5">
-                    {LEVEL_LABEL[student.level]}
+                  <h3 className="text-sm font-bold text-[var(--heading)] truncate">{aluno.nome}</h3>
+                  <Badge variant={aluno.ativo ? 'success' : 'warning'} className="mt-1.5">
+                    {aluno.ativo ? 'Ativo' : 'Inativo'}
                   </Badge>
                 </div>
               </div>
 
-              <div className="space-y-2 mb-4">
-                <div className="flex items-center gap-2 text-xs text-[var(--muted)]">
-                  <BookOpen size={12} className="text-[var(--accent-500)] shrink-0" />
-                  <span>{student.totalLessons} aulas realizadas</span>
-                </div>
+              <div className="space-y-2">
                 <div className="flex items-center gap-2 text-xs text-[var(--muted)]">
                   <Mail size={12} className="text-[var(--accent-500)] shrink-0" />
-                  <span className="truncate">{student.email}</span>
+                  <span className="truncate">{aluno.email}</span>
                 </div>
-                <div className="flex items-center gap-2 text-xs text-[var(--muted)]">
-                  <Phone size={12} className="text-[var(--accent-500)] shrink-0" />
-                  <span>{student.phone}</span>
-                </div>
-              </div>
-
-              <div className="flex items-center justify-between pt-3 border-t border-[var(--border)]">
-                <div>
-                  <p className="text-xs text-[var(--muted)]">Saldo</p>
-                  <p className={cn(
-                    'text-sm font-bold',
-                    student.balance < 0 ? 'text-rose-500' : student.balance > 0 ? 'text-emerald-600' : 'text-[var(--text)]',
-                  )}>
-                    {student.balance < 0 ? '-' : student.balance > 0 ? '+' : ''}R$ {Math.abs(student.balance)}
-                  </p>
-                </div>
-                {student.nextLesson && (
-                  <div className="text-right">
-                    <p className="text-xs text-[var(--muted)]">Próxima aula</p>
-                    <p className="text-xs font-semibold text-[var(--text)]">
-                      {new Date(student.nextLesson).toLocaleDateString('pt-BR', { day: 'numeric', month: 'short' })}
-                    </p>
+                {aluno.telefone && (
+                  <div className="flex items-center gap-2 text-xs text-[var(--muted)]">
+                    <Phone size={12} className="text-[var(--accent-500)] shrink-0" />
+                    <span>{aluno.telefone}</span>
                   </div>
                 )}
               </div>
@@ -131,7 +76,6 @@ export function StudentsPage({ students }: StudentsPageProps) {
 
       {filtered.length === 0 && (
         <div className="text-center py-16 text-[var(--muted)]">
-          <Music size={40} className="mx-auto mb-3 opacity-40" />
           <p className="text-sm">Nenhum aluno encontrado</p>
         </div>
       )}

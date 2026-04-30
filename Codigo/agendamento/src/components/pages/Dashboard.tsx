@@ -3,7 +3,7 @@ import {
   Users, CalendarDays, Music,
   Clock, AlertCircle, CheckCircle,
 } from 'lucide-react';
-import type { Lesson, Student, Page } from '../../types';
+import type { Lesson, Aluno, Page } from '../../types';
 import { StatCard, Card } from '../ui/Card';
 import { Badge } from '../ui/Badge';
 import { Avatar } from '../ui/Avatar';
@@ -11,7 +11,7 @@ import { formatTime } from '../../utils';
 
 interface DashboardProps {
   lessons: Lesson[];
-  students: Student[];
+  students: Aluno[];
   onNavigate: (page: Page) => void;
 }
 
@@ -163,13 +163,13 @@ export function Dashboard({ lessons, students, onNavigate }: DashboardProps) {
             <div className="space-y-2">
               {students.slice(0, 4).map(s => (
                 <div key={s.id} className="flex items-center gap-3 p-2 rounded-lg hover:bg-[var(--hover-bg)] transition-colors">
-                  <Avatar name={s.name} size="sm" />
+                  <Avatar name={s.nome} size="sm" />
                   <div className="flex-1 min-w-0">
-                    <p className="text-xs font-semibold text-[var(--heading)] truncate">{s.name}</p>
-                    <p className="text-xs text-[var(--muted)]">{s.instrument}</p>
+                    <p className="text-xs font-semibold text-[var(--heading)] truncate">{s.nome}</p>
+                    <p className="text-xs text-[var(--muted)] truncate">{s.email}</p>
                   </div>
-                  <Badge variant={s.level === 'advanced' ? 'success' : s.level === 'intermediate' ? 'warning' : 'default'} className="text-[10px]">
-                    {s.level === 'beginner' ? 'Inic.' : s.level === 'intermediate' ? 'Inter.' : 'Avanç.'}
+                  <Badge variant={s.ativo ? 'success' : 'warning'} className="text-[10px]">
+                    {s.ativo ? 'Ativo' : 'Inativo'}
                   </Badge>
                 </div>
               ))}
