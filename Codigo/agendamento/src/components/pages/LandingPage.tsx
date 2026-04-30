@@ -562,6 +562,48 @@ export function LandingPage({ onEnterLogin }: LandingPageProps) {
       </section>
 
       {/* ══════════════════════════════════════════════
+          BENEFÍCIOS DA TECNOLOGIA PARA O ALUNO
+      ══════════════════════════════════════════════ */}
+      <section
+        className="border-y py-16"
+        style={{ borderColor: 'var(--border)', backgroundColor: 'var(--surface-soft)' }}
+      >
+        <div className="mx-auto max-w-6xl px-6">
+          <motion.div {...fadeUp(0)} className="mb-10 text-center">
+            <SectionLabel>Área do Aluno</SectionLabel>
+            <h2 className="mt-3 text-3xl font-black" style={{ color: 'var(--heading)' }}>
+              Tecnologia a favor do seu ensino
+            </h2>
+            <p className="mx-auto mt-2 max-w-md text-sm" style={{ color: 'var(--muted)' }}>
+              Ao se tornar um aluno da nossa escola, você ganha acesso exclusivo a um painel digital prático para acompanhar e gerenciar 100% da sua jornada musical.
+            </p>
+          </motion.div>
+
+          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+            {SOFTWARE_FEATURES.map((feat, i) => (
+              <motion.div
+                key={feat.title}
+                {...fadeUp(i * 0.05)}
+                className="app-surface flex gap-4 rounded-2xl border p-5"
+                style={{ borderColor: 'var(--border)' }}
+              >
+                <div
+                  className="mt-0.5 flex h-10 w-10 shrink-0 items-center justify-center rounded-xl"
+                  style={{ backgroundColor: 'var(--accent-icon-bg)', color: 'var(--accent-icon-fg)' }}
+                >
+                  {feat.icon}
+                </div>
+                <div>
+                  <h3 className="font-black" style={{ color: 'var(--text)' }}>{feat.title}</h3>
+                  <p className="mt-1 text-xs leading-relaxed" style={{ color: 'var(--muted)' }}>{feat.desc}</p>
+                </div>
+              </motion.div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* ══════════════════════════════════════════════
           CTA FINAL
       ══════════════════════════════════════════════ */}
       <section

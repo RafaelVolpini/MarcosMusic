@@ -16,6 +16,10 @@ public interface AulaRepository extends JpaRepository<Aula, Long>{
 
     List<Aula> findByFlagCanceladaFalse();
 
+    List<Aula> findByDataInicioBetweenAndFlagCanceladaFalse(LocalDateTime dataInicio, LocalDateTime dataFim);
+
+    List<Aula> findByAlunoIdAndDataInicioBetweenAndFlagCanceladaFalse(UUID alunoId, LocalDateTime dataInicio, LocalDateTime dataFim);
+
     @Query("""
         SELECT CASE WHEN COUNT(a) > 0 THEN true ELSE false END
         FROM Aula a

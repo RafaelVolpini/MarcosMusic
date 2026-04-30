@@ -4,16 +4,19 @@ import type { AuthUser } from '../../lib/auth';
 import { CalendarView } from '../calendar/CalendarView';
 import { LessonModal } from '../modals/LessonModal';
 import { NewLessonModal } from '../modals/NewLessonModal';
+import { SyncSuccessModal } from '../modals/SyncSuccessModal';
 import { buscarAulas, cancelarAula, criarAula, reagendarAula, confirmarPresenca } from '../../services/aulaService';
 import { listarAlunos } from '../../services/alunoService';
 import { toLesson } from '../../adapters/aulaAdapter';
 import { timeToMinutes, minutesToTime } from '../../utils';
+import { startGoogleOAuth, syncGoogleCalendar } from '../../services/googleService';
 
 interface AgendaPageProps {
   lessons: Lesson[];
   availability: WeeklyAvailability;
   availabilityReposicao: WeeklyAvailability;
   currentUser: AuthUser;
+  onNavigate: (page: Page) => void;
   onUpdateLesson: (lesson: Lesson) => void;
   onDeleteLesson: (id: string) => void;
   onMoveLesson: (id: string, date: string, time: string) => void;
@@ -21,7 +24,7 @@ interface AgendaPageProps {
 
 export function AgendaPage({
   lessons: lessonsProp,
-  availability, availabilityReposicao, currentUser,
+  availability, availabilityReposicao, currentUser, onNavigate,
   onUpdateLesson, onDeleteLesson, onMoveLesson,
 }: AgendaPageProps) {
   const [selectedLesson, setSelectedLesson] = useState<Lesson | null>(null);
@@ -32,6 +35,12 @@ export function AgendaPage({
   const [apiLessons, setApiLessons] = useState<Lesson[] | null>(null);
   const [loadingLessons, setLoadingLessons] = useState(false);
   const [apiError, setApiError] = useState<string | null>(null);
+  const [syncMessage, setSyncMessage] = useState<string | null>(null);
+  const [syncError, setSyncError] = useState<string | null>(null);
+  const [visibleRange, setVisibleRange] = useState<{ start: string; end: string } | null>(null);
+  const [pendingSync, setPendingSync] = useState(false);
+  const [showSuccessModal, setShowSuccessModal] = useState(false);
+  const [syncCount, setSyncCount] = useState(0);
 
   const fetchAulas = useCallback(async (dataInicio: string, dataFim: string) => {
     setLoadingLessons(true);
@@ -63,7 +72,55 @@ export function AgendaPage({
 
   const handleWeekChange = useCallback((dataInicio: string, dataFim: string) => {
     fetchAulas(dataInicio, dataFim);
+    setVisibleRange({ start: dataInicio, end: dataFim });
   }, [fetchAulas]);
+
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const googleStatus = params.get('google');
+    if (!googleStatus) return;
+
+    params.delete('google');
+    const url = new URL(window.location.href);
+    url.search = params.toString();
+    window.history.replaceState({}, '', url.toString());
+
+    if (googleStatus !== 'connected') {
+      setSyncError('Não foi possível conectar ao Google Calendar.');
+      return;
+    }
+
+    setPendingSync(true);
+  }, []);
+
+  useEffect(() => {
+    if (!pendingSync) return;
+    if (!visibleRange) {
+      setSyncMessage('Conta Google conectada. Selecione uma semana para sincronizar.');
+      return;
+    }
+
+    setPendingSync(false);
+    syncGoogleCalendar(visibleRange.start, visibleRange.end)
+      .then((result) => {
+        setSyncCount(result.success);
+        setShowSuccessModal(true);
+      })
+      .catch((err) => {
+        const msg = err instanceof Error ? err.message : 'Erro ao sincronizar com o Google.';
+        setSyncError(msg);
+      });
+  }, [pendingSync, visibleRange]);
+
+  const handleSync = useCallback(async () => {
+    const returnUrl = `${window.location.origin}/agenda`;
+    try {
+      await startGoogleOAuth(undefined, returnUrl);
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : 'Erro ao iniciar sincronização.';
+      setSyncError(msg);
+    }
+  }, [currentUser]);
 
   // Busca alunos reais do backend (para o modal de criar aula)
   useEffect(() => {
@@ -131,6 +188,12 @@ export function AgendaPage({
           ⚠ {apiError}
         </div>
       )}
+      {/* Mensagens de erro continuam como banners discretos */}
+      {syncError && (
+        <div className="px-6 py-1.5 text-xs text-rose-600 bg-rose-50 border-b border-rose-200 shrink-0">
+          ⚠ {syncError}
+        </div>
+      )}
 
       <CalendarView
         lessons={visibleLessons}
@@ -140,6 +203,7 @@ export function AgendaPage({
         onLessonClick={setSelectedLesson}
         onNewLesson={(date, time) => setNewLessonModal({ date, time })}
         onLessonMove={handleMoveLesson}
+        onSyncCalendar={handleSync}
         onWeekChange={handleWeekChange}
       />
 
@@ -175,6 +239,17 @@ export function AgendaPage({
             alert(err instanceof Error ? err.message : 'Erro ao criar aula.');
           }
           setNewLessonModal(null);
+        }}
+      />
+
+      <SyncSuccessModal
+        isOpen={showSuccessModal}
+        count={syncCount}
+        onClose={() => {
+          setShowSuccessModal(false);
+          // Volta para a tela inicial (dashboard para admin, agenda é o padrão para aluno mas o user pediu pra "voltar")
+          const target: Page = currentUser.role === 'teacher' ? 'dashboard' : 'aboutMe';
+          onNavigate(target);
         }}
       />
     </div>

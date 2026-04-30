@@ -17,6 +17,7 @@ import type { Page, Lesson, WeeklyAvailability, Aluno } from './types';
 import { mockVideos } from './data/mockData';
 import {
   logout,
+  getUser,
   hasAcceptedContract,
   type AuthUser,
   type ContractAcceptance,
@@ -62,6 +63,28 @@ function App() {
   const [availabilityReposicao, setAvailabilityReposicao] = useState<WeeklyAvailability>({
     seg: [], ter: [], qua: [], qui: [], sex: [], sab: [], dom: [],
   });
+
+  // Tenta restaurar a sessão ao carregar a página
+  useEffect(() => {
+    const savedUser = getUser();
+    if (savedUser) {
+      setSessionUser(savedUser);
+      setAppState('app');
+      
+      // Se for professor, já aceitou contrato. Se for aluno, verifica o campo termos.
+      if (savedUser.role === 'teacher' || savedUser.termos === true) {
+        setContractAccepted(true);
+      }
+    }
+  }, []);
+
+  // Detecta se voltamos do Google OAuth para manter na Agenda
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    if (params.has('google')) {
+      setActivePage('agenda');
+    }
+  }, []);
 
   const studentFromEmail = sessionUser?.role === 'student'
     ? alunos.find((aluno) => aluno.email.trim().toLowerCase() === sessionUser.email.trim().toLowerCase())
@@ -223,6 +246,7 @@ function App() {
             onUpdateLesson={handleUpdateLesson}
             onDeleteLesson={handleDeleteLesson}
             onMoveLesson={handleMoveLesson}
+            onNavigate={setActivePage}
           />
         );
       case 'students':
