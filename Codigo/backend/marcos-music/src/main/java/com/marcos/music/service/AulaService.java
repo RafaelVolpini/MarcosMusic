@@ -65,10 +65,9 @@ public class AulaService {
         return aulaCustomRepository.buscar(f);
     }
 
-    public Aula criar(String email, CriarAulaDTO dto) {
+    public List<Aula> criar(String email, CriarAulaDTO dto) {
         Aluno aluno;
         if (dto.getStudentId() != null && !dto.getStudentId().isBlank()) {
-            // Professor criando aula para um aluno específico
             UUID studentUUID;
             try {
                 studentUUID = UUID.fromString(dto.getStudentId());
@@ -78,15 +77,35 @@ public class AulaService {
             aluno = alunoRepository.findById(studentUUID)
                     .orElseThrow(() -> new RuntimeException("Aluno não encontrado"));
         } else {
-            // Aluno criando sua própria aula via JWT
             Usuario usuario = usuarioRepository.findByEmail(email)
                     .orElseThrow(() -> new RuntimeException("Usuário não encontrado"));
             aluno = alunoRepository.findById(usuario.getId())
                     .orElseThrow(() -> new RuntimeException("Aluno não encontrado"));
         }
-        Aula nova = salvar(new Aula(dto.getDataInicio(), dto.getDataFim(), aluno));
-        logAula(nova, "AGENDADO");
-        return nova;
+
+        boolean recorrente = Boolean.TRUE.equals(dto.getRecorrente());
+        List<Aula> aulas = new ArrayList<>();
+
+        Aula primeira = salvar(new Aula(dto.getDataInicio(), dto.getDataFim(), aluno, recorrente));
+        logAula(primeira, "AGENDADO");
+        aulas.add(primeira);
+
+        if (recorrente) {
+            // Cria aulas semanais por 1 ano (51 ocorrências adicionais = 52 no total)
+            for (int i = 1; i <= 51; i++) {
+                LocalDateTime nextInicio = dto.getDataInicio().plusWeeks(i);
+                LocalDateTime nextFim = dto.getDataFim().plusWeeks(i);
+                try {
+                    Aula proxima = salvar(new Aula(nextInicio, nextFim, aluno, true));
+                    logAula(proxima, "AGENDADO");
+                    aulas.add(proxima);
+                } catch (RuntimeException e) {
+                    // Ignora semanas com conflito de horário
+                }
+            }
+        }
+
+        return aulas;
     }
 
     public List<Aula> gerarPorHorario(AulaAluno e) throws RuntimeException{

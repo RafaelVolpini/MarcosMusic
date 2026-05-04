@@ -1,9 +1,10 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { Settings, Bell, Palette, Shield, Globe, Check, RotateCcw, Sliders } from 'lucide-react';
+import { Settings, Bell, Palette, Shield, Globe, Check, RotateCcw, Sliders, RefreshCw, CheckCircle2 } from 'lucide-react';
 import { Card } from '../ui/Card';
 import { Button } from '../ui/Button';
 import { cn } from '../../utils';
+import { startGoogleOAuth, syncGoogleCalendar } from '../../services/googleService';
 import {
   useThemeSettings,
   type ThemePreset,
@@ -49,6 +50,66 @@ export function SettingsPage() {
   const [notifLessons, setNotifLessons] = useState(true);
   const [notifPayments, setNotifPayments] = useState(true);
   const [notifMessages, setNotifMessages] = useState(false);
+
+  // Google Calendar state
+  const [googleConnected, setGoogleConnected] = useState(false);
+  const [googleConnecting, setGoogleConnecting] = useState(false);
+  const [googleError, setGoogleError] = useState<string | null>(null);
+  const [syncLoading, setSyncLoading] = useState(false);
+  const [syncSuccess, setSyncSuccess] = useState<number | null>(null);
+
+  // Detecta retorno do OAuth do Google
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const status = params.get('google');
+    if (!status) return;
+
+    // Limpa o param da URL
+    params.delete('google');
+    const url = new URL(window.location.href);
+    url.search = params.toString();
+    window.history.replaceState({}, '', url.toString());
+
+    if (status === 'connected') {
+      setGoogleConnected(true);
+      setActiveSection('integrations');
+    } else {
+      setGoogleError('Não foi possível conectar ao Google Calendar.');
+      setActiveSection('integrations');
+    }
+  }, []);
+
+  const handleConnectGoogle = async () => {
+    setGoogleConnecting(true);
+    setGoogleError(null);
+    try {
+      const returnUrl = `${window.location.origin}${window.location.pathname}`;
+      await startGoogleOAuth(undefined, returnUrl);
+    } catch (err) {
+      setGoogleError(err instanceof Error ? err.message : 'Erro ao conectar com Google.');
+      setGoogleConnecting(false);
+    }
+  };
+
+  const handleSyncGoogle = async () => {
+    setSyncLoading(true);
+    setSyncSuccess(null);
+    setGoogleError(null);
+    try {
+      // Sincroniza o mês atual
+      const now = new Date();
+      const start = new Date(now.getFullYear(), now.getMonth(), 1);
+      const end = new Date(now.getFullYear(), now.getMonth() + 1, 0, 23, 59, 59);
+      const fmt = (d: Date) =>
+        `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+      const result = await syncGoogleCalendar(`${fmt(start)}T00:00:00`, `${fmt(end)}T23:59:59`);
+      setSyncSuccess(result.success);
+    } catch (err) {
+      setGoogleError(err instanceof Error ? err.message : 'Erro ao sincronizar.');
+    } finally {
+      setSyncLoading(false);
+    }
+  };
 
   const inputCls = 'w-full border border-[var(--input-border)] bg-[var(--input-bg)] rounded-xl px-3 py-2 text-sm text-[var(--input-text)] focus:outline-none focus:ring-2 focus:ring-[var(--accent-100)]';
   const labelCls = 'text-xs font-medium text-[var(--muted)] mb-1.5 block';
@@ -388,12 +449,53 @@ export function SettingsPage() {
             {activeSection === 'integrations' && (
               <Card className="p-6 app-surface">
                 <h2 className="text-sm font-semibold text-[var(--heading)] mb-5">Integrações</h2>
+                {googleError && (
+                  <div className="mb-4 px-4 py-2.5 rounded-xl bg-rose-50 border border-rose-200 text-xs text-rose-600">
+                    ⚠ {googleError}
+                  </div>
+                )}
+                {syncSuccess !== null && (
+                  <div className="mb-4 px-4 py-2.5 rounded-xl bg-emerald-50 border border-emerald-200 text-xs text-emerald-700 flex items-center gap-2">
+                    <CheckCircle2 size={13} /> {syncSuccess} aula(s) sincronizada(s) com sucesso.
+                  </div>
+                )}
                 <div className="space-y-3">
+                  {/* Google Calendar — funcional */}
+                  <div className="flex items-center gap-4 p-4 border border-[var(--border)] rounded-2xl hover:border-[var(--accent-500)] transition-colors">
+                    <div className="w-10 h-10 rounded-xl flex items-center justify-center text-white font-bold text-sm" style={{ backgroundColor: '#0F9D58' }}>
+                      G
+                    </div>
+                    <div className="flex-1">
+                      <p className="text-sm font-medium text-[var(--heading)]">Google Calendar</p>
+                      <p className="text-xs text-[var(--muted)]">
+                        {googleConnected ? 'Conta conectada — sincronize suas aulas' : 'Sincronizar agenda com Google Calendar'}
+                      </p>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      {googleConnected && (
+                        <button
+                          onClick={handleSyncGoogle}
+                          disabled={syncLoading}
+                          className="flex items-center gap-1.5 px-3 h-8 rounded-xl border border-[var(--border)] text-xs font-semibold text-[var(--text)] hover:bg-[var(--hover-bg)] disabled:opacity-50 transition-colors"
+                        >
+                          <RefreshCw size={12} className={syncLoading ? 'animate-spin' : ''} />
+                          {syncLoading ? 'Sincronizando…' : 'Sincronizar'}
+                        </button>
+                      )}
+                      <Button
+                        size="sm"
+                        variant={googleConnected ? 'secondary' : 'primary'}
+                        onClick={googleConnected ? () => setGoogleConnected(false) : handleConnectGoogle}
+                        disabled={googleConnecting}
+                      >
+                        {googleConnecting ? 'Aguarde…' : googleConnected ? 'Desconectar' : 'Conectar'}
+                      </Button>
+                    </div>
+                  </div>
+
+                  {/* Outros (estáticos) */}
                   {[
-                    { name: 'Google Meet',     desc: 'Gerar links de videoconferência', connected: true,  color: '#4285F4' },
-                    { name: 'Google Calendar', desc: 'Sincronizar agenda',              connected: false, color: '#0F9D58' },
-                    { name: 'WhatsApp',        desc: 'Notificações por mensagem',       connected: false, color: '#25D366' },
-                    { name: 'Stripe',          desc: 'Pagamentos online',               connected: false, color: '#635BFF' },
+                    { name: 'Google Meet',  desc: 'Gerar links de videoconferência', connected: true,  color: '#4285F4' },
                   ].map(integration => (
                     <div
                       key={integration.name}

@@ -6,6 +6,7 @@ import com.marcos.music.entity.Aluno;
 import com.marcos.music.service.AlunoService;
 import com.marcos.music.service.AulaService;
 
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -48,5 +49,15 @@ public class AlunoController {
     public Boolean validarHorario(@RequestBody HorarioValidatorDTO dto){
         return aService.validarHorarioSemana(dto);
     }
-    
+
+    @DeleteMapping("/{id}")
+    public ResponseEntity<Void> deletar(@PathVariable UUID id) {
+        try {
+            service.deletarAluno(id);
+            return ResponseEntity.noContent().build();
+        } catch (RuntimeException e) {
+            return ResponseEntity.notFound().build();
+        }
+    }
+
 }

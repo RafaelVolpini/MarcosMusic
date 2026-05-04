@@ -160,12 +160,10 @@ export function CalendarView({
 
         {/* View toggle */}
         <div className="hidden lg:flex items-center gap-3 ml-1 text-[11px] text-[var(--muted)]">
-          {(!currentUser || currentUser.role === 'teacher') && (
             <span className="inline-flex items-center gap-1 text-[var(--muted)] italic">
               <MousePointerClick size={11} />
               Clique em um horário para agendar
             </span>
-          )}
         </div>
 
         {onSyncCalendar && (
@@ -243,7 +241,6 @@ export function CalendarView({
 
                 // Indisponível só vale para datas a partir de hoje
                 const unavailable = !isPast && !isAvailable(dateStr, cellTime);
-                const blocked = isPast || unavailable;
 
                 const dayLessons = lessons.filter(l =>
                   l.date === dateStr &&
@@ -251,12 +248,16 @@ export function CalendarView({
                   timeToMinutes(l.startTime) < (hour + 1) * 60
                 );
 
+                // Célula bloqueada: passado, indisponível, ou já tem aula (própria ou de outro aluno)
+                const hasAnyLesson = dayLessons.length > 0;
+                const blocked = isPast || unavailable || hasAnyLesson;
+
                 return (
                   <div
                     key={`cell-${hour}-${di}`}
                     className={cn(
                       'relative border-b border-l border-[var(--border)] group',
-                      blocked ? 'cursor-not-allowed' : 'cursor-pointer',
+                      isPast || unavailable ? 'cursor-not-allowed' : hasAnyLesson ? 'cursor-default' : 'cursor-pointer',
                     )}
                     style={{ height: CELL_HEIGHT }}
                     onDragOver={blocked ? undefined : (e) => handleDragOver(dateStr, hour, e)}
@@ -279,7 +280,7 @@ export function CalendarView({
                     {/* Indisponível (futuro): listras accent, visível em claro e escuro */}
                     {unavailable && (
                       <div
-                        className="absolute inset-0 pointer-events-none z-0 flex items-center justify-center"
+                        className="absolute inset-0 overflow-hidden pointer-events-none z-0 flex items-center justify-center"
                         style={{
                           background: 'repeating-linear-gradient(135deg, color-mix(in srgb, var(--accent-500) 15%, transparent) 0px, color-mix(in srgb, var(--accent-500) 15%, transparent) 6px, color-mix(in srgb, var(--accent-500) 28%, transparent) 6px, color-mix(in srgb, var(--accent-500) 28%, transparent) 7px)',
                         }}
@@ -298,7 +299,7 @@ export function CalendarView({
                       </div>
                     )}
 
-                    {/* Tooltip contextual no hover — só quando não há aulas (evita sobreposição com card) */}
+                    {/* Tooltip contextual no hover — só quando não há aulas */}
                     {dayLessons.length === 0 && (
                       <CellStateTooltip state={isPast ? 'past' : unavailable ? 'unavailable' : 'available'} />
                     )}
@@ -391,15 +392,15 @@ function CellStateTooltip({ state }: { state: 'available' | 'unavailable' | 'pas
   const c = configs[state];
 
   return (
-    <div className="absolute top-1/2 -translate-y-1/2 left-full ml-1 pointer-events-none z-50 opacity-0 group-hover:opacity-100 transition-opacity duration-150 flex items-center">
-      {/* seta apontando para a esquerda */}
-      <div style={{ width: 0, height: 0, borderTop: '5px solid transparent', borderBottom: '5px solid transparent', borderRight: `6px solid ${c.border}` }} />
+    <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-1 pointer-events-none z-50 opacity-0 group-hover:opacity-100 transition-opacity duration-150 flex flex-col items-center">
       <div
         className="px-2 py-0.5 rounded text-[9px] font-bold uppercase tracking-wider border shadow-md whitespace-nowrap"
         style={{ backgroundColor: c.bg, borderColor: c.border, color: c.color }}
       >
         {c.label}
       </div>
+      {/* seta apontando para baixo */}
+      <div style={{ width: 0, height: 0, borderLeft: '5px solid transparent', borderRight: '5px solid transparent', borderTop: `6px solid ${c.border}` }} />
     </div>
   );
 }
@@ -495,10 +496,19 @@ function ReservedBlock({ lesson, hourStart }: ReservedBlockProps) {
 
   return (
     <div
-      title={`Horário reservado · ${lesson.startTime} – ${lesson.endTime}`}
-      className="absolute left-1 right-1 rounded-lg overflow-hidden select-none z-10 cursor-default"
+      className="absolute left-1 right-1 rounded-lg select-none z-10 cursor-default group/reserved"
       style={{ top: `${top}px`, height: `${height}px` }}
     >
+      {/* Tooltip acima do bloco */}
+      <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-1 pointer-events-none z-50 opacity-0 group-hover/reserved:opacity-100 transition-opacity duration-150 flex flex-col items-center">
+        <div
+          className="px-2 py-0.5 rounded text-[9px] font-bold uppercase tracking-wider border shadow-md whitespace-nowrap"
+          style={{ backgroundColor: 'var(--surface)', borderColor: 'var(--border)', color: 'var(--muted)' }}
+        >
+          Reservado · {lesson.startTime} – {lesson.endTime}
+        </div>
+        <div style={{ width: 0, height: 0, borderLeft: '5px solid transparent', borderRight: '5px solid transparent', borderTop: `6px solid var(--border)` }} />
+      </div>
       {/* Fundo listrado */}
       <div
         className="absolute inset-0 rounded-lg opacity-70"

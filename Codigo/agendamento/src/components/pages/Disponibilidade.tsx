@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useState, useCallback } from 'react';
 import { motion } from 'framer-motion';
 import { AlertTriangle, CalendarClock, Check, Clock3, GraduationCap, Plus, RefreshCw, Save, Trash2 } from 'lucide-react';
 import type { Lesson, WeeklyAvailability, DayKey } from '../../types';
@@ -6,7 +6,7 @@ import { toLesson } from '../../adapters/aulaAdapter';
 import { Button } from '../ui/Button';
 import { cn } from '../../utils';
 import { getDayKeyFromISODate, timeToMinutes } from '../../utils';
-import { salvarDisponibilidade, buscarAulas } from '../../services/aulaService';
+import { salvarDisponibilidade, buscarAulas, buscarDisponibilidade, type DisponibilidadeResponseDTO } from '../../services/aulaService';
 
 const WEEK_DAYS = [
   { key: 'seg' as DayKey, label: 'Segunda' },
@@ -32,6 +32,43 @@ interface RoomsPageProps {
 export function RoomsPage({ availability, availabilityReposicao, lessons, onChangeAvailability, onChangeAvailabilityReposicao }: RoomsPageProps) {
   const [warning, setWarning] = useState('');
   const [saveStatus, setSaveStatus] = useState<'idle' | 'saving' | 'saved' | 'error'>('idle');
+  const [loadingDb, setLoadingDb] = useState(true);
+
+  // ── Converte DTOs do banco em WeeklyAvailability ────────────────────────
+  const applyDTOs = useCallback((dtos: DisponibilidadeResponseDTO[]) => {
+    const empty = (): WeeklyAvailability => ({ seg: [], ter: [], qua: [], qui: [], sex: [], sab: [], dom: [] });
+    const avail = empty();
+    const repos = empty();
+
+    for (const dto of dtos) {
+      const day = dto.diaSemana as DayKey;
+      if (!avail[day]) continue; // dia desconhecido — ignora
+      if (dto.disponivel) {
+        avail[day] = [...avail[day], dto.horario].sort((a, b) => timeToMinutes(a) - timeToMinutes(b));
+      }
+      if (dto.reposicao) {
+        repos[day] = [...repos[day], dto.horario].sort((a, b) => timeToMinutes(a) - timeToMinutes(b));
+      }
+    }
+
+    onChangeAvailability(avail);
+    onChangeAvailabilityReposicao(repos);
+  }, [onChangeAvailability, onChangeAvailabilityReposicao]);
+
+  // ── Carrega disponibilidade do banco ao montar ──────────────────────────
+  const loadFromDb = useCallback(async () => {
+    setLoadingDb(true);
+    try {
+      const dtos = await buscarDisponibilidade();
+      applyDTOs(dtos);
+    } catch {
+      // fallback: mantém o estado atual (props vindas do App.tsx)
+    } finally {
+      setLoadingDb(false);
+    }
+  }, [applyDTOs]);
+
+  useEffect(() => { loadFromDb(); }, [loadFromDb]);
 
   // Busca aulas do backend para um intervalo amplo (passado + futuro)
   const [apiLessons, setApiLessons] = useState<Lesson[]>([]);
@@ -54,8 +91,9 @@ export function RoomsPage({ availability, availabilityReposicao, lessons, onChan
 
   const scheduledLessonCountBySlot = useMemo(() => {
     const map = new Map<string, number>();
+    const todayStr = new Date().toISOString().slice(0, 10);
     effectiveLessons
-      .filter(l => ['scheduled', 'rescheduled'].includes(l.status))
+      .filter(l => ['scheduled', 'rescheduled'].includes(l.status) && l.date >= todayStr)
       .forEach((lesson) => {
         const day = getDayKeyFromISODate(lesson.date);
         const hourSlot = `${lesson.startTime.slice(0, 2)}:00`;
@@ -133,7 +171,8 @@ export function RoomsPage({ availability, availabilityReposicao, lessons, onChan
   const handleSave = async () => {
     setSaveStatus('saving');
     try {
-      await salvarDisponibilidade(availability, availabilityReposicao);
+      const dtos = await salvarDisponibilidade(availability, availabilityReposicao);
+      applyDTOs(dtos); // atualiza a view com o retorno confirmado do banco
       setSaveStatus('saved');
       setTimeout(() => setSaveStatus('idle'), 2500);
     } catch {
@@ -143,7 +182,7 @@ export function RoomsPage({ availability, availabilityReposicao, lessons, onChan
   };
 
   return (
-    <div className="p-6 max-w-7xl mx-auto">
+    <div className="p-6">
       {/* ── Header ─────────────────────────────────── */}
       <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-4 mb-6">
         <div>
@@ -151,26 +190,6 @@ export function RoomsPage({ availability, availabilityReposicao, lessons, onChan
           <p className="text-sm text-[var(--muted)] mt-0.5">
             Clique nos horários para marcar ou remover disponibilidade para aulas
           </p>
-          <p className="text-xs text-[var(--muted)] opacity-70 mt-1">
-            <span className="font-semibold text-[var(--accent-600)]">{totalSlots}</span> horários disponíveis no total
-          </p>
-        </div>
-        <div className="flex items-center gap-2 shrink-0">
-          <Button variant="secondary" size="sm" onClick={applyBusinessHours}>
-            <Plus size={14} /> Horário comercial
-          </Button>
-          <Button variant="ghost" size="sm" onClick={clearAll}>
-            <Trash2 size={14} /> Limpar
-          </Button>
-          <Button
-            variant="primary"
-            size="sm"
-            onClick={handleSave}
-            disabled={saveStatus === 'saving'}
-          >
-            <Save size={14} />
-            {saveStatus === 'saving' ? 'Salvando…' : saveStatus === 'saved' ? '✓ Salvo!' : saveStatus === 'error' ? 'Erro ao salvar' : 'Salvar'}
-          </Button>
         </div>
       </div>
 
@@ -182,31 +201,56 @@ export function RoomsPage({ availability, availabilityReposicao, lessons, onChan
         </div>
       )}
 
-      {/* ── Legend ─────────────────────────────────── */}
-      <div className="flex flex-wrap items-center gap-5 mb-5 text-xs text-[var(--muted)]">
-        <span className="flex items-center gap-1.5">
-          <span
-            className="inline-block w-4 h-4 rounded"
-            style={{ background: 'linear-gradient(135deg, var(--accent-gradient-from), var(--accent-gradient-to))' }}
-          />
-          Disponível
-        </span>
-        <span className="flex items-center gap-1.5">
-          <span className="inline-block w-4 h-4 rounded bg-[var(--surface-soft)] border border-[var(--border)]" />
-          Indisponível
-        </span>
-        <span className="flex items-center gap-1.5">
-          <span className="inline-flex items-center justify-center w-5 h-5 rounded bg-amber-400 border-2 border-amber-500">
-            <GraduationCap size={10} className="text-amber-900" />
+      {/* ── Legend + Actions ──────────────────────────────── */}
+      <div className="flex items-center justify-between gap-4 mb-5 flex-wrap">
+        {/* Legenda — lado esquerdo */}
+        <div className="flex flex-wrap items-center gap-4 text-xs text-[var(--muted)]">
+          <span className="flex items-center gap-1.5">
+            <span
+              className="inline-block w-4 h-4 rounded"
+              style={{ background: 'linear-gradient(135deg, var(--accent-gradient-from), var(--accent-gradient-to))' }}
+            />
+            Disponível
           </span>
-          Com aula agendada (protegido)
-        </span>
-        <span className="flex items-center gap-1.5">
-          <span className="inline-flex items-center justify-center w-5 h-5 rounded bg-violet-500 border-2 border-violet-600">
-            <RefreshCw size={9} className="text-white" />
+          <span className="flex items-start gap-1.5">
+            <span className="inline-flex items-center justify-center w-5 h-5 rounded bg-amber-400 border-2 border-amber-500">
+              <GraduationCap size={10} className="text-amber-900" />
+            </span>
+            Com aula agendada (protegido)
           </span>
-          Reposição
-        </span>
+          <span className="flex items-start gap-1.5">
+            <span className="inline-flex items-center justify-center w-5 h-5 rounded bg-violet-500 border-2 border-violet-600">
+              <RefreshCw size={9} className="text-white" />
+            </span>
+            Reposição
+          </span>
+          <span className="flex items-start gap-1.5">
+            <span className="inline-block w-4 h-4 rounded bg-[var(--surface-soft)] border border-[var(--border)]" />
+            Indisponível
+          </span>
+        </div>
+
+        {/* Ações — lado direito */}
+        <div className="flex items-center gap-2 shrink-0">
+          <Button variant="ghost" size="sm" onClick={loadFromDb} disabled={loadingDb} title="Recarregar do banco">
+            <RefreshCw size={14} className={loadingDb ? 'animate-spin' : ''} />
+          </Button>
+          <Button variant="secondary" size="sm" onClick={applyBusinessHours}>
+            <Plus size={14} /> Horário comercial
+          </Button>
+          <Button variant="ghost" size="sm" onClick={clearAll}>
+            <Trash2 size={14} /> Limpar
+          </Button>
+          <Button
+            variant="primary"
+            size="sm"
+            onClick={handleSave}
+            disabled={saveStatus === 'saving' || loadingDb}
+          >
+            <Save size={14} />
+            {saveStatus === 'saving' ? 'Salvando…' : saveStatus === 'saved' ? '✓ Salvo!' : saveStatus === 'error' ? 'Erro ao salvar' : 'Salvar'}
+          </Button>
+        </div>
       </div>
 
       {/* ── Day cards ──────────────────────────────── */}

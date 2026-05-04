@@ -32,7 +32,8 @@ public class AulaController {
                 aula.getAluno().getId(),
                 aula.getAluno().getNome(),
                 aula.getFlagCancelada(),
-                aula.getPresencaConfirmada()
+                aula.getPresencaConfirmada(),
+                aula.getRecorrente()
         );
     }
 
@@ -77,7 +78,11 @@ public class AulaController {
                 return ResponseEntity.status(401).body("Token não fornecido");
             }
             String email = jwtService.getEmailFromToken(authHeader.substring(7));
-            return ResponseEntity.ok(toDTO(service.criar(email, dto)));
+            List<CalendarResponseDTO> result = service.criar(email, dto)
+                    .stream()
+                    .map(this::toDTO)
+                    .collect(java.util.stream.Collectors.toList());
+            return ResponseEntity.ok(result);
         } catch (RuntimeException e) {
             return ResponseEntity.badRequest().body(e.getMessage());
         }

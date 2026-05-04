@@ -11,6 +11,7 @@ export interface CalendarResponseDTO {
   nomeAluno?: string;
   flagCancelada?: boolean;
   presencaConfirmada?: boolean;
+  recorrente?: boolean;
 }
 
 export interface HorarioValidatorDTO {
@@ -88,20 +89,23 @@ export interface CriarAulaDTO {
   studentId: string;   // UUID do aluno
   dataInicio: string;  // ISO-8601 "2026-04-22T09:00:00"
   dataFim: string;     // ISO-8601 "2026-04-22T09:50:00"
+  recorrente?: boolean;
 }
 
 /**
  * POST /aula/criar
- * Cria uma nova aula para o aluno autenticado (identificado pelo JWT).
+ * Cria uma ou mais aulas (recorrente = toda semana por 1 ano).
+ * Retorna sempre um array de CalendarResponseDTO.
  */
-export async function criarAula(dto: CriarAulaDTO): Promise<CalendarResponseDTO> {
+export async function criarAula(dto: CriarAulaDTO): Promise<CalendarResponseDTO[]> {
   try {
     const res = await fetch('/aula/criar', {
       method: 'POST',
       headers: authHeaders(),
       body: JSON.stringify(dto),
     });
-    return handleResponse<CalendarResponseDTO>(res);
+    const raw = await handleResponse<CalendarResponseDTO[] | CalendarResponseDTO>(res);
+    return Array.isArray(raw) ? raw : [raw];
   } catch (err) {
     if (err instanceof Error) throw err;
     throw new Error('Não foi possível criar a aula. Verifique sua conexão.');
@@ -176,6 +180,19 @@ export interface DisponibilidadeResponseDTO {
  */
 export async function buscarDisponibilidade(): Promise<DisponibilidadeResponseDTO[]> {
   const res = await fetch('/disponibilidade', { headers: authHeaders() });
+  return handleResponse<DisponibilidadeResponseDTO[]>(res);
+}
+
+/**
+ * POST /disponibilidade/sincronizar
+ * Sincroniza apenas as flags de aula (aulaMarcada) nos slots existentes,
+ * sem alterar os campos disponivel/reposicao definidos pelo professor.
+ */
+export async function sincronizarDisponibilidade(): Promise<DisponibilidadeResponseDTO[]> {
+  const res = await fetch('/disponibilidade/sincronizar', {
+    method: 'POST',
+    headers: authHeaders(),
+  });
   return handleResponse<DisponibilidadeResponseDTO[]>(res);
 }
 

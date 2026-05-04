@@ -27,14 +27,14 @@ interface NavItem {
 
 const NAV_ITEMS: NavItem[] = [
   { id: 'dashboard',    label: 'Dashboard',       icon: <Disc3 size={20} />,           color: 'var(--accent-500)', roles: ['teacher'] },
-  { id: 'agenda',       label: 'Agenda',          icon: <CalendarDays size={20} />,    color: 'var(--accent-500)', roles: ['teacher', 'student'] },
-  { id: 'students',     label: 'Alunos',          icon: <Users size={20} />,           color: 'var(--accent-500)', roles: ['teacher'] },
-  { id: 'rooms',        label: 'Calendario',      icon: <CalendarClock size={20} />,   color: 'var(--accent-500)', roles: ['teacher'] },
+  { id: 'agenda',       label: 'Calendário',          icon: <CalendarDays size={20} />,    color: 'var(--accent-500)', roles: ['teacher', 'student'] },
+  { id: 'rooms',        label: 'Disponibilidade',      icon: <CalendarClock size={20} />,   color: 'var(--accent-500)', roles: ['teacher'] },
   { id: 'rescheduling', label: 'Reagendamentos',  icon: <RefreshCw size={20} />,       color: 'var(--accent-500)', roles: ['teacher', 'student'] },
   { id: 'video',        label: 'Aulas Online',    icon: <Music size={20} />,           color: 'var(--accent-500)', roles: ['teacher', 'student'] },
   { id: 'lessonAlerts', label: 'Alertar Aula',    icon: <MessageCircle size={20} />,   color: 'var(--accent-500)', roles: ['teacher'] },
+  { id: 'students',     label: 'Alunos',          icon: <Users size={20} />,           color: 'var(--accent-500)', roles: ['teacher'] },
+  { id: 'profile',      label: 'Meu Perfil',      icon: <UserCircle size={20} />,      color: 'var(--accent-500)', roles: ['student', 'teacher'] },
   { id: 'settings',     label: 'Configurações',   icon: <Settings size={20} />,        color: 'var(--accent-500)', roles: ['teacher', 'student'] },
-  { id: 'profile',      label: 'Meu Perfil',      icon: <UserCircle size={20} />,      color: 'var(--accent-500)', roles: ['student'] },
 ];
 
 interface SidebarProps {

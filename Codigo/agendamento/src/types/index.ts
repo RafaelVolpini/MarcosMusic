@@ -12,6 +12,7 @@ export interface Aluno {
   email: string;
   telefone: string;
   ativo: boolean;
+  apelido?: string;
 }
 
 export interface Lesson {
@@ -33,6 +34,7 @@ export interface Lesson {
   lastReminderSentAt?: string;
   color: string;
   recording?: VideoRecording;
+  recorrente?: boolean;
 }
 
 export interface VideoRecording {

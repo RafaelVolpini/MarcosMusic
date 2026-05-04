@@ -44,6 +44,9 @@ public class Aluno {
     @Column(name = "termos")
     private Boolean termos = false;
 
+    @Column(name = "apelido", length = 100)
+    private String apelido;
+
 
     @OneToMany(mappedBy = "aluno", cascade = CascadeType.ALL, orphanRemoval = true)
     @JsonIgnore

@@ -83,6 +83,35 @@ public class DisponibilidadeService {
         return listar();
     }
 
+    // ── Sincronizar flags de aula (sem alterar disponivel/reposicao) ─────────
+
+    /**
+     * Varre todos os slots já salvos no banco e atualiza apenas as flags de aula
+     * (aulaMarcada, aula_id, aluno_id) consultando a tabela de aulas.
+     * Não altera os campos disponivel/reposicao definidos pelo professor.
+     */
+    @Transactional
+    public List<DisponibilidadeResponseDTO> sincronizar() {
+        Map<String, Aula> lessonLookup = buildLessonLookup();
+
+        repository.findAllByOrderByDiaSemanaAscHorarioAsc().forEach(slot -> {
+            String key = slot.getDiaSemana() + "-" + slot.getHorario();
+            Aula aula = lessonLookup.get(key);
+            if (aula != null) {
+                slot.setAulaMarcada(true);
+                slot.setAula(aula);
+                slot.setAluno(aula.getAluno());
+            } else {
+                slot.setAulaMarcada(false);
+                slot.setAula(null);
+                slot.setAluno(null);
+            }
+            repository.save(slot);
+        });
+
+        return listar();
+    }
+
     // ── Cancelar aula de um slot ──────────────────────────────────────────────
 
     @Transactional

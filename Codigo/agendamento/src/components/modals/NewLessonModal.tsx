@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { X, Plus, Video } from 'lucide-react';
+import { X, Plus, Video, Repeat } from 'lucide-react';
 import type { Lesson, LessonType, Aluno } from '../../types';
 import type { AuthUser } from '../../lib/auth';
 import { generateMeetLink, minutesToTime, timeToMinutes } from '../../utils';
@@ -27,6 +27,7 @@ interface NewLessonModalProps {
     instrument: string;
     notes: string;
     meetLink: string;
+    recorrente: boolean;
   }) => void;
 }
 
@@ -46,6 +47,7 @@ export function NewLessonModal({
   const [instrument, setInstrument] = useState('Piano');
   const [notes, setNotes] = useState('');
   const [hasMeetLink, setHasMeetLink] = useState(false);
+  const [recorrente, setRecorrente] = useState(false);
   const [errors, setErrors] = useState<string[]>([]);
 
   const INSTRUMENTS = ['Piano', 'Violão', 'Guitarra', 'Teclado', 'Bateria', 'Canto', 'Percussão'];
@@ -96,6 +98,7 @@ export function NewLessonModal({
     setDate(defaultDate);
     setStartTime(defaultTime || ALL_HOURS[2]);
     setHasMeetLink(false);
+    setRecorrente(false);
     setNotes('');
     setErrors([]);
   }, [open, defaultDate, defaultTime]);
@@ -121,6 +124,7 @@ export function NewLessonModal({
       instrument,
       notes,
       meetLink: hasMeetLink ? generateMeetLink() : '',
+      recorrente,
     });
     onClose();
   };
@@ -231,6 +235,24 @@ export function NewLessonModal({
                     className="rounded border-[var(--input-border)]"
                   />
                 </label>
+
+                <label className="flex items-center justify-between rounded-xl border border-[var(--border)] px-3 py-2 text-sm text-[var(--text)]">
+                  <span className="flex items-center gap-2">
+                    <Repeat size={14} className="text-(--accent-600)" />
+                    Aula recorrente (repete toda semana)
+                  </span>
+                  <input
+                    type="checkbox"
+                    checked={recorrente}
+                    onChange={(e) => setRecorrente(e.target.checked)}
+                    className="rounded border-[var(--input-border)]"
+                  />
+                </label>
+                {recorrente && (
+                  <p className="text-[11px] text-(--muted) -mt-2">
+                    Serão criadas 4 aulas semanais consecutivas a partir desta data.
+                  </p>
+                )}
 
                 {selectedStudent && (
                   <p className="text-xs text-[var(--muted)]">

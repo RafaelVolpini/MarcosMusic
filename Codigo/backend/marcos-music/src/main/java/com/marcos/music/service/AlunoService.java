@@ -48,6 +48,7 @@ public class AlunoService {
             aluno.setTelefone(dto.getTelefone());
             aluno.setStatus(dto.getStatus() != null ? dto.getStatus() : true);
             aluno.setTermos(dto.getTermos() != null ? dto.getTermos() : false);
+            aluno.setApelido(dto.getApelido());
 
             List<Long> idsDTO = dto.getHorarios() == null ? List.of() :
                     dto.getHorarios().stream()
@@ -102,6 +103,7 @@ public class AlunoService {
         aluno.setTelefone(dto.getTelefone());
         aluno.setTermos(dto.getTermos() != null ? dto.getTermos() : false);
         aluno.setStatus(dto.getStatus() != null ? dto.getStatus() : true);
+        aluno.setApelido(dto.getApelido());
 
         aluno.setUsuario(user); 
 
@@ -171,8 +173,16 @@ public class AlunoService {
                     if (aluno.getUsuario() != null) {
                         dto.setEmail(aluno.getUsuario().getEmail());
                     }
+                    dto.setApelido(aluno.getApelido());
                     return dto;
                 })
                 .collect(Collectors.toList());
+    }
+
+    public void deletarAluno(UUID id) {
+        Aluno aluno = repository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Aluno não encontrado"));
+        // Remove o usuário vinculado (cascade apaga o aluno também)
+        usuarioRepository.deleteById(aluno.getId());
     }
 }

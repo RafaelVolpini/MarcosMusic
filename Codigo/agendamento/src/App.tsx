@@ -23,8 +23,24 @@ import {
   type ContractAcceptance,
 } from './lib/auth';
 import { listarAlunos } from './services/alunoService';
+import { buscarDisponibilidade } from './services/aulaService';
 
 const LESSON_DURATION_MINUTES = 50;
+
+const EMPTY_AVAILABILITY: WeeklyAvailability = { seg: [], ter: [], qua: [], qui: [], sex: [], sab: [], dom: [] };
+
+function dtosToAvailability(dtos: Awaited<ReturnType<typeof buscarDisponibilidade>>) {
+  const avail: WeeklyAvailability = { seg: [], ter: [], qua: [], qui: [], sex: [], sab: [], dom: [] };
+  const repos: WeeklyAvailability = { seg: [], ter: [], qua: [], qui: [], sex: [], sab: [], dom: [] };
+  for (const dto of dtos) {
+    const day = dto.diaSemana as keyof WeeklyAvailability;
+    if (!(day in avail)) continue;
+    // Slots com aula marcada também entram em avail para evitar o badge "CONFLITO" falso
+    if (dto.disponivel || dto.aulaMarcada) avail[day].push(dto.horario);
+    if (dto.reposicao) repos[day].push(dto.horario);
+  }
+  return { avail, repos };
+}
 
 const normalizeName = (value: string) =>
   value
@@ -39,16 +55,6 @@ const addMinutesToTime = (time: string, minutesToAdd: number) => {
   return `${String(Math.floor(total / 60)).padStart(2, '0')}:${String(total % 60).padStart(2, '0')}`;
 };
 
-const INITIAL_AVAILABILITY: WeeklyAvailability = {
-  seg: ['09:00', '10:00', '11:00', '14:00', '15:00', '16:00', '19:00', '20:00'],
-  ter: ['09:00', '10:00', '11:00', '14:00', '15:00', '16:00', '19:00', '20:00'],
-  qua: ['09:00', '10:00', '11:00', '14:00', '15:00', '16:00', '19:00', '20:00'],
-  qui: ['09:00', '10:00', '11:00', '14:00', '15:00', '16:00', '19:00', '20:00'],
-  sex: ['09:00', '10:00', '11:00', '14:00', '15:00', '16:00'],
-  sab: ['09:00', '10:00', '11:00'],
-  dom: [],
-};
-
 type AppState = 'landing' | 'login' | 'app';
 
 function App() {
@@ -59,10 +65,19 @@ function App() {
   const [collapsed, setCollapsed] = useState(false);
   const [lessons, setLessons] = useState<Lesson[]>([]);
   const [alunos, setAlunos] = useState<Aluno[]>([]);
-  const [availability, setAvailability] = useState<WeeklyAvailability>(INITIAL_AVAILABILITY);
-  const [availabilityReposicao, setAvailabilityReposicao] = useState<WeeklyAvailability>({
-    seg: [], ter: [], qua: [], qui: [], sex: [], sab: [], dom: [],
-  });
+  const [availability, setAvailability] = useState<WeeklyAvailability>(EMPTY_AVAILABILITY);
+  const [availabilityReposicao, setAvailabilityReposicao] = useState<WeeklyAvailability>(EMPTY_AVAILABILITY);
+
+  const loadAvailability = async () => {
+    try {
+      const dtos = await buscarDisponibilidade();
+      const { avail, repos } = dtosToAvailability(dtos);
+      setAvailability(avail);
+      setAvailabilityReposicao(repos);
+    } catch {
+      // fallback: mantém vazio (banco inacessível)
+    }
+  };
 
   // Tenta restaurar a sessão ao carregar a página
   useEffect(() => {
@@ -70,7 +85,7 @@ function App() {
     if (savedUser) {
       setSessionUser(savedUser);
       setAppState('app');
-      
+      loadAvailability();
       // Se for professor, já aceitou contrato. Se for aluno, verifica o campo termos.
       if (savedUser.role === 'teacher' || savedUser.termos === true) {
         setContractAccepted(true);
@@ -78,11 +93,11 @@ function App() {
     }
   }, []);
 
-  // Detecta se voltamos do Google OAuth para manter na Agenda
+  // Detecta se voltamos do Google OAuth e navega para Configurações
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
     if (params.has('google')) {
-      setActivePage('agenda');
+      setActivePage('settings');
     }
   }, []);
 
@@ -116,6 +131,7 @@ function App() {
   const handleLoginSuccess = (user: AuthUser) => {
     setSessionUser(user);
     setAppState('app');
+    loadAvailability();
     // Teachers (ADMIN) never need to accept student contract
     if (user.role === 'teacher') {
       setContractAccepted(true);
@@ -137,7 +153,7 @@ function App() {
   };
 
   const allowedPages: Page[] = sessionUser?.role === 'teacher'
-    ? ['dashboard', 'agenda', 'students', 'rooms', 'rescheduling', 'video', 'lessonAlerts', 'settings']
+    ? ['dashboard', 'agenda', 'students', 'rooms', 'rescheduling', 'video', 'lessonAlerts', 'settings', 'profile']
     : ['agenda', 'rescheduling', 'video', 'settings', 'profile'];
 
   const defaultPage: Page = sessionUser?.role === 'teacher' ? 'dashboard' : 'agenda';
@@ -250,7 +266,13 @@ function App() {
           />
         );
       case 'students':
-        return <StudentsPage students={alunos} />;
+        return (
+          <StudentsPage
+            students={alunos}
+            currentUser={sessionUser ?? undefined}
+            onReload={() => listarAlunos().then(setAlunos).catch(() => {})}
+          />
+        );
       case 'rooms':
         return (
           <RoomsPage

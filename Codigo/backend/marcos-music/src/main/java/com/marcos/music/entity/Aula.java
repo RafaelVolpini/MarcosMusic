@@ -34,6 +34,9 @@ public class Aula {
     @Column(name = "presenca_confirmada")
     private Boolean presencaConfirmada = false;
 
+    @Column(name = "recorrente")
+    private Boolean recorrente = false;
+
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "id_aluno", nullable = false)
     private Aluno aluno;
@@ -42,6 +45,13 @@ public class Aula {
         this.dataInicio = dataInicio;
         this.dataFim = dataFim;
         this.aluno = aluno;
+    }
+
+    public Aula(LocalDateTime dataInicio, LocalDateTime dataFim, Aluno aluno, Boolean recorrente){
+        this.dataInicio = dataInicio;
+        this.dataFim = dataFim;
+        this.aluno = aluno;
+        this.recorrente = recorrente != null ? recorrente : false;
     }
 
 }
