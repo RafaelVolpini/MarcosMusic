@@ -11,6 +11,4 @@ public interface DisponibilidadeRepository extends JpaRepository<Disponibilidade
     Optional<Disponibilidade> findByDiaSemanaAndHorario(String diaSemana, String horario);
 
     List<Disponibilidade> findAllByOrderByDiaSemanaAscHorarioAsc();
-
-    Optional<Disponibilidade> findByAulaId(Long aulaId);
 }

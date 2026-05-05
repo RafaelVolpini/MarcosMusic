@@ -36,7 +36,7 @@ function dtosToAvailability(dtos: Awaited<ReturnType<typeof buscarDisponibilidad
     const day = dto.diaSemana as keyof WeeklyAvailability;
     if (!(day in avail)) continue;
     // Slots com aula marcada também entram em avail para evitar o badge "CONFLITO" falso
-    if (dto.disponivel || dto.aulaMarcada) avail[day].push(dto.horario);
+    if (dto.disponivel) avail[day].push(dto.horario);
     if (dto.reposicao) repos[day].push(dto.horario);
   }
   return { avail, repos };

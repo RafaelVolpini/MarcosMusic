@@ -36,30 +36,5 @@ public class DisponibilidadeController {
             return ResponseEntity.badRequest().body(e.getMessage());
         }
     }
-
-    /**
-     * Sincroniza as flags de aula nos slots existentes sem alterar disponivel/reposicao.
-     * Chamado automaticamente pelo frontend ao carregar a página.
-     */
-    @PostMapping("/sincronizar")
-    public ResponseEntity<?> sincronizar() {
-        try {
-            return ResponseEntity.ok(service.sincronizar());
-        } catch (RuntimeException e) {
-            return ResponseEntity.badRequest().body(e.getMessage());
-        }
-    }
-
-    /**
-     * Cancela a aula vinculada a um slot de disponibilidade.
-     */
-    @PatchMapping("/{id}/cancelar")
-    public ResponseEntity<?> cancelar(@PathVariable Long id) {
-        try {
-            return ResponseEntity.ok(service.cancelar(id));
-        } catch (RuntimeException e) {
-            return ResponseEntity.badRequest().body(e.getMessage());
-        }
-    }
 }
 

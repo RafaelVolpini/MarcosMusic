@@ -17,7 +17,7 @@ function authHeaders(): HeadersInit {
 export async function listarAlunos(): Promise<Aluno[]> {
   const res = await fetch('/aluno', { method: 'GET', headers: authHeaders() });
   if (!res.ok) throw new Error(`Erro ${res.status}`);
-  const data = await res.json() as Array<{ id: string; nome: string | null; email: string | null; telefone: string | null; status: boolean; apelido?: string | null }>;
+  const data = await res.json() as Array<{ id: string; nome: string | null; email: string | null; telefone: string | null; status: boolean; apelido?: string | null; reposicoes?: number | null }>;
   return data.map(d => ({
     id: d.id,
     nome: d.nome ?? d.email ?? 'Aluno',
@@ -25,6 +25,7 @@ export async function listarAlunos(): Promise<Aluno[]> {
     telefone: d.telefone ?? '',
     ativo: d.status !== false,
     apelido: d.apelido ?? undefined,
+    reposicoes: d.reposicoes ?? 0,
   }));
 }
 

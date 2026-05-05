@@ -6,6 +6,7 @@ import type { ReposicaoDTO } from '../../services/reposicaoService';
 import { adicionarAluno, removerAluno, deletarReposicao } from '../../services/reposicaoService';
 import { Avatar } from '../ui/Avatar';
 import { Button } from '../ui/Button';
+import { useToast } from '../ui/Toast';
 import { DAY_LABELS, STATUS_COLOR, STATUS_LABEL } from '../../utils/reposicaoHelpers';
 
 export interface ReposicaoCalendarModalProps {
@@ -28,16 +29,32 @@ export function ReposicaoCalendarModal({
 }: ReposicaoCalendarModalProps) {
   const [reposicao, setReposicao] = useState(initial);
   const [busy, setBusy] = useState(false);
+  const toast = useToast();
 
   const isTeacher = currentUser.role === 'teacher';
   const isEnrolled = !!currentAlunoId && reposicao.alunos.some(a => a.id === currentAlunoId);
   const isOpen = reposicao.status === 'ABERTA';
+
+  // Impede inscrição com menos de 30min de antecedência
+  const tooLate = (() => {
+    const now = new Date();
+    const [h, m] = reposicao.horario.split(':').map(Number);
+    const lessonStart = new Date(`${reposicao.dataAula}T${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}:00`);
+    return (lessonStart.getTime() - now.getTime()) < 30 * 60 * 1000;
+  })();
 
   const run = async (fn: () => Promise<ReposicaoDTO | void>) => {
     setBusy(true);
     try {
       const result = await fn();
       if (result) { setReposicao(result); onUpdated(result); }
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : 'Erro desconhecido';
+      if (msg.toLowerCase().includes('crédito') || msg.toLowerCase().includes('insuficiente')) {
+        toast('Você não tem créditos de reposição disponíveis. Solicite ao professor.', 'warning');
+      } else {
+        toast(msg || 'Erro ao processar solicitação.', 'error');
+      }
     } finally {
       setBusy(false);
     }
@@ -180,7 +197,7 @@ export function ReposicaoCalendarModal({
                 <Button size="sm" variant="danger" onClick={handleDelete} disabled={busy} className="flex-1">
                   <Trash2 size={13} /> Excluir
                 </Button>
-              ) : currentAlunoId && isOpen && (
+              ) : currentAlunoId && isOpen && !tooLate && (
                 <Button
                   size="sm"
                   variant={isEnrolled ? 'secondary' : 'primary'}

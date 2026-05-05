@@ -168,11 +168,6 @@ export interface DisponibilidadeResponseDTO {
   horario: string;
   disponivel: boolean;
   reposicao: boolean;
-  aulaMarcada: boolean;
-  aulaId: number | null;
-  alunoId: string | null;
-  alunoNome: string | null;
-  flagCancelada: boolean;
 }
 
 /**
@@ -181,19 +176,6 @@ export interface DisponibilidadeResponseDTO {
  */
 export async function buscarDisponibilidade(): Promise<DisponibilidadeResponseDTO[]> {
   const res = await fetch('/disponibilidade', { headers: authHeaders() });
-  return handleResponse<DisponibilidadeResponseDTO[]>(res);
-}
-
-/**
- * POST /disponibilidade/sincronizar
- * Sincroniza apenas as flags de aula (aulaMarcada) nos slots existentes,
- * sem alterar os campos disponivel/reposicao definidos pelo professor.
- */
-export async function sincronizarDisponibilidade(): Promise<DisponibilidadeResponseDTO[]> {
-  const res = await fetch('/disponibilidade/sincronizar', {
-    method: 'POST',
-    headers: authHeaders(),
-  });
   return handleResponse<DisponibilidadeResponseDTO[]>(res);
 }
 
@@ -211,16 +193,4 @@ export async function salvarDisponibilidade(
     body: JSON.stringify({ availability, availabilityReposicao }),
   });
   return handleResponse<DisponibilidadeResponseDTO[]>(res);
-}
-
-/**
- * PATCH /disponibilidade/{id}/cancelar
- * Cancela a aula vinculada a um slot de disponibilidade.
- */
-export async function cancelarSlotDisponibilidade(id: number): Promise<DisponibilidadeResponseDTO> {
-  const res = await fetch(`/disponibilidade/${id}/cancelar`, {
-    method: 'PATCH',
-    headers: authHeaders(),
-  });
-  return handleResponse<DisponibilidadeResponseDTO>(res);
 }

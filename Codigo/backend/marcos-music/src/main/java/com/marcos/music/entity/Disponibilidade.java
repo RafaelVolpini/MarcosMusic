@@ -3,8 +3,6 @@ package com.marcos.music.entity;
 import jakarta.persistence.*;
 import lombok.*;
 
-import java.util.UUID;
-
 @Entity
 @Getter
 @Setter
@@ -17,7 +15,7 @@ public class Disponibilidade {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    /** Dia da semana: 'mon','tue','wed','thu','fri','sat','sun' */
+    /** Dia da semana: 'seg','ter','qua','qui','sex','sab','dom' */
     @Column(name = "dia_semana", nullable = false, length = 3)
     private String diaSemana;
 
@@ -32,18 +30,4 @@ public class Disponibilidade {
     /** true → horário disponível apenas para reposição */
     @Column(name = "reposicao", nullable = false)
     private Boolean reposicao = false;
-
-    /** true → há uma aula concreta vinculada a este slot */
-    @Column(name = "aula_marcada", nullable = false)
-    private Boolean aulaMarcada = false;
-
-    /** Aula vinculada (obrigatório quando aulaMarcada = true) */
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "aula_id")
-    private Aula aula;
-
-    /** Aluno vinculado (obrigatório quando aulaMarcada = true) */
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "aluno_id")
-    private Aluno aluno;
 }

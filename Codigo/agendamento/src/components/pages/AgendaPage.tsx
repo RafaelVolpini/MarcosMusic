@@ -4,6 +4,7 @@ import type { AuthUser } from '../../lib/auth';
 import { CalendarView } from '../calendar/CalendarView';
 import { LessonModal } from '../modals/LessonModal';
 import { NewLessonModal } from '../modals/NewLessonModal';
+import { ReposicaoCalendarModal } from '../modals/ReposicaoCalendarModal';
 import { buscarAulas, cancelarAula, criarAula, reagendarAula, confirmarPresenca } from '../../services/aulaService';
 import { listarAlunos } from '../../services/alunoService';
 import { listarReposicoes, type ReposicaoDTO } from '../../services/reposicaoService';
@@ -30,6 +31,7 @@ export function AgendaPage({
   const [newLessonModal, setNewLessonModal] = useState<{ date: string; time: string } | null>(null);
   const [apiStudents, setApiStudents] = useState<Aluno[]>([]);
   const [reposicoes, setReposicoes] = useState<ReposicaoDTO[]>([]);
+  const [selectedReposicao, setSelectedReposicao] = useState<ReposicaoDTO | null>(null);
 
   // Aulas reais vindas do backend; fallback para as props enquanto não há dados da API
   const [apiLessons, setApiLessons] = useState<Lesson[] | null>(null);
@@ -80,6 +82,10 @@ export function AgendaPage({
 
   // Usa dados da API quando disponíveis; caso contrário usa prop
   const visibleLessons = apiLessons ?? lessonsProp;
+
+  const currentAlunoId = currentUser.role !== 'teacher'
+    ? apiStudents.find(a => a.email.trim().toLowerCase() === currentUser.email.trim().toLowerCase())?.id
+    : undefined;
 
   const handleDeleteLesson = async (id: string) => {
     try {
@@ -148,8 +154,25 @@ export function AgendaPage({
         onNewLesson={(date, time) => setNewLessonModal({ date, time })}
         onLessonMove={handleMoveLesson}
         onWeekChange={handleWeekChange}
-        onReposicaoClick={() => onNavigate?.('rescheduling')}
+        onReposicaoClick={(r) => setSelectedReposicao(r)}
       />
+
+      {selectedReposicao && (
+        <ReposicaoCalendarModal
+          reposicao={selectedReposicao}
+          currentUser={currentUser}
+          currentAlunoId={currentAlunoId}
+          onClose={() => setSelectedReposicao(null)}
+          onUpdated={(r) => {
+            setReposicoes(prev => prev.map(x => x.id === r.id ? r : x));
+            setSelectedReposicao(r);
+          }}
+          onDeleted={(id) => {
+            setReposicoes(prev => prev.filter(x => x.id !== id));
+            setSelectedReposicao(null);
+          }}
+        />
+      )}
 
       <LessonModal
         lesson={selectedLesson}

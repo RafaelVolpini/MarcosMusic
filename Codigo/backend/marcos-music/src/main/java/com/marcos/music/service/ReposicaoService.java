@@ -79,10 +79,12 @@ public class ReposicaoService {
 
         boolean jaAdicionado = r.getAlunos().stream().anyMatch(a -> a.getId().equals(alunoId));
         if (!jaAdicionado) {
-            r.getAlunos().add(aluno);
-            // Consome 1 crédito de reposição do aluno
             int atual = aluno.getReposicoes() != null ? aluno.getReposicoes() : 0;
-            aluno.setReposicoes(Math.max(0, atual - 1));
+            if (atual <= 0) {
+                throw new IllegalArgumentException("Créditos de reposição insuficientes");
+            }
+            r.getAlunos().add(aluno);
+            aluno.setReposicoes(atual - 1);
             alunoRepository.save(aluno);
         }
         return toDTO(repository.save(r));

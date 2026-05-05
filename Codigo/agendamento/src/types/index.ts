@@ -13,6 +13,7 @@ export interface Aluno {
   telefone: string;
   ativo: boolean;
   apelido?: string;
+  reposicoes?: number;
 }
 
 export interface Lesson {
