@@ -31,4 +31,6 @@ public interface AulaRepository extends JpaRepository<Aula, Long>{
         @Param("inicioNovo") LocalDateTime inicioNovo,
         @Param("fimNovo") LocalDateTime fimNovo
     );
+
+    List<Aula> findByFlagCanceladaFalseAndFlagRealizadaFalseAndDataFimBefore(LocalDateTime dateTime);
 }

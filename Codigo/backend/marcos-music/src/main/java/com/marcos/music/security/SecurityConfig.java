@@ -36,6 +36,7 @@ public class SecurityConfig {
                 .requestMatchers("/aluno/**", "/aluno").permitAll()
                 .requestMatchers("/aula/**", "/aula").permitAll()  // tirar apos testes de roles melhores
                 .requestMatchers("/disponibilidade/**", "/disponibilidade").permitAll()
+                .requestMatchers("/reposicao/**", "/reposicao").permitAll()
                 .requestMatchers("/google/**").permitAll()
                 .requestMatchers("/swagger-ui/**", "/v3/api-docs/**", "/swagger-ui.html").permitAll()
                 .anyRequest().authenticated()

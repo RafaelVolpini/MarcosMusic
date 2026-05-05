@@ -9,6 +9,10 @@ import com.marcos.music.repository.DisponibilidadeRepository;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.DayOfWeek;
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.time.temporal.TemporalAdjusters;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -28,9 +32,10 @@ public class DisponibilidadeService {
 
 
     public List<DisponibilidadeResponseDTO> listar() {
+        Map<String, Aula> lookup = buildLessonLookup();
         return repository.findAllByOrderByDiaSemanaAscHorarioAsc()
                 .stream()
-                .map(this::toDTO)
+                .map(s -> toDTO(s, lookup))
                 .toList();
     }
 
@@ -123,8 +128,7 @@ public class DisponibilidadeService {
             throw new RuntimeException("Não há aula marcada neste slot.");
         }
 
-        // A flag de cancelamento agora é derivada da aula via FK — não há campo local
-        return toDTO(slot);
+        return toDTO(slot, buildLessonLookup());
     }
 
     // ── Helpers ───────────────────────────────────────────────────────────────
@@ -137,24 +141,26 @@ public class DisponibilidadeService {
     private void aplicarFlags(Disponibilidade slot, String dia, String horario,
                               List<String> horariosAvail, List<String> horariosRepos,
                               Map<String, Aula> lessonLookup) {
+        // Sempre persiste a configuração do professor — disponivel/reposicao são "template" semanal
+        slot.setDisponivel(horariosAvail.contains(horario));
+        slot.setReposicao(horariosRepos.contains(horario));
+
+        // aulaMarcada é cache: listar() sobrescreve dinamicamente a cada chamada
         Aula aula = lessonLookup.get(dia + "-" + horario);
         if (aula != null) {
             slot.setAulaMarcada(true);
-            slot.setDisponivel(false);
-            slot.setReposicao(false);
             slot.setAula(aula);
             slot.setAluno(aula.getAluno());
         } else {
             slot.setAulaMarcada(false);
             slot.setAula(null);
             slot.setAluno(null);
-            slot.setDisponivel(horariosAvail.contains(horario));
-            slot.setReposicao(horariosRepos.contains(horario));
         }
     }
 
     /**
-     * Carrega todas as aulas não canceladas e constrói um mapa "dia-horario" → Aula.
+     * Carrega as aulas não canceladas DA SEMANA ATUAL e constrói um mapa "dia-horario" → Aula.
+     * "Semana atual" = segunda-feira a domingo da semana corrente.
      * O dia é derivado do DayOfWeek em português (seg/ter/qua/qui/sex/sab/dom).
      * O horario é a hora cheia do dataInicio (ex: "14:00").
      */
@@ -169,30 +175,42 @@ public class DisponibilidadeService {
             "SUNDAY",    "dom"
         );
 
+        // Somente aulas de hoje em diante até o fim desta semana (domingo)
+        // Dias já passados desta semana não devem contar como "aula ativa"
+        LocalDate today = LocalDate.now();
+        LocalDateTime weekStart = today.atStartOfDay();
+        LocalDateTime weekEnd   = today.with(TemporalAdjusters.nextOrSame(DayOfWeek.SUNDAY)).atTime(23, 59, 59);
+
         Map<String, Aula> lookup = new HashMap<>();
-        aulaRepository.findByFlagCanceladaFalse().forEach(a -> {
+        aulaRepository.findByDataInicioBetweenAndFlagCanceladaFalse(weekStart, weekEnd).forEach(a -> {
             String dia = dowToPt.get(a.getDataInicio().getDayOfWeek().name());
             if (dia != null) {
                 String horario = String.format("%02d:00", a.getDataInicio().getHour());
-                // Se houver mais de uma aula na mesma combinação dia+hora, qualquer uma serve
                 lookup.putIfAbsent(dia + "-" + horario, a);
             }
         });
         return lookup;
     }
 
-    private DisponibilidadeResponseDTO toDTO(Disponibilidade s) {
-        boolean cancelada = s.getAula() != null && Boolean.TRUE.equals(s.getAula().getFlagCancelada());
+    /**
+     * Converte um slot para DTO usando o lookup dinâmico da semana atual.
+     * aulaMarcada é computado do lookup (não da coluna do banco),
+     * e disponivel/reposicao são mascarados se houver aula ativa no slot.
+     */
+    private DisponibilidadeResponseDTO toDTO(Disponibilidade s, Map<String, Aula> lookup) {
+        Aula aula = lookup.get(s.getDiaSemana() + "-" + s.getHorario());
+        boolean aulaMarcada = aula != null;
+        boolean cancelada = aula != null && Boolean.TRUE.equals(aula.getFlagCancelada());
         return new DisponibilidadeResponseDTO(
                 s.getId(),
                 s.getDiaSemana(),
                 s.getHorario(),
-                s.getDisponivel(),
-                s.getReposicao(),
-                s.getAulaMarcada(),
-                s.getAula() != null ? s.getAula().getId() : null,
-                s.getAluno() != null ? s.getAluno().getId() : null,
-                s.getAluno() != null ? s.getAluno().getNome() : null,
+                !aulaMarcada && Boolean.TRUE.equals(s.getDisponivel()),
+                !aulaMarcada && Boolean.TRUE.equals(s.getReposicao()),
+                aulaMarcada,
+                aula != null ? aula.getId() : null,
+                aula != null && aula.getAluno() != null ? aula.getAluno().getId() : null,
+                aula != null && aula.getAluno() != null ? aula.getAluno().getNome() : null,
                 cancelada
         );
     }

@@ -25,6 +25,7 @@ import com.marcos.music.repository.AlunoRepository;
 import com.marcos.music.repository.Aula.AulaAlunoRepository;
 import com.marcos.music.repository.Aula.AulaCustomRepository;
 import com.marcos.music.repository.Aula.AulaRepository;
+import com.marcos.music.repository.ReposicaoRepository;
 import com.marcos.music.repository.UsuarioRepository;
 
 
@@ -36,6 +37,7 @@ public class AulaService {
     private final AulaCustomRepository aulaCustomRepository;
     private final UsuarioRepository usuarioRepository;
     private final AlunoRepository alunoRepository;
+    private final ReposicaoRepository reposicaoRepository;
 
 
     public AulaService(
@@ -44,7 +46,8 @@ public class AulaService {
         @Lazy AlunoService alunoService,
         AulaCustomRepository aulaCustomRepository,
         UsuarioRepository usuarioRepository,
-        AlunoRepository alunoRepository
+        AlunoRepository alunoRepository,
+        ReposicaoRepository reposicaoRepository
     ){
         this.repository = repository;
         this.aulaAlunoRepository = aulaAlunoRepository;
@@ -52,11 +55,19 @@ public class AulaService {
         this.aulaCustomRepository = aulaCustomRepository;
         this.usuarioRepository = usuarioRepository;
         this.alunoRepository = alunoRepository;
+        this.reposicaoRepository = reposicaoRepository;
     }
 
     public Aula salvar(Aula a) throws RuntimeException{
         if (a.getId() == null && repository.validarData(a.getDataInicio(), a.getDataFim())) {
             throw new RuntimeException("Já existe uma aula nesse horário");
+        }
+        if (a.getId() == null) {
+            String horario = String.format("%02d:%02d",
+                a.getDataInicio().getHour(), a.getDataInicio().getMinute());
+            if (reposicaoRepository.existsConflito(a.getDataInicio().toLocalDate(), horario)) {
+                throw new RuntimeException("Horário reservado para uma reposição");
+            }
         }
         return repository.save(a);
     }

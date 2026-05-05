@@ -21,6 +21,21 @@ const WEEK_DAYS = [
 // 07:00 → 23:00
 const TIME_SLOTS = Array.from({ length: 17 }, (_, i) => `${String(i + 7).padStart(2, '0')}:00`);
 
+/** Retorna as datas ISO de início e fim da semana atual (seg–dom). */
+function getThisWeek() {
+  const today = new Date();
+  const dow = today.getDay(); // 0=Dom
+  const monday = new Date(today);
+  monday.setDate(today.getDate() - ((dow + 6) % 7));
+  monday.setHours(0, 0, 0, 0);
+  const sunday = new Date(monday);
+  sunday.setDate(monday.getDate() + 6);
+  sunday.setHours(23, 59, 59, 999);
+  const fmt = (d: Date) =>
+    `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+  return { weekStart: fmt(monday), weekEnd: fmt(sunday) };
+}
+
 interface RoomsPageProps {
   availability: WeeklyAvailability;
   availabilityReposicao: WeeklyAvailability;
@@ -55,32 +70,27 @@ export function RoomsPage({ availability, availabilityReposicao, lessons, onChan
     onChangeAvailabilityReposicao(repos);
   }, [onChangeAvailability, onChangeAvailabilityReposicao]);
 
-  // ── Carrega disponibilidade do banco ao montar ──────────────────────────
-  const loadFromDb = useCallback(async () => {
+  // ── Carrega tudo em sequência: aulas desta semana → disponibilidade ───────
+  const [apiLessons, setApiLessons] = useState<Lesson[]>([]);
+
+  const loadAll = useCallback(async () => {
     setLoadingDb(true);
+    const { weekStart, weekEnd } = getThisWeek();
     try {
+      // 1. Aulas desta semana primeiro (para os badges ficarem prontos)
+      const lessonDtos = await buscarAulas(`${weekStart}T00:00:00`, `${weekEnd}T23:59:59`);
+      setApiLessons(lessonDtos.map(toLesson));
+      // 2. Disponibilidade (configuração semanal do professor)
       const dtos = await buscarDisponibilidade();
       applyDTOs(dtos);
     } catch {
-      // fallback: mantém o estado atual (props vindas do App.tsx)
+      // fallback: mantém estado atual
     } finally {
       setLoadingDb(false);
     }
   }, [applyDTOs]);
 
-  useEffect(() => { loadFromDb(); }, [loadFromDb]);
-
-  // Busca aulas do backend para um intervalo amplo (passado + futuro)
-  const [apiLessons, setApiLessons] = useState<Lesson[]>([]);
-  useEffect(() => {
-    const now = new Date();
-    const past = new Date(now); past.setDate(now.getDate() - 14);
-    const future = new Date(now); future.setDate(now.getDate() + 56);
-    const fmt = (d: Date) => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
-    buscarAulas(`${fmt(past)}T00:00:00`, `${fmt(future)}T23:59:59`)
-      .then(dtos => setApiLessons(dtos.map(toLesson)))
-      .catch(() => {/* usa prop como fallback */});
-  }, []);
+  useEffect(() => { loadAll(); }, [loadAll]);
 
   const effectiveLessons = apiLessons.length > 0 ? apiLessons : lessons;
 
@@ -91,9 +101,9 @@ export function RoomsPage({ availability, availabilityReposicao, lessons, onChan
 
   const scheduledLessonCountBySlot = useMemo(() => {
     const map = new Map<string, number>();
-    const todayStr = new Date().toISOString().slice(0, 10);
+    const { weekStart, weekEnd } = getThisWeek();
     effectiveLessons
-      .filter(l => ['scheduled', 'rescheduled'].includes(l.status) && l.date >= todayStr)
+      .filter(l => ['scheduled', 'rescheduled'].includes(l.status) && l.date >= weekStart && l.date <= weekEnd)
       .forEach((lesson) => {
         const day = getDayKeyFromISODate(lesson.date);
         const hourSlot = `${lesson.startTime.slice(0, 2)}:00`;
@@ -232,7 +242,7 @@ export function RoomsPage({ availability, availabilityReposicao, lessons, onChan
 
         {/* Ações — lado direito */}
         <div className="flex items-center gap-2 shrink-0">
-          <Button variant="ghost" size="sm" onClick={loadFromDb} disabled={loadingDb} title="Recarregar do banco">
+          <Button variant="ghost" size="sm" onClick={loadAll} disabled={loadingDb} title="Recarregar do banco">
             <RefreshCw size={14} className={loadingDb ? 'animate-spin' : ''} />
           </Button>
           <Button variant="secondary" size="sm" onClick={applyBusinessHours}>

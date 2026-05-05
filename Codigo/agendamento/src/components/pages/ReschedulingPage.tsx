@@ -1,74 +1,474 @@
-import { motion } from 'framer-motion';
-import { RefreshCw, ArrowRight } from 'lucide-react';
-import type { Lesson } from '../../types';
+﻿import { useCallback, useEffect, useState } from 'react';
+import { useToast } from '../ui/Toast';
+import { AnimatePresence, motion } from 'framer-motion';
+import { CalendarPlus, Clock, Trash2, Users, X, CheckCircle2, ChevronRight } from 'lucide-react';
+import type { Aluno } from '../../types';
+import type { AuthUser } from '../../lib/auth';
 import { Card } from '../ui/Card';
-import { Avatar } from '../ui/Avatar';
 import { Button } from '../ui/Button';
-import { formatTime } from '../../utils';
+import { buscarDisponibilidade, type DisponibilidadeResponseDTO } from '../../services/aulaService';
+import { listarAlunos } from '../../services/alunoService';
+import {
+  listarReposicoes,
+  adicionarAluno,
+  deletarReposicao,
+  removerAluno,
+  type ReposicaoDTO,
+} from '../../services/reposicaoService';
+import { ReposicaoViewModal } from '../modals/ReposicaoViewModal';
+import { AgendarReposicaoModal } from '../modals/AgendarReposicaoModal';
+import {
+  DAY_LABELS, STATUS_COLOR, STATUS_LABEL,
+  getThisWeek, thisWeekDate, normalizeName,
+} from '../../utils/reposicaoHelpers';
+
+// --- Page ---
 
 interface ReschedulingPageProps {
-  lessons: Lesson[];
+  sessionUser: AuthUser;
 }
 
-export function ReschedulingPage({ lessons }: ReschedulingPageProps) {
-  // Show lessons that could be rescheduled (cancelled or upcoming)
-  const candidates = lessons.filter(l => l.status === 'scheduled' || l.status === 'rescheduled');
+// Returns minutes until the reposição starts (negative if already started)
+function minutesUntilStart(dataAula: string, horario: string): number {
+  const start = new Date(`${dataAula}T${horario}:00`);
+  return (start.getTime() - Date.now()) / 60_000;
+}
+
+export function ReschedulingPage({ sessionUser }: ReschedulingPageProps) {
+  const isTeacher = sessionUser.role === 'teacher';
+  const toast = useToast();
+
+  const [alunos, setAlunos] = useState<Aluno[]>([]);
+  const [slots, setSlots] = useState<DisponibilidadeResponseDTO[]>([]);
+  const [reposicoes, setReposicoes] = useState<ReposicaoDTO[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  const [showSlotsPicker, setShowSlotsPicker] = useState(false);
+  const [agendarSlot, setAgendarSlot] = useState<DisponibilidadeResponseDTO | null>(null);
+  const [viewModal, setViewModal] = useState<ReposicaoDTO | null>(null);
+  const [deletingId, setDeletingId] = useState<number | null>(null);
+  const [removingKey, setRemovingKey] = useState<string | null>(null);
+  const [enrollingId, setEnrollingId] = useState<number | null>(null);
+
+  const currentAluno = !isTeacher
+    ? alunos.find(a => a.email.trim().toLowerCase() === sessionUser.email.trim().toLowerCase())
+      ?? alunos.find(a =>
+          normalizeName(a.nome.split(' ')[0] ?? '') ===
+          normalizeName(sessionUser.firstName || sessionUser.name.split(' ')[0] || '')
+        )
+    : undefined;
+
+  const load = useCallback(async () => {
+    setLoading(true);
+    try {
+      const [alunosList, disp, repos] = await Promise.all([
+        listarAlunos(),
+        buscarDisponibilidade(),
+        listarReposicoes(),
+      ]);
+      setAlunos(alunosList);
+      const { weekStart, weekEnd } = getThisWeek();
+      const todayISO = new Date().toISOString().slice(0, 10);
+      const nowMins = new Date().getHours() * 60 + new Date().getMinutes();
+      setSlots(
+        disp
+          .filter(d => {
+            if (!d.reposicao) return false;
+            const date = thisWeekDate(d.diaSemana);
+            if (!date) return false;
+            // Se é hoje, só mostra horários que ainda não passaram
+            if (date === todayISO) {
+              const [h, m] = d.horario.split(':').map(Number);
+              return h * 60 + m > nowMins;
+            }
+            return true;
+          })
+          .sort((a, b) => {
+            const dateA = thisWeekDate(a.diaSemana) ?? '';
+            const dateB = thisWeekDate(b.diaSemana) ?? '';
+            if (dateA !== dateB) return dateA.localeCompare(dateB);
+            return a.horario.localeCompare(b.horario);
+          }),
+      );
+      setReposicoes(
+        repos
+          .filter(r => r.dataAula >= weekStart && r.dataAula <= weekEnd)
+          .sort((a, b) => a.dataAula.localeCompare(b.dataAula)),
+      );
+    } catch {
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  useEffect(() => { load(); }, [load]);
+
+  const handleCreated = (r: ReposicaoDTO) => {
+    setReposicoes(prev => [...prev, r].sort((a, b) => a.dataAula.localeCompare(b.dataAula)));
+    setAgendarSlot(null);
+  };
+
+  const handleDelete = async (id: number) => {
+    setDeletingId(id);
+    try {
+      await deletarReposicao(id);
+      setReposicoes(prev => prev.filter(r => r.id !== id));
+    } finally {
+      setDeletingId(null);
+    }
+  };
+
+  const handleRemoveAluno = async (reposicaoId: number, alunoId: string) => {
+    const key = `${reposicaoId}-${alunoId}`;
+    setRemovingKey(key);
+    try {
+      const updated = await removerAluno(reposicaoId, alunoId);
+      setReposicoes(prev => prev.map(r => r.id === reposicaoId ? updated : r));
+      setViewModal(prev => prev?.id === reposicaoId ? updated : prev);
+    } finally {
+      setRemovingKey(null);
+    }
+  };
+
+  const handleEnroll = async (reposicaoId: number, alunoId: string) => {
+    setEnrollingId(reposicaoId);
+    try {
+      const updated = await adicionarAluno(reposicaoId, alunoId);
+      setReposicoes(prev => prev.map(r => r.id === reposicaoId ? updated : r));
+      setViewModal(prev => prev?.id === reposicaoId ? updated : prev);
+    } finally {
+      setEnrollingId(null);
+    }
+  };
+
+  const handleUnenroll = async (reposicaoId: number, alunoId: string) => {
+    setEnrollingId(reposicaoId);
+    try {
+      const updated = await removerAluno(reposicaoId, alunoId);
+      setReposicoes(prev => prev.map(r => r.id === reposicaoId ? updated : r));
+      setViewModal(prev => prev?.id === reposicaoId ? updated : prev);
+    } finally {
+      setEnrollingId(null);
+    }
+  };
 
   return (
-    <div className="page-padding space-y-6">
+    <div className="page-padding space-y-7">
+      {/* Header */}
       <Card className="p-5 border-l-4 border-l-[var(--accent-500)] app-surface">
         <div className="flex items-start gap-3">
-          <RefreshCw size={18} className="text-[var(--accent-600)] shrink-0 mt-0.5" />
+          <Users size={18} className="text-[var(--accent-600)] shrink-0 mt-0.5" />
           <div>
-            <h3 className="text-sm font-semibold text-[var(--heading)]">Reagendamento de Aulas</h3>
+            <h3 className="text-sm font-semibold text-[var(--heading)]">Reposições</h3>
             <p className="text-xs text-[var(--muted)] mt-0.5">
-              Arraste aulas na agenda ou use os controles abaixo para reagendar. <br />
-              {candidates.length} aula(s) disponíveis para reagendamento.
+              {isTeacher
+                ? 'Agende reposições nos horários disponíveis e gerencie quais alunos participarão.'
+                : 'Veja as reposições disponíveis esta semana e inscreva-se nas que quiser participar.'}
             </p>
           </div>
         </div>
       </Card>
 
-      <div className="space-y-3">
-        {candidates.map((lesson, i) => (
-          <motion.div
-            key={lesson.id}
-            initial={{ opacity: 0, x: -12 }}
-            animate={{ opacity: 1, x: 0 }}
-            transition={{ delay: i * 0.05 }}
-          >
-            <Card className="p-4 app-surface">
-              <div className="flex items-center gap-4">
-                <div className="w-1 h-12 rounded-full shrink-0" style={{ backgroundColor: lesson.color }} />
-                <Avatar name={lesson.studentName} size="sm" />
-                <div className="flex-1 min-w-0">
-                  <p className="text-sm font-medium text-[var(--heading)]">{lesson.studentName}</p>
-                  <p className="text-xs text-[var(--muted)]">{lesson.instrument}</p>
-                </div>
-                <div className="text-center hidden sm:block">
-                  <p className="text-xs text-[var(--muted)]">Data atual</p>
-                  <p className="text-xs font-medium text-[var(--text)]">
-                    {new Date(lesson.date).toLocaleDateString('pt-BR', { day: 'numeric', month: 'short' })}
+      {loading ? (
+        <div className="flex justify-center py-16">
+          <div className="w-6 h-6 rounded-full border-2 border-[var(--accent-500)] border-t-transparent animate-spin" />
+        </div>
+      ) : (
+        <>
+          {/* Professor: horarios disponiveis como botao compacto */}
+          {isTeacher && (
+            <section>
+              <h2 className="text-xs font-semibold uppercase tracking-widest text-[var(--muted)] mb-3">
+                Horários disponíveis ({slots.length})
+              </h2>
+              {slots.length === 0 ? (
+                <Card className="p-6 app-surface text-center">
+                  <p className="text-sm text-[var(--muted)]">
+                    Nenhum horário marcado como reposição. Configure na aba{' '}
+                    <span className="font-medium text-[var(--text)]">Disponibilidade</span>.
                   </p>
-                  <p className="text-xs text-[var(--muted)]">{formatTime(lesson.startTime)}</p>
-                </div>
-                <ArrowRight size={14} className="text-[var(--muted)]" />
-                <div className="text-center">
-                  <input
-                    type="date"
-                    defaultValue={lesson.date}
-                    className="text-xs border border-[var(--input-border)] rounded-lg px-2 py-1 text-[var(--text)] bg-[var(--input-bg)] focus:outline-none focus:ring-2 focus:ring-[var(--accent-100)]"
-                  />
-                </div>
-                <Button size="sm" variant="secondary">
-                  <RefreshCw size={12} />
-                  Reagendar
-                </Button>
+                </Card>
+              ) : (
+                <button
+                  type="button"
+                  onClick={() => setShowSlotsPicker(true)}
+                  className="w-full text-left"
+                >
+                  <Card className="p-4 app-surface flex items-center gap-4 hover:border-[var(--accent-400)] transition-colors cursor-pointer group">
+                    <div className="w-10 h-10 rounded-xl bg-[color-mix(in_srgb,var(--accent-500)_12%,var(--surface))] flex items-center justify-center shrink-0">
+                      <CalendarPlus size={18} className="text-[var(--accent-600)]" />
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm font-semibold text-[var(--heading)]">
+                        {slots.length} horário{slots.length !== 1 ? 's' : ''} disponível{slots.length !== 1 ? 'is' : ''}
+                      </p>
+                      <p className="text-xs text-[var(--muted)]">
+                        Clique para selecionar um horário e agendar uma reposição
+                      </p>
+                    </div>
+                    <ChevronRight size={16} className="text-[var(--muted)] group-hover:text-[var(--accent-600)] transition-colors shrink-0" />
+                  </Card>
+                </button>
+              )}
+            </section>
+          )}
+
+          {/* Reposicoes list */}
+          <section>
+            <h2 className="text-xs font-semibold uppercase tracking-widest text-[var(--muted)] mb-3">
+              {isTeacher ? 'Reposições agendadas' : 'Reposições disponíveis'}{' '}
+              ({reposicoes.length})
+            </h2>
+            {reposicoes.length === 0 ? (
+              <Card className="p-6 app-surface text-center">
+                <p className="text-sm text-[var(--muted)]">
+                  {isTeacher
+                    ? 'Nenhuma reposição agendada esta semana.'
+                    : 'Nenhuma reposição disponível esta semana.'}
+                </p>
+              </Card>
+            ) : (
+              <div className="space-y-3">
+                <AnimatePresence>
+                  {reposicoes.map((r, i) => {
+                    const isEnrolled = !!currentAluno && r.alunos.some(a => a.id === currentAluno.id);
+                    return (
+                      <motion.div
+                        key={r.id}
+                        layout
+                        initial={{ opacity: 0, x: -12 }}
+                        animate={{ opacity: 1, x: 0 }}
+                        exit={{ opacity: 0, scale: 0.95 }}
+                        transition={{ delay: i * 0.04 }}
+                      >
+                        <button
+                          type="button"
+                          className="w-full text-left"
+                          onClick={() => {
+                            if (!isTeacher && r.status === 'ABERTA') {
+                              const mins = minutesUntilStart(r.dataAula, r.horario);
+                              if (mins < 0) {
+                                toast('Esta reposição já foi iniciada. Inscrições não são mais possíveis.', 'warning');
+                              } else if (mins < 30) {
+                                toast(
+                                  `Inscrições encerradas. É necessário pelo menos 30 minutos de antecedência (faltam ${Math.ceil(mins)} min).`,
+                                  'warning',
+                                );
+                              }
+                            }
+                            setViewModal(r);
+                          }}
+                        >
+                        <Card
+                          className="p-4 app-surface cursor-pointer hover:border-[var(--accent-400)] transition-colors group"
+                        >
+                          <div className="flex items-start gap-4">
+                            <div className="w-10 shrink-0 flex flex-col items-center pt-0.5">
+                              <span className="text-lg font-black text-[var(--accent-600)] leading-none">
+                                {new Date(`${r.dataAula}T12:00:00`).getDate()}
+                              </span>
+                              <span className="text-[10px] text-[var(--muted)] uppercase tracking-wide">
+                                {new Date(`${r.dataAula}T12:00:00`).toLocaleDateString('pt-BR', { month: 'short' })}
+                              </span>
+                            </div>
+
+                            <div className="flex-1 min-w-0">
+                              <div className="flex items-center gap-2 flex-wrap">
+                                <p className="text-sm font-semibold text-[var(--heading)]">
+                                  {DAY_LABELS[r.diaSemana] ?? r.diaSemana} · {r.horario}
+                                </p>
+                                <span className={`text-[10px] font-medium px-2 py-0.5 rounded-full ${STATUS_COLOR[r.status] ?? ''}`}>
+                                  {STATUS_LABEL[r.status] ?? r.status}
+                                </span>
+                              </div>
+                              {r.observacao && (
+                                <p className="text-xs text-[var(--muted)] mt-0.5">{r.observacao}</p>
+                              )}
+                              <div className="flex items-center gap-2 mt-1.5 flex-wrap">
+                                <span className="text-xs text-[var(--muted)] flex items-center gap-1">
+                                  <Users size={11} />
+                                  {r.alunos.length} inscrito{r.alunos.length !== 1 ? 's' : ''}
+                                </span>
+                                {!isTeacher && isEnrolled && (
+                                  <span className="inline-flex items-center gap-1 text-[10px] font-medium text-emerald-600 bg-emerald-50 dark:bg-emerald-950/30 px-2 py-0.5 rounded-full">
+                                    <CheckCircle2 size={10} /> Inscrito
+                                  </span>
+                                )}
+                                {isTeacher && r.alunos.length > 0 && (
+                                  <div className="flex flex-wrap gap-1">
+                                    {r.alunos.map(a => (
+                                      <span
+                                        key={a.id}
+                                        className="text-[10px] bg-[color-mix(in_srgb,var(--accent-500)_10%,var(--surface))] text-[var(--text)] border border-[var(--border)] px-1.5 py-0.5 rounded-full"
+                                      >
+                                        {a.nome.split(' ')[0]}
+                                      </span>
+                                    ))}
+                                  </div>
+                                )}
+                              </div>
+                            </div>
+
+                            {isTeacher && (
+                              <button
+                                type="button"
+                                onClick={e => { e.stopPropagation(); handleDelete(r.id); }}
+                                disabled={deletingId === r.id}
+                                className="p-1.5 rounded-lg text-[var(--muted)] hover:text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-950/30 transition-colors disabled:opacity-40 shrink-0 self-start"
+                                title="Excluir reposição"
+                              >
+                                {deletingId === r.id ? (
+                                  <div className="w-4 h-4 rounded-full border-2 border-current border-t-transparent animate-spin" />
+                                ) : (
+                                  <Trash2 size={14} />
+                                )}
+                              </button>
+                            )}
+                          </div>
+                        </Card>
+                        </button>
+                      </motion.div>
+                    );
+                  })}
+                </AnimatePresence>
               </div>
-            </Card>
-          </motion.div>
-        ))}
-      </div>
+            )}
+          </section>
+        </>
+      )}
+
+      {/* Slots picker modal */}
+      <AnimatePresence>
+        {showSlotsPicker && !agendarSlot && (
+          <SlotsPickerModal
+            key="slots-picker"
+            slots={slots}
+            onClose={() => setShowSlotsPicker(false)}
+            onSelect={slot => {
+              setShowSlotsPicker(false);
+              setAgendarSlot(slot);
+            }}
+          />
+        )}
+      </AnimatePresence>
+
+      {/* Agendar modal */}
+      <AnimatePresence>
+        {agendarSlot && (
+          <AgendarReposicaoModal
+            key="agendar-modal"
+            slot={agendarSlot}
+            defaultDate={thisWeekDate(agendarSlot.diaSemana) ?? agendarSlot.diaSemana}
+            alunos={alunos}
+            onClose={() => setAgendarSlot(null)}
+            onCreated={handleCreated}
+          />
+        )}
+      </AnimatePresence>
+
+      {/* View modal */}
+      <AnimatePresence>
+        {viewModal && (
+          <ReposicaoViewModal
+            key="view-modal"
+            reposicao={viewModal}
+            isTeacher={isTeacher}
+            currentAlunoId={currentAluno?.id}
+            onClose={() => setViewModal(null)}
+            onEnroll={handleEnroll}
+            onUnenroll={handleUnenroll}
+            onDeleteAluno={handleRemoveAluno}
+            onDelete={async id => {
+              await handleDelete(id);
+              setViewModal(null);
+            }}
+          />
+        )}
+      </AnimatePresence>
     </div>
+  );
+}
+
+// --- SlotsPickerModal ---
+
+interface SlotsPickerModalProps {
+  slots: DisponibilidadeResponseDTO[];
+  onClose: () => void;
+  onSelect: (slot: DisponibilidadeResponseDTO) => void;
+}
+
+function SlotsPickerModal({ slots, onClose, onSelect }: SlotsPickerModalProps) {
+  return (
+    <>
+      <motion.div
+        key="backdrop"
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        exit={{ opacity: 0 }}
+        className="fixed inset-0 bg-black/40 backdrop-blur-sm z-40"
+        onClick={onClose}
+      />
+      <motion.div
+        key="panel"
+        initial={{ opacity: 0, scale: 0.96, y: 10 }}
+        animate={{ opacity: 1, scale: 1, y: 0 }}
+        exit={{ opacity: 0, scale: 0.96, y: 10 }}
+        transition={{ type: 'spring', stiffness: 380, damping: 28 }}
+        className="fixed inset-0 z-50 flex items-center justify-center pointer-events-none px-4"
+      >
+        <div
+          className="w-full max-w-md bg-[var(--surface)] rounded-2xl shadow-2xl border border-[var(--border)] overflow-hidden pointer-events-auto flex flex-col max-h-[80vh]"
+          onClick={e => e.stopPropagation()}
+        >
+          <div className="flex items-center justify-between px-5 py-4 border-b border-[var(--border)] shrink-0">
+            <div className="flex items-center gap-2">
+              <CalendarPlus size={15} className="text-[var(--accent-600)]" />
+              <span className="font-semibold text-[var(--heading)] text-sm">Selecionar horário</span>
+              <span className="text-xs text-[var(--muted)] bg-[var(--surface-soft)] px-2 py-0.5 rounded-full border border-[var(--border)]">
+                {slots.length}
+              </span>
+            </div>
+            <button onClick={onClose} className="text-[var(--muted)] hover:text-[var(--text)] transition-colors">
+              <X size={16} />
+            </button>
+          </div>
+
+          <div className="overflow-y-auto flex-1 p-4 space-y-2">
+            {slots.map((slot, i) => {
+              const dateStr = thisWeekDate(slot.diaSemana);
+              const dateLabel = dateStr
+                ? new Date(`${dateStr}T12:00:00`).toLocaleDateString('pt-BR', { day: 'numeric', month: 'short' })
+                : '-';
+              return (
+                <motion.button
+                  key={slot.id}
+                  type="button"
+                  initial={{ opacity: 0, y: 6 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: i * 0.03 }}
+                  onClick={() => onSelect(slot)}
+                  className="w-full text-left flex items-center gap-4 px-4 py-3 rounded-xl border border-[var(--border)] bg-[var(--surface-soft)] hover:border-[var(--accent-400)] hover:bg-[color-mix(in_srgb,var(--accent-500)_6%,var(--surface))] transition-all group"
+                >
+                  <div className="w-9 h-9 rounded-xl bg-[color-mix(in_srgb,var(--accent-500)_12%,var(--surface))] flex items-center justify-center shrink-0">
+                    <Clock size={15} className="text-[var(--accent-600)]" />
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm font-semibold text-[var(--heading)]">
+                       {DAY_LABELS[slot.diaSemana] ?? slot.diaSemana} · {slot.horario}
+                    </p>
+                    <p className="text-xs text-[var(--muted)]">{dateLabel}</p>
+                  </div>
+                  <ChevronRight size={14} className="text-[var(--muted)] group-hover:text-[var(--accent-600)] transition-colors shrink-0" />
+                </motion.button>
+              );
+            })}
+          </div>
+
+          <div className="px-5 py-3 border-t border-[var(--border)] shrink-0">
+            <Button variant="ghost" size="sm" onClick={onClose} className="w-full">Cancelar</Button>
+          </div>
+        </div>
+      </motion.div>
+    </>
   );
 }

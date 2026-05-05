@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { X, User, Mail, Phone, Tag, Save, UserPlus, Info } from 'lucide-react';
+import { X, User, Mail, Phone, Tag, Save, UserPlus, Info, Lock, CheckCircle2, AlertCircle } from 'lucide-react';
 import type { Aluno } from '../../types';
 import type { AlunoFormData } from '../../services/alunoService';
 
@@ -15,6 +15,25 @@ interface AlunoModalProps {
 }
 
 // ─── helpers ──────────────────────────────────────────────────────────────────
+
+const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/;
+const PHONE_DIGITS_MIN = 10; // (XX) XXXX-XXXX
+const PHONE_DIGITS_MAX = 11; // (XX) XXXXX-XXXX
+
+/** Formata telefone brasileiro: (XX) XXXXX-XXXX ou (XX) XXXX-XXXX */
+function formatPhone(raw: string): string {
+  const d = raw.replace(/\D/g, '').slice(0, PHONE_DIGITS_MAX);
+  if (d.length === 0) return '';
+  if (d.length <= 2)  return `(${d}`;
+  if (d.length <= 6)  return `(${d.slice(0, 2)}) ${d.slice(2)}`;
+  if (d.length <= 10) return `(${d.slice(0, 2)}) ${d.slice(2, 6)}-${d.slice(6)}`;
+  return `(${d.slice(0, 2)}) ${d.slice(2, 7)}-${d.slice(7)}`;
+}
+
+function isPhoneValid(phone: string): boolean {
+  const d = phone.replace(/\D/g, '');
+  return d.length >= PHONE_DIGITS_MIN && d.length <= PHONE_DIGITS_MAX;
+}
 
 const EMPTY: AlunoFormData = {
   nome: '',
@@ -40,11 +59,15 @@ function Field({
   label,
   icon: Icon,
   error,
+  required,
+  hint,
   children,
 }: {
   label: string;
   icon: React.ElementType;
   error?: string;
+  required?: boolean;
+  hint?: string;
   children: React.ReactNode;
 }) {
   return (
@@ -52,8 +75,10 @@ function Field({
       <label className="text-xs font-semibold text-[var(--muted)] uppercase tracking-wide flex items-center gap-1.5">
         <Icon size={11} className="text-[var(--accent-500)]" />
         {label}
+        {required && <span className="text-red-400 font-bold normal-case tracking-normal">*</span>}
       </label>
       {children}
+      {hint && !error && <span className="text-[11px] text-[var(--muted)] -mt-0.5">{hint}</span>}
       {error && <span className="text-xs text-red-500">{error}</span>}
     </div>
   );
@@ -65,34 +90,80 @@ function TextInput({
   placeholder,
   type = 'text',
   hasError,
+  isValid,
   disabled,
+  iconRight,
 }: {
   value: string;
   onChange: (v: string) => void;
   placeholder?: string;
   type?: string;
   hasError?: boolean;
+  isValid?: boolean;
   disabled?: boolean;
+  iconRight?: React.ReactNode;
 }) {
+  const borderCls = hasError
+    ? 'border-red-400 focus:border-red-400 focus:ring-red-300/20'
+    : isValid
+      ? 'border-emerald-400 focus:border-emerald-400 focus:ring-emerald-300/20'
+      : 'border-[var(--input-border)] focus:border-[var(--accent-500)] focus:ring-[var(--accent-500)]/30';
+
+  const showRightIcon = iconRight || isValid || hasError;
+
   return (
-    <input
-      type={type}
-      value={value}
-      onChange={e => onChange(e.target.value)}
-      placeholder={placeholder}
-      disabled={disabled}
-      className={`
-        h-10 px-3 rounded-xl text-sm bg-[var(--input-bg)]
-        border transition-all outline-none
-        text-[var(--text)] placeholder:text-[var(--muted)]
-        focus:ring-2 focus:ring-[var(--accent-500)]/30
-        disabled:opacity-50 disabled:cursor-not-allowed
-        ${hasError
-          ? 'border-red-400 focus:border-red-400'
-          : 'border-[var(--input-border)] focus:border-[var(--accent-500)]'
-        }
-      `}
-    />
+    <div className="relative">
+      <input
+        type={type}
+        value={value}
+        onChange={e => onChange(e.target.value)}
+        placeholder={placeholder}
+        disabled={disabled}
+        className={`
+          h-10 px-3 rounded-xl text-sm bg-[var(--input-bg)] w-full
+          border transition-all outline-none
+          text-[var(--text)] placeholder:text-[var(--muted)]
+          focus:ring-2
+          disabled:opacity-60 disabled:cursor-not-allowed
+          ${showRightIcon ? 'pr-8' : ''}
+          ${borderCls}
+        `}
+      />
+      {/* Ícone à direita: prioridade: prop iconRight > isValid > hasError */}
+      {iconRight && (
+        <span className="absolute right-2.5 top-1/2 -translate-y-1/2 text-[var(--muted)] pointer-events-none">
+          {iconRight}
+        </span>
+      )}
+      {!iconRight && (
+        <AnimatePresence>
+          {isValid && !hasError && (
+            <motion.span
+              key="valid"
+              initial={{ opacity: 0, scale: 0.5 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.5 }}
+              transition={{ type: 'spring', stiffness: 500, damping: 28 }}
+              className="absolute right-2.5 top-1/2 -translate-y-1/2 pointer-events-none"
+            >
+              <CheckCircle2 size={13} className="text-emerald-500" />
+            </motion.span>
+          )}
+          {hasError && (
+            <motion.span
+              key="error"
+              initial={{ opacity: 0, scale: 0.5 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.5 }}
+              transition={{ type: 'spring', stiffness: 500, damping: 28 }}
+              className="absolute right-2.5 top-1/2 -translate-y-1/2 pointer-events-none"
+            >
+              <AlertCircle size={13} className="text-red-400" />
+            </motion.span>
+          )}
+        </AnimatePresence>
+      )}
+    </div>
   );
 }
 
@@ -103,6 +174,7 @@ export function AlunoModal({ aluno, open, onClose, onSave }: AlunoModalProps) {
 
   const [form, setForm] = useState<AlunoFormData>(EMPTY);
   const [errors, setErrors] = useState<Partial<Record<keyof AlunoFormData, string>>>({});
+  const [apiError, setApiError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const firstInputRef = useRef<HTMLInputElement>(null);
 
@@ -111,6 +183,7 @@ export function AlunoModal({ aluno, open, onClose, onSave }: AlunoModalProps) {
     if (open) {
       setForm(aluno ? toFormData(aluno) : EMPTY);
       setErrors({});
+      setApiError(null);
       setTimeout(() => firstInputRef.current?.focus(), 80);
     }
   }, [open, aluno]);
@@ -125,13 +198,24 @@ export function AlunoModal({ aluno, open, onClose, onSave }: AlunoModalProps) {
   function set<K extends keyof AlunoFormData>(field: K, value: AlunoFormData[K]) {
     setForm(prev => ({ ...prev, [field]: value }));
     if (errors[field]) setErrors(prev => ({ ...prev, [field]: undefined }));
+    if (apiError) setApiError(null);
   }
 
   function validate(): boolean {
     const e: typeof errors = {};
-    if (!form.nome.trim())        e.nome   = 'Nome é obrigatório';
-    if (!form.email.trim())       e.email  = 'E-mail é obrigatório';
-    else if (!/\S+@\S+\.\S+/.test(form.email)) e.email = 'E-mail inválido';
+    if (!form.nome.trim()) {
+      e.nome = 'Nome é obrigatório';
+    }
+    if (!isEdit) {
+      if (!form.email.trim()) {
+        e.email = 'E-mail é obrigatório';
+      } else if (!EMAIL_RE.test(form.email.trim())) {
+        e.email = 'Formato de e-mail inválido';
+      }
+    }
+    if (form.telefone && form.telefone.trim() && !isPhoneValid(form.telefone)) {
+      e.telefone = 'Telefone inválido — use (XX) XXXXX-XXXX ou (XX) XXXX-XXXX';
+    }
     setErrors(e);
     return Object.keys(e).length === 0;
   }
@@ -140,9 +224,18 @@ export function AlunoModal({ aluno, open, onClose, onSave }: AlunoModalProps) {
     e.preventDefault();
     if (!validate()) return;
     setLoading(true);
+    setApiError(null);
     try {
       await onSave(form, aluno?.id);
       onClose();
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : 'Erro ao salvar. Tente novamente.';
+      // Detecta erro de email duplicado e exibe no campo
+      if (msg.toLowerCase().includes('e-mail') || msg.toLowerCase().includes('email')) {
+        setErrors(prev => ({ ...prev, email: msg }));
+      } else {
+        setApiError(msg);
+      }
     } finally {
       setLoading(false);
     }
@@ -171,7 +264,7 @@ export function AlunoModal({ aluno, open, onClose, onSave }: AlunoModalProps) {
           >
             <div
               className="
-                w-full max-w-md bg-[var(--card)] rounded-2xl shadow-2xl
+                w-full max-w-md bg-[var(--surface)] rounded-2xl shadow-2xl
                 border border-[var(--border)] overflow-hidden
               "
               onClick={e => e.stopPropagation()}
@@ -179,19 +272,25 @@ export function AlunoModal({ aluno, open, onClose, onSave }: AlunoModalProps) {
               {/* Header */}
               <div className="flex items-center justify-between px-6 py-4 border-b border-[var(--border)]">
                 <div className="flex items-center gap-3">
-                  <div className="w-8 h-8 rounded-xl bg-[var(--accent-500)]/10 flex items-center justify-center">
-                    {isEdit
-                      ? <User size={15} className="text-[var(--accent-500)]" />
-                      : <UserPlus size={15} className="text-[var(--accent-500)]" />
-                    }
-                  </div>
+                  {isEdit ? (
+                    <div
+                      className="w-9 h-9 rounded-xl flex items-center justify-center text-white text-sm font-bold shrink-0"
+                      style={{ background: 'linear-gradient(135deg, var(--accent-gradient-from), var(--accent-gradient-to))' }}
+                    >
+                      {aluno.nome.trim().charAt(0).toUpperCase()}
+                    </div>
+                  ) : (
+                    <div className="w-9 h-9 rounded-xl bg-[var(--accent-500)]/10 flex items-center justify-center shrink-0">
+                      <UserPlus size={16} className="text-[var(--accent-500)]" />
+                    </div>
+                  )}
                   <div>
                     <h2 className="text-sm font-bold text-[var(--heading)]">
                       {isEdit ? 'Editar aluno' : 'Novo aluno'}
                     </h2>
-                    {isEdit && (
-                      <p className="text-xs text-[var(--muted)]">{aluno.nome}</p>
-                    )}
+                    <p className="text-xs text-[var(--muted)]">
+                      {isEdit ? aluno.nome : 'Preencha os dados do aluno'}
+                    </p>
                   </div>
                 </div>
                 <button
@@ -210,51 +309,45 @@ export function AlunoModal({ aluno, open, onClose, onSave }: AlunoModalProps) {
               <form onSubmit={handleSubmit} noValidate>
                 <div className="px-6 py-5 flex flex-col gap-4">
 
-                  <Field label="Nome completo" icon={User} error={errors.nome}>
+                  {/* Campos obrigatórios */}
+                  <Field label="Nome completo" icon={User} error={errors.nome} required>
                     <TextInput
                       value={form.nome}
                       onChange={v => set('nome', v)}
                       placeholder="Ex: João da Silva"
                       hasError={!!errors.nome}
+                      isValid={!!form.nome.trim() && !errors.nome}
                     />
                   </Field>
 
-                  <Field label="E-mail" icon={Mail} error={errors.email}>
+                  <Field
+                    label="E-mail"
+                    icon={Mail}
+                    error={errors.email}
+                    required={!isEdit}
+                    hint={isEdit ? 'O e-mail não pode ser alterado após o cadastro.' : undefined}
+                  >
                     <TextInput
                       type="email"
                       value={form.email}
                       onChange={v => set('email', v)}
                       placeholder="aluno@email.com"
                       hasError={!!errors.email}
+                      isValid={!isEdit && !!form.email.trim() && EMAIL_RE.test(form.email.trim()) && !errors.email}
                       disabled={isEdit}
-                    />
-                    {isEdit && (
-                      <p className="text-[11px] text-[var(--muted)] -mt-0.5">
-                        E-mail não pode ser alterado após o cadastro.
-                      </p>
-                    )}
-                  </Field>
-
-                  <Field label="Telefone" icon={Phone}>
-                    <TextInput
-                      type="tel"
-                      value={form.telefone}
-                      onChange={v => set('telefone', v)}
-                      placeholder="(31) 9 9999-9999"
-                    />
-                  </Field>
-
-                  <Field label="Apelido" icon={Tag}>
-                    <TextInput
-                      value={form.apelido ?? ''}
-                      onChange={v => set('apelido', v)}
-                      placeholder="Como prefere ser chamado..."
+                      iconRight={isEdit ? <Lock size={13} /> : undefined}
                     />
                   </Field>
 
                   {/* Senha padrão — somente no cadastro */}
                   {!isEdit && (
-                    <div className="flex items-start gap-2 px-3 py-2.5 rounded-xl bg-[var(--accent-500)]/8 border border-[var(--accent-500)]/20">
+                    <div
+                      className="flex items-start gap-2 px-3 py-2.5 rounded-xl border"
+                      style={{
+                        backgroundColor: 'color-mix(in srgb, var(--accent-500) 10%, var(--surface))',
+                        borderColor: 'color-mix(in srgb, var(--accent-500) 30%, transparent)',
+                      }}
+                    >
                       <Info size={13} className="text-[var(--accent-500)] mt-0.5 shrink-0" />
                       <p className="text-xs text-[var(--muted)] leading-relaxed">
                         A senha inicial do aluno será{' '}
@@ -264,28 +357,81 @@ export function AlunoModal({ aluno, open, onClose, onSave }: AlunoModalProps) {
                     </div>
                   )}
 
+                  {/* Divisor campos opcionais */}
+                  <div className="flex items-center gap-2 pt-1">
+                    <div className="flex-1 h-px bg-[var(--border)]" />
+                    <span className="text-[10px] font-semibold uppercase tracking-widest text-[var(--muted)]">Opcional</span>
+                    <div className="flex-1 h-px bg-[var(--border)]" />
+                  </div>
+
+                  <Field label="Telefone" icon={Phone} error={errors.telefone}
+                    hint={!errors.telefone ? 'Celular: (XX) XXXXX-XXXX · Fixo: (XX) XXXX-XXXX' : undefined}
+                  >
+                    <TextInput
+                      type="tel"
+                      value={form.telefone}
+                      onChange={v => set('telefone', formatPhone(v))}
+                      placeholder="(31) 99999-9999"
+                      hasError={!!errors.telefone}
+                      isValid={!!form.telefone && isPhoneValid(form.telefone) && !errors.telefone}
+                    />
+                  </Field>
+
+                  <Field
+                    label="Apelido"
+                    icon={Tag}
+                    hint="Como o aluno prefere ser chamado (aparece no cartão)"
+                  >
+                    <TextInput
+                      value={form.apelido ?? ''}
+                      onChange={v => set('apelido', v)}
+                      placeholder="Ex: João, Jotinha..."
+                    />
+                  </Field>
+
                   {/* Toggle ativo */}
                   <div className="flex items-center justify-between py-1">
-                    <span className="text-sm text-[var(--text)] font-medium">Aluno ativo</span>
+                    <div>
+                      <span className="text-sm text-[var(--text)] font-medium">Status da conta</span>
+                      <p className="text-[11px] text-[var(--muted)] mt-0.5">
+                        {form.ativo ? 'O aluno pode fazer login normalmente.' : 'O aluno não conseguirá acessar o sistema.'}
+                      </p>
+                    </div>
                     <button
                       type="button"
                       onClick={() => set('ativo', !form.ativo)}
-                      className={`
-                        relative w-10 h-5 rounded-full transition-colors duration-200 focus:outline-none
-                        ${form.ativo ? 'bg-[var(--accent-500)]' : 'bg-[var(--input-border)]'}
-                      `}
+                      className="flex items-center gap-2 shrink-0 ml-4"
+                      aria-label={form.ativo ? 'Desativar aluno' : 'Ativar aluno'}
                     >
-                      <span
+                      <span className={`text-xs font-semibold ${form.ativo ? 'text-emerald-600' : 'text-[var(--muted)]'}`}>
+                        {form.ativo ? 'Ativo' : 'Inativo'}
+                      </span>
+                      <div
                         className={`
-                          absolute top-0.5 left-0.5 w-4 h-4 rounded-full bg-white shadow-sm
-                          transition-transform duration-200
-                          ${form.ativo ? 'translate-x-5' : 'translate-x-0'}
+                          relative w-10 h-5 rounded-full transition-colors duration-200 focus:outline-none
+                          ${form.ativo ? 'bg-emerald-500' : 'bg-[var(--input-border)]'}
                         `}
-                      />
+                      >
+                        <span
+                          className={`
+                            absolute top-0.5 left-0.5 w-4 h-4 rounded-full bg-white shadow-sm
+                            transition-transform duration-200
+                            ${form.ativo ? 'translate-x-5' : 'translate-x-0'}
+                          `}
+                        />
+                      </div>
                     </button>
                   </div>
 
                 </div>
+
+                {/* Erro da API */}
+                {apiError && (
+                  <div className="mx-6 mb-4 flex items-start gap-2 px-3 py-2.5 rounded-xl border border-red-300 bg-red-50 dark:bg-red-950/40 dark:border-red-900/50">
+                    <span className="text-red-500 mt-0.5 shrink-0 text-sm font-bold">!</span>
+                    <p className="text-xs text-red-600 dark:text-red-400 leading-relaxed">{apiError}</p>
+                  </div>
+                )}
 
                 {/* Footer */}
                 <div className="flex items-center justify-end gap-2 px-6 py-4 border-t border-[var(--border)] bg-[var(--input-bg)]/40">

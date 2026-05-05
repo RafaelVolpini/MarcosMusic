@@ -27,6 +27,7 @@ public class Aluno {
     @OneToOne
     @MapsId
     @JoinColumn(name = "id")
+    @JsonIgnore
     private Usuario usuario;
 
     @Column(nullable = false, length = 255)

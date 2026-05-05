@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
-import { Search, Plus, Phone, Mail, Tag, Trash2, ChevronLeft, ChevronRight } from 'lucide-react';
+import { Search, Plus, Phone, Mail, Tag, ChevronLeft, ChevronRight, Trash2 } from 'lucide-react';
+import { DeleteConfirmModal } from '../modals/DeleteConfirmModal';
 import type { Aluno } from '../../types';
 import type { AuthUser } from '../../lib/auth';
 import { Card } from '../ui/Card';
@@ -26,6 +27,7 @@ export function StudentsPage({ students, currentUser, onReload }: StudentsPagePr
   const [modalOpen, setModalOpen] = useState(false);
   const [alunoEditando, setAlunoEditando] = useState<Aluno | undefined>(undefined);
   const [deletingId, setDeletingId] = useState<string | null>(null);
+  const [alunoParaExcluir, setAlunoParaExcluir] = useState<Aluno | null>(null);
 
   const filtered = students.filter(s =>
     s.nome.toLowerCase().includes(query.toLowerCase()) ||
@@ -68,10 +70,15 @@ export function StudentsPage({ students, currentUser, onReload }: StudentsPagePr
 
   async function handleDelete(e: React.MouseEvent, aluno: Aluno) {
     e.stopPropagation();
-    if (!window.confirm(`Excluir ${aluno.nome}? Esta ação não pode ser desfeita.`)) return;
-    setDeletingId(aluno.id);
+    setAlunoParaExcluir(aluno);
+  }
+
+  async function confirmarExclusao() {
+    if (!alunoParaExcluir) return;
+    setDeletingId(alunoParaExcluir.id);
     try {
-      await deletarAluno(aluno.id);
+      await deletarAluno(alunoParaExcluir.id);
+      setAlunoParaExcluir(null);
       onReload();
     } finally {
       setDeletingId(null);
@@ -85,6 +92,13 @@ export function StudentsPage({ students, currentUser, onReload }: StudentsPagePr
         aluno={alunoEditando}
         onClose={handleClose}
         onSave={handleSave}
+      />
+
+      <DeleteConfirmModal
+        aluno={alunoParaExcluir}
+        loading={deletingId !== null}
+        onConfirm={confirmarExclusao}
+        onCancel={() => setAlunoParaExcluir(null)}
       />
 
       {/* Header */}
@@ -115,11 +129,14 @@ export function StudentsPage({ students, currentUser, onReload }: StudentsPagePr
           transition={{ duration: 0.18 }}
           className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4"
         >
+          <AnimatePresence>
           {pageItems.map((aluno, i) => (
             <motion.div
               key={aluno.id}
-              initial={{ opacity: 0, y: 18 }}
-              animate={{ opacity: 1, y: 0 }}
+              layout
+              initial={{ opacity: 0, y: 18, scale: 0.95 }}
+              animate={{ opacity: 1, y: 0, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.82, y: -10, transition: { duration: 0.18 } }}
               transition={{ delay: i * 0.045, duration: 0.22 }}
             >
               <Card
@@ -181,6 +198,7 @@ export function StudentsPage({ students, currentUser, onReload }: StudentsPagePr
               </Card>
             </motion.div>
           ))}
+          </AnimatePresence>
         </motion.div>
       </AnimatePresence>
 

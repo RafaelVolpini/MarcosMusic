@@ -10,6 +10,7 @@ export interface CalendarResponseDTO {
   idAluno?: string;
   nomeAluno?: string;
   flagCancelada?: boolean;
+  flagRealizada?: boolean;
   presencaConfirmada?: boolean;
   recorrente?: boolean;
 }

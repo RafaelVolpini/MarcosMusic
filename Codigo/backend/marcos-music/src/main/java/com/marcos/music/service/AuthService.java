@@ -98,6 +98,9 @@ public class AuthService {
     }
 
     public Usuario criarUsuario(String email, String password, Role role) {
+        if (repository.findByEmail(email).isPresent()) {
+            throw new IllegalArgumentException("E-mail já cadastrado: " + email);
+        }
         Usuario user = new Usuario();
         user.setEmail(email);
         user.setPassword(encoder.encode(password));

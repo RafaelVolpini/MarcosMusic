@@ -64,7 +64,7 @@ export function toLesson(dto: CalendarResponseDTO): Lesson {
     startTime: isoToTime(dto.dataInicio),
     endTime: isoToTime(dto.dataFim),
 
-    status: dto.flagCancelada ? 'cancelled' : 'scheduled',
+    status: dto.flagRealizada ? 'completed' : dto.flagCancelada ? 'cancelled' : 'scheduled',
     attendanceConfirmed: dto.presencaConfirmada ?? false,
     recorrente: dto.recorrente ?? false,
   };

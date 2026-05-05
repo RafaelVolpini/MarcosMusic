@@ -33,7 +33,8 @@ public class AulaController {
                 aula.getAluno().getNome(),
                 aula.getFlagCancelada(),
                 aula.getPresencaConfirmada(),
-                aula.getRecorrente()
+                aula.getRecorrente(),
+                aula.getFlagRealizada()
         );
     }
 

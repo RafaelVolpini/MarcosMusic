@@ -21,4 +21,5 @@ public class CalendarResponseDTO {
     private Boolean flagCancelada;
     private Boolean presencaConfirmada;
     private Boolean recorrente;
+    private Boolean flagRealizada;
 }

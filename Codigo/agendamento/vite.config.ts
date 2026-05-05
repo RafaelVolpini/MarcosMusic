@@ -12,6 +12,7 @@ export default defineConfig({
       '/aluno':            { target: 'http://localhost:8080', changeOrigin: true },
       '/auth':             { target: 'http://localhost:8080', changeOrigin: true },
       '/disponibilidade':  { target: 'http://localhost:8080', changeOrigin: true },
+      '/reposicao':        { target: 'http://localhost:8080', changeOrigin: true },
       '/google':           { target: 'http://localhost:8080', changeOrigin: true },
     },
   },

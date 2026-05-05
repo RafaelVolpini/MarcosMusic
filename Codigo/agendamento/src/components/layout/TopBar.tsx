@@ -3,18 +3,19 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { Search, Bell, ChevronDown, Music, X, Settings, LogOut, User } from 'lucide-react';
 import type { Page } from '../../types';
 import { cn } from '../../utils';
+import type { AuthUser } from '../../lib/auth'; 
 import marcosPhoto from '../../assets/image.png';
-import type { AuthUser } from '../../lib/auth';
 
 const PAGE_LABELS: Record<Page, string> = {
   dashboard: 'Dashboard',
   agenda: 'Agenda',
   students: 'Alunos',
   rooms: 'Calendario de Disponibilidade',
-  rescheduling: 'Reagendamentos',
+  rescheduling: 'Reposições',
   video: 'Aulas Online & Vídeos',
   lessonAlerts: 'Alertar Aula',
   settings: 'Configurações',
+  profile: 'Meu Perfil',
 };
 
 interface Notification {

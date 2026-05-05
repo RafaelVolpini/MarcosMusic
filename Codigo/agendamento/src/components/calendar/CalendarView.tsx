@@ -2,11 +2,13 @@ import { useState, useCallback, useEffect } from 'react';
 import { ChevronLeft, ChevronRight, MousePointerClick, RefreshCw } from 'lucide-react';
 import type { Lesson, WeeklyAvailability } from '../../types';
 import type { AuthUser } from '../../lib/auth';
+import type { ReposicaoDTO } from '../../services/reposicaoService';
 import {
   getWeekDays, formatDateISO, isToday,
   timeToMinutes, cn, getDayKeyFromISODate,
 } from '../../utils';
 import { CalendarCellOverlay } from './CalendarCellOverlay';
+import { ReposicaoBlock } from './ReposicaoBlock';
 
 // ─── Constants ───────────────────────────────────────────────────────────────
 
@@ -25,6 +27,7 @@ interface CalendarProps {
   lessons: Lesson[];
   availability: WeeklyAvailability;
   availabilityReposicao: WeeklyAvailability;
+  reposicoes?: ReposicaoDTO[];
   currentUser?: AuthUser;
   onLessonClick: (lesson: Lesson) => void;
   onNewLesson: (date: string, time: string) => void;
@@ -32,6 +35,7 @@ interface CalendarProps {
   onSyncCalendar?: () => void;
   /** Chamado toda vez que a semana/dia visível muda. Recebe [dataInicio, dataFim] ISO. */
   onWeekChange?: (dataInicio: string, dataFim: string) => void;
+  onReposicaoClick?: (reposicao: ReposicaoDTO) => void;
 }
 
 // ─── Main Calendar ───────────────────────────────────────────────────────────
@@ -46,12 +50,14 @@ export function CalendarView({
   lessons,
   availability,
   availabilityReposicao,
+  reposicoes = [],
   currentUser,
   onLessonClick,
   onNewLesson,
   onLessonMove,
   onSyncCalendar,
   onWeekChange,
+  onReposicaoClick,
 }: CalendarProps) {
   const [view, setView] = useState<CalendarView>('week');
   const [currentDate, setCurrentDate] = useState(new Date());
@@ -248,9 +254,16 @@ export function CalendarView({
                   timeToMinutes(l.startTime) < (hour + 1) * 60
                 );
 
+                const dayReposicoes = reposicoes.filter(r =>
+                  r.dataAula === dateStr &&
+                  timeToMinutes(r.horario) >= hour * 60 &&
+                  timeToMinutes(r.horario) < (hour + 1) * 60
+                );
+
                 // Célula bloqueada: passado, indisponível, ou já tem aula (própria ou de outro aluno)
                 const hasAnyLesson = dayLessons.length > 0;
-                const blocked = isPast || unavailable || hasAnyLesson;
+                const hasReposicao = dayReposicoes.length > 0;
+                const blocked = isPast || unavailable || hasAnyLesson || hasReposicao;
 
                 return (
                   <div
@@ -299,8 +312,8 @@ export function CalendarView({
                       </div>
                     )}
 
-                    {/* Tooltip contextual no hover — só quando não há aulas */}
-                    {dayLessons.length === 0 && (
+                    {/* Tooltip contextual no hover — só quando não há aulas nem reposições */}
+                    {dayLessons.length === 0 && dayReposicoes.length === 0 && (
                       <CellStateTooltip state={isPast ? 'past' : unavailable ? 'unavailable' : 'available'} />
                     )}
 
@@ -353,6 +366,16 @@ export function CalendarView({
                         />
                       );
                     })}
+
+                    {dayReposicoes.map(r => (
+                      <ReposicaoBlock
+                        key={`repos-${r.id}`}
+                        reposicao={r}
+                        hourStart={hour}
+                        cellHeight={CELL_HEIGHT}
+                        onClick={onReposicaoClick ? (e) => { e.stopPropagation(); onReposicaoClick(r); } : undefined}
+                      />
+                    ))}
                   </div>
                 );
               })}

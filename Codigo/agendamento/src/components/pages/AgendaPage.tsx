@@ -6,6 +6,7 @@ import { LessonModal } from '../modals/LessonModal';
 import { NewLessonModal } from '../modals/NewLessonModal';
 import { buscarAulas, cancelarAula, criarAula, reagendarAula, confirmarPresenca } from '../../services/aulaService';
 import { listarAlunos } from '../../services/alunoService';
+import { listarReposicoes, type ReposicaoDTO } from '../../services/reposicaoService';
 import { toLesson } from '../../adapters/aulaAdapter';
 import { timeToMinutes, minutesToTime } from '../../utils';
 
@@ -23,11 +24,12 @@ interface AgendaPageProps {
 export function AgendaPage({
   lessons: lessonsProp,
   availability, availabilityReposicao, currentUser,
-  onUpdateLesson, onDeleteLesson,
+  onUpdateLesson, onDeleteLesson, onNavigate,
 }: AgendaPageProps) {
   const [selectedLesson, setSelectedLesson] = useState<Lesson | null>(null);
   const [newLessonModal, setNewLessonModal] = useState<{ date: string; time: string } | null>(null);
   const [apiStudents, setApiStudents] = useState<Aluno[]>([]);
+  const [reposicoes, setReposicoes] = useState<ReposicaoDTO[]>([]);
 
   // Aulas reais vindas do backend; fallback para as props enquanto não há dados da API
   const [apiLessons, setApiLessons] = useState<Lesson[] | null>(null);
@@ -71,6 +73,9 @@ export function AgendaPage({
     listarAlunos()
       .then(setApiStudents)
       .catch(() => { /* mantém lista vazia como fallback */ });
+    listarReposicoes()
+      .then(setReposicoes)
+      .catch(() => {});
   }, []);
 
   // Usa dados da API quando disponíveis; caso contrário usa prop
@@ -137,11 +142,13 @@ export function AgendaPage({
         lessons={visibleLessons}
         availability={availability}
         availabilityReposicao={availabilityReposicao}
+        reposicoes={reposicoes}
         currentUser={currentUser}
         onLessonClick={setSelectedLesson}
         onNewLesson={(date, time) => setNewLessonModal({ date, time })}
         onLessonMove={handleMoveLesson}
         onWeekChange={handleWeekChange}
+        onReposicaoClick={() => onNavigate?.('rescheduling')}
       />
 
       <LessonModal

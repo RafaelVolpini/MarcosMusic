@@ -7,6 +7,7 @@ import com.marcos.music.repository.Aula.AulaAlunoRepository;
 
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -39,6 +40,7 @@ public class AlunoService {
         this.aulaAlunoRepository =aulaAlunoRepository;
     }
 
+    @Transactional
     public Aluno criarAluno(AlunoDTO dto) {
         if (dto.getId() != null) {
             Aluno aluno = repository.findById(dto.getId())
@@ -98,7 +100,6 @@ public class AlunoService {
         Usuario user = authService.criarUsuario(dto.getEmail(), PASS, Role.USER);
 
         Aluno aluno = new Aluno();
-        aluno.setId(user.getId());
         aluno.setNome(dto.getNome());
         aluno.setTelefone(dto.getTelefone());
         aluno.setTermos(dto.getTermos() != null ? dto.getTermos() : false);
@@ -179,10 +180,11 @@ public class AlunoService {
                 .collect(Collectors.toList());
     }
 
+    @Transactional
     public void deletarAluno(UUID id) {
         Aluno aluno = repository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Aluno não encontrado"));
-        // Remove o usuário vinculado (cascade apaga o aluno também)
-        usuarioRepository.deleteById(aluno.getId());
+                .orElseThrow(() -> new IllegalArgumentException("Aluno não encontrado"));
+        repository.delete(aluno);          // JPA cascade → AulaAluno; DB cascade → Aula
+        usuarioRepository.deleteById(id); // remove o login
     }
 }

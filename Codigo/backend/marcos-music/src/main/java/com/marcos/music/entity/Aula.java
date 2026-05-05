@@ -37,6 +37,12 @@ public class Aula {
     @Column(name = "recorrente")
     private Boolean recorrente = false;
 
+    @Column(name = "is_reposicao")
+    private Boolean isReposicao = false;
+
+    @Column(name = "flag_realizada")
+    private Boolean flagRealizada = false;
+
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "id_aluno", nullable = false)
     private Aluno aluno;

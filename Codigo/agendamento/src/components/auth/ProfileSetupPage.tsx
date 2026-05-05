@@ -1,11 +1,27 @@
 import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { User, Phone, Mail, CheckCircle2, Music2, ShieldCheck } from 'lucide-react';
+import { User, Phone, Mail, CheckCircle2, Music2, ShieldCheck, AlertCircle } from 'lucide-react';
 import { Button } from '../ui/Button';
 import type { AuthUser } from '../../lib/auth';
 import { getToken } from '../../lib/auth';
 
 const SESSION_KEY = 'musga:auth:session';
+
+// ─── Validação e máscara de telefone ──────────────────────────────────────────
+
+function formatPhone(raw: string): string {
+  const d = raw.replace(/\D/g, '').slice(0, 11);
+  if (d.length === 0) return '';
+  if (d.length <= 2)  return `(${d}`;
+  if (d.length <= 6)  return `(${d.slice(0, 2)}) ${d.slice(2)}`;
+  if (d.length <= 10) return `(${d.slice(0, 2)}) ${d.slice(2, 6)}-${d.slice(6)}`;
+  return `(${d.slice(0, 2)}) ${d.slice(2, 7)}-${d.slice(7)}`;
+}
+
+function isPhoneValid(phone: string): boolean {
+  const d = phone.replace(/\D/g, '');
+  return d.length >= 10 && d.length <= 11;
+}
 
 interface ProfileSetupPageProps {
   user: AuthUser;
@@ -38,6 +54,10 @@ export function ProfileSetupPage({ user, onComplete, inApp = false }: ProfileSet
     e.preventDefault();
     if (!nome.trim()) {
       setError('Nome é obrigatório.');
+      return;
+    }
+    if (telefone.trim() && !isPhoneValid(telefone)) {
+      setError('Telefone inválido. Use (XX) XXXXX-XXXX ou (XX) XXXX-XXXX.');
       return;
     }
     setLoading(true);
@@ -164,15 +184,55 @@ export function ProfileSetupPage({ user, onComplete, inApp = false }: ProfileSet
       <div>
         <label className={labelCls} style={{ color: 'var(--muted)' }}>Telefone</label>
         <div className="relative">
-          <Phone size={14} className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2" style={{ color: 'var(--muted)' }} />
-          <input
-            className={`${inputCls} pl-9`}
-            style={inputStyle}
-            value={telefone}
-            onChange={(e) => setTelefone(e.target.value)}
-            placeholder="(11) 99999-9999"
+          <Phone size={14} className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 transition-colors"
+            style={{ color: telefone && isPhoneValid(telefone) ? 'var(--accent-500)' : 'var(--muted)' }}
           />
+          <input
+            className={`${inputCls} pl-9 pr-9`}
+            style={{
+              ...inputStyle,
+              borderColor: telefone && !isPhoneValid(telefone)
+                ? '#f87171'
+                : telefone && isPhoneValid(telefone)
+                  ? '#34d399'
+                  : 'var(--border)',
+            }}
+            value={telefone}
+            onChange={(e) => { setTelefone(formatPhone(e.target.value)); if (error) setError(''); }}
+            placeholder="(11) 99999-9999"
+            type="tel"
+            inputMode="numeric"
+          />
+          <AnimatePresence>
+            {telefone && isPhoneValid(telefone) && (
+              <motion.span
+                key="ok"
+                initial={{ opacity: 0, scale: 0.5 }}
+                animate={{ opacity: 1, scale: 1 }}
+                exit={{ opacity: 0, scale: 0.5 }}
+                transition={{ type: 'spring', stiffness: 500, damping: 28 }}
+                className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2"
+              >
+                <CheckCircle2 size={14} className="text-emerald-500" />
+              </motion.span>
+            )}
+            {telefone && !isPhoneValid(telefone) && (
+              <motion.span
+                key="err"
+                initial={{ opacity: 0, scale: 0.5 }}
+                animate={{ opacity: 1, scale: 1 }}
+                exit={{ opacity: 0, scale: 0.5 }}
+                transition={{ type: 'spring', stiffness: 500, damping: 28 }}
+                className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2"
+              >
+                <AlertCircle size={14} className="text-rose-400" />
+              </motion.span>
+            )}
+          </AnimatePresence>
         </div>
+        {telefone && !isPhoneValid(telefone) && (
+          <p className="mt-1 text-xs text-rose-500">Use o formato (XX) XXXXX-XXXX ou (XX) XXXX-XXXX</p>
+        )}
       </div>
 
       {/* Error */}

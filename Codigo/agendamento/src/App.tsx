@@ -284,7 +284,7 @@ function App() {
           />
         );
       case 'rescheduling':
-        return <ReschedulingPage lessons={visibleLessons} />;
+        return <ReschedulingPage sessionUser={sessionUser!} />;
       case 'video':
         return <VideoPage videos={mockVideos} />;
       case 'lessonAlerts':
