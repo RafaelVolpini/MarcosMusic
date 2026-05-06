@@ -58,7 +58,8 @@ export function RoomsPage({ availability, availabilityReposicao, lessons, onChan
     for (const dto of dtos) {
       const day = dto.diaSemana as DayKey;
       if (!avail[day]) continue; // dia desconhecido — ignora
-      if (dto.disponivel) {
+      // aulaMarcada também entra em avail para evitar badge CONFLITO no calendário
+      if (dto.disponivel || dto.aulaMarcada) {
         avail[day] = [...avail[day], dto.horario].sort((a, b) => timeToMinutes(a) - timeToMinutes(b));
       }
       if (dto.reposicao) {
@@ -92,7 +93,13 @@ export function RoomsPage({ availability, availabilityReposicao, lessons, onChan
 
   useEffect(() => { loadAll(); }, [loadAll]);
 
-  const effectiveLessons = apiLessons.length > 0 ? apiLessons : lessons;
+  // Mescla apiLessons (semana atual) com lessons prop (30 dias), sem duplicatas
+  const effectiveLessons = useMemo(() => {
+    const byId = new Map<string, Lesson>();
+    for (const l of lessons) byId.set(l.id, l);
+    for (const l of apiLessons) byId.set(l.id, l); // apiLessons tem precedência (mais atualizado)
+    return [...byId.values()];
+  }, [lessons, apiLessons]);
 
   const totalSlots = useMemo(
     () => Object.values(availability).reduce((sum, slots) => sum + slots.length, 0),
@@ -101,9 +108,9 @@ export function RoomsPage({ availability, availabilityReposicao, lessons, onChan
 
   const scheduledLessonCountBySlot = useMemo(() => {
     const map = new Map<string, number>();
-    const { weekStart, weekEnd } = getThisWeek();
+    const today = new Date().toISOString().split('T')[0];
     effectiveLessons
-      .filter(l => ['scheduled', 'rescheduled'].includes(l.status) && l.date >= weekStart && l.date <= weekEnd)
+      .filter(l => ['scheduled', 'rescheduled'].includes(l.status) && l.date >= today)
       .forEach((lesson) => {
         const day = getDayKeyFromISODate(lesson.date);
         const hourSlot = `${lesson.startTime.slice(0, 2)}:00`;

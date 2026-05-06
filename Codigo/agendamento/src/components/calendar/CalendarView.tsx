@@ -63,6 +63,12 @@ export function CalendarView({
   const [currentDate, setCurrentDate] = useState(new Date());
   const [dragging, setDragging] = useState<{ lesson: Lesson; offsetMinutes: number } | null>(null);
   const [dragOver, setDragOver] = useState<{ date: string; time: string } | null>(null);
+  const [nowTime, setNowTime] = useState(new Date());
+
+  useEffect(() => {
+    const id = setInterval(() => setNowTime(new Date()), 60_000);
+    return () => clearInterval(id);
+  }, []);
 
   const weekDays = getWeekDays(currentDate);
 
@@ -341,6 +347,11 @@ export function CalendarView({
                       />
                     )}
 
+                    {/* Linha de agora */}
+                    {isToday(day) && hour === nowTime.getHours() && nowTime.getHours() >= HOUR_START && nowTime.getHours() < HOUR_END && (
+                      <NowLine minuteOffset={nowTime.getMinutes()} />
+                    )}
+
                     {/* Lessons */}
                     {dayLessons.map(lesson => {
                       const own = isOwnLesson(lesson, currentUser);
@@ -497,6 +508,21 @@ function LessonBlock({ lesson, hourStart, isUnavailable, isPast, blurContent, on
           <span className="text-[9px] bg-rose-100 text-rose-600 font-semibold px-1 rounded">CONFLITO</span>
         </span>
       )}
+    </div>
+  );
+}
+
+// ─── Now Line ────────────────────────────────────────────────────────────────
+
+function NowLine({ minuteOffset }: { minuteOffset: number }) {
+  const top = Math.round((minuteOffset / 60) * CELL_HEIGHT);
+  return (
+    <div
+      className="absolute left-0 right-0 z-40 pointer-events-none flex items-center"
+      style={{ top: `${top}px` }}
+    >
+      <div className="w-2 h-2 rounded-full shrink-0 bg-red-500" />
+      <div className="flex-1 h-px bg-red-500 opacity-75" />
     </div>
   );
 }

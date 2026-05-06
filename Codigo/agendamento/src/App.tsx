@@ -23,7 +23,8 @@ import {
   type ContractAcceptance,
 } from './lib/auth';
 import { listarAlunos } from './services/alunoService';
-import { buscarDisponibilidade } from './services/aulaService';
+import { buscarDisponibilidade, buscarAulas } from './services/aulaService';
+import { toLesson } from './adapters/aulaAdapter';
 
 const LESSON_DURATION_MINUTES = 50;
 
@@ -79,6 +80,20 @@ function App() {
     }
   };
 
+  const loadLessons = async () => {
+    try {
+      const today = new Date();
+      const future = new Date(today);
+      future.setDate(today.getDate() + 30);
+      const fmt = (d: Date) =>
+        `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+      const dtos = await buscarAulas(`${fmt(today)}T00:00:00`, `${fmt(future)}T23:59:59`);
+      setLessons(dtos.map(toLesson));
+    } catch {
+      // fallback: mantém vazio
+    }
+  };
+
   // Tenta restaurar a sessão ao carregar a página
   useEffect(() => {
     const savedUser = getUser();
@@ -86,6 +101,7 @@ function App() {
       setSessionUser(savedUser);
       setAppState('app');
       loadAvailability();
+      loadLessons();
       // Se for professor, já aceitou contrato. Se for aluno, verifica o campo termos.
       if (savedUser.role === 'teacher' || savedUser.termos === true) {
         setContractAccepted(true);
@@ -132,6 +148,7 @@ function App() {
     setSessionUser(user);
     setAppState('app');
     loadAvailability();
+    loadLessons();
     // Teachers (ADMIN) never need to accept student contract
     if (user.role === 'teacher') {
       setContractAccepted(true);
