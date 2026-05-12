@@ -1,18 +1,100 @@
+import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import {
   Users, CalendarDays, Music,
-  Clock, AlertCircle, CheckCircle,
+  Clock, AlertCircle, CheckCircle, Copy, Check,
 } from 'lucide-react';
 import type { Lesson, Aluno, Page } from '../../types';
 import { StatCard, Card } from '../ui/Card';
 import { Badge } from '../ui/Badge';
 import { Avatar } from '../ui/Avatar';
-import { formatTime } from '../../utils';
+import { formatTime, timeToMinutes } from '../../utils';
 
 interface DashboardProps {
   lessons: Lesson[];
   students: Aluno[];
   onNavigate: (page: Page) => void;
+}
+
+function NextLessonBanner({ lesson }: { lesson: Lesson }) {
+  const [now, setNow] = useState(new Date());
+  const [copied, setCopied] = useState(false);
+
+  useEffect(() => {
+    const id = setInterval(() => setNow(new Date()), 30_000);
+    return () => clearInterval(id);
+  }, []);
+
+  const lessonStart = new Date(`${lesson.date}T${lesson.startTime}:00`);
+  const lessonEnd = new Date(`${lesson.date}T${lesson.endTime}:00`);
+  const isHappening = now >= lessonStart && now < lessonEnd;
+  const diffMs = lessonStart.getTime() - now.getTime();
+
+  const countdownLabel = (() => {
+    if (isHappening) return 'Acontecendo agora';
+    if (diffMs <= 0) return '';
+    const mins = Math.floor(diffMs / 60_000);
+    const h = Math.floor(mins / 60);
+    const m = mins % 60;
+    if (h > 0 && m > 0) return `em ${h}h ${m}min`;
+    if (h > 0) return `em ${h}h`;
+    return `em ${m}min`;
+  })();
+
+  const handleCopy = () => {
+    if (lesson.meetLink) {
+      navigator.clipboard.writeText(lesson.meetLink);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    }
+  };
+
+  return (
+    <motion.div variants={{ initial: { opacity: 0, y: 16 }, animate: { opacity: 1, y: 0 } }}>
+      <div className="relative overflow-hidden rounded-2xl bg-[var(--accent-600)] p-5 text-white">
+        <div className="pointer-events-none absolute -right-8 -top-8 h-36 w-36 rounded-full bg-white/10" />
+        <div className="pointer-events-none absolute right-12 -bottom-10 h-28 w-28 rounded-full bg-white/5" />
+
+        <div className="relative flex items-center gap-4">
+          <div className="min-w-0 flex-1 space-y-2">
+            <div className="flex items-center gap-2">
+              {isHappening ? (
+                <span className="relative flex h-2 w-2 shrink-0">
+                  <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-green-300 opacity-75" />
+                  <span className="relative inline-flex h-2 w-2 rounded-full bg-green-400" />
+                </span>
+              ) : (
+                <Clock size={12} className="shrink-0 text-white/70" />
+              )}
+              <span className="text-xs font-semibold uppercase tracking-wide text-white/80">
+                Próxima aula{countdownLabel ? ` — ${countdownLabel}` : ''}
+              </span>
+            </div>
+
+            <div className="flex items-center gap-3">
+              <Avatar name={lesson.studentName} size="sm" />
+              <div className="min-w-0">
+                <p className="truncate font-bold text-white">{lesson.studentName}</p>
+                <p className="text-xs text-white/70">{lesson.instrument}</p>
+              </div>
+            </div>
+          </div>
+
+          <div className="flex shrink-0 flex-col items-end gap-2">
+            <p className="text-2xl font-bold tabular-nums text-white">{formatTime(lesson.startTime)}</p>
+            <button
+              onClick={handleCopy}
+              disabled={!lesson.meetLink}
+              className="flex items-center gap-1.5 rounded-xl bg-white/20 px-3 py-1.5 text-xs font-semibold text-white transition-colors hover:bg-white/30 disabled:opacity-40 disabled:cursor-not-allowed"
+            >
+              {copied ? <Check size={12} /> : <Copy size={12} />}
+              {copied ? 'Copiado!' : 'Copiar link'}
+            </button>
+          </div>
+        </div>
+      </div>
+    </motion.div>
+  );
 }
 
 export function Dashboard({ lessons, students, onNavigate }: DashboardProps) {
@@ -27,6 +109,17 @@ export function Dashboard({ lessons, students, onNavigate }: DashboardProps) {
   const lessonsThisMonth = lessons.filter(l => l.date.startsWith(currentMonthPrefix)).length;
   const monthLabel = now.toLocaleDateString('pt-BR', { month: 'long', year: 'numeric' });
 
+  const nowMinutes = now.getHours() * 60 + now.getMinutes();
+
+  const nextLesson = lessons
+    .filter(l => l.status === 'scheduled')
+    .filter(l => {
+      if (l.date > today) return true;
+      if (l.date === today) return timeToMinutes(l.endTime) > nowMinutes;
+      return false;
+    })
+    .sort((a, b) => `${a.date}${a.startTime}`.localeCompare(`${b.date}${b.startTime}`))[0] ?? null;
+
   const upcomingLessons = lessons
     .filter(l => l.date >= today && l.status === 'scheduled')
     .sort((a, b) => `${a.date}${a.startTime}`.localeCompare(`${b.date}${b.startTime}`))
@@ -39,6 +132,8 @@ export function Dashboard({ lessons, students, onNavigate }: DashboardProps) {
       variants={{ animate: { transition: { staggerChildren: 0.05 } } }}
       className="p-6 space-y-6"
     >
+      {nextLesson && <NextLessonBanner lesson={nextLesson} />}
+
       {/* Stats row */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
         <motion.div variants={{ initial: { opacity: 0, y: 16 }, animate: { opacity: 1, y: 0 } }}>
