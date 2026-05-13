@@ -1,4 +1,4 @@
-## Sistema de Gestão de Aulas de Música — Casos de Uso
+debora ludmila## Sistema de Gestão de Aulas de Música — Casos de Uso
 
 ### Atores
 - **Professor**
@@ -230,5 +230,22 @@
 1. Sistema recebe solicitação de remarcação.
 2. Verifica horários disponíveis.
 3. Retorna resultado para o caso chamador.
+
+## UC-16 - Cancelar aula
+
+**Ator principal:** Aluno, Professor  
+**Objetivo:** Cancelar uma aula já agendada.
+**Pré-condições:** Aula existente; usuário com permissão.  
+**Pós-condições:** Aula marcada como cancelada e envolvidos notificados.
+
+**Fluxo principal:**
+
+1. Usuário seleciona a aula.
+2. Sistema solicita confirmação do cancelamento.
+3. Usuário confirma.
+4. Sistema marca a aula como cancelada.
+5. Sistema notifica os envolvidos.
+
+
 
 ---

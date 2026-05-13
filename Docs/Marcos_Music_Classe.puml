@@ -46,9 +46,12 @@ class Aula {
     - id: Long (PK)
     - dataInicio: LocalDateTime (not null)
     - dataFim: LocalDateTime (not null)
+    - idAluno: UUID (FK)
     - flagCancelada: Boolean
     - presencaConfirmada: Boolean
-    - idAluno: UUID (FK)
+    - recorrente: Boolean
+    - isReposicao: Boolean
+    - flagRealizada: Boolean
     ---
     + getId(): Long
     + getDataInicio(): LocalDateTime
@@ -56,7 +59,6 @@ class Aula {
     + isCancelada(): Boolean
     + isPresencaConfirmada(): Boolean
 }
-
 class AulaAluno {
     - id: Long (PK)
     - dia: Integer (not null)
@@ -73,6 +75,28 @@ class AulaAluno {
     + getHorarioFim(): LocalTime
 }
 
+class Disponibilidade {
+    - id : Long (PK)
+    - diaSemana: String
+    - horario: String
+    - disponivel: Boolean
+    - reposicao: Boolean
+}
+class Reposicao {
+    - id: Long (PK)
+    - status: String (padrão "ABERTA")
+    - disponibilidade: Disponibilidade
+    - aulaId: Aula
+    - observação: String
+    - dataAula: LocalDate
+    - alunos: List<Aluno>
+    --
+    + getId(): Long 
+    + getDataAula(): LocalDate
+    + getStatus(): String
+    + getObservação(): String 
+}
+
 ' Relacionamentos
 Usuario "1" -- "0..1" Aluno : perfil
 Usuario "1" -- "0..*" TermsHistory : termos
@@ -80,4 +104,7 @@ Aluno "1" -- "n" Aula : agendadas
 Aluno "1" -- "n" AulaAluno : horários recorrentes
 Aula "0..1" -- "0..*" AulaAluno : log
 Role -- Usuario : define papel
+Reposicao "0..*" -- "1" Aula: aula
+Reposicao "0..*" -- "0..*" Aluno: alunos
+Reposicao "0..*" -- "1" Disponibilidade: disponibilidade
 @enduml
