@@ -45,4 +45,3 @@ O sistema adota uma arquitetura Web Moderna (Frontend com **React/Vite** e Backe
 * **TermsHistory:** Rastreamento do aceite de contratos pelos alunos.
 
 ---
-> Próximos Passos: Este documento reflete o estado atual dos Casos de Uso e do Diagrama de Classes. Pode ser expandido com Requisitos Não-Funcionais (escalabilidade, segurança, performance) conforme o projeto evolua.
