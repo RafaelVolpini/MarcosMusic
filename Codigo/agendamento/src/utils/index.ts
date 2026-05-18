@@ -6,12 +6,15 @@ export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
 }
 
-export function formatTime(time: string): string {
-  const [h, m] = time.split(':');
-  const hour = parseInt(h, 10);
-  const ampm = hour >= 12 ? 'PM' : 'AM';
-  const displayHour = hour % 12 || 12;
-  return `${displayHour}:${m} ${ampm}`;
+export function formatTime(time: string, lang = 'pt'): string {
+  if (lang === 'en') {
+    const [h, m] = time.split(':');
+    const hour = parseInt(h, 10);
+    const ampm = hour >= 12 ? 'PM' : 'AM';
+    const displayHour = hour % 12 || 12;
+    return `${displayHour}:${m} ${ampm}`;
+  }
+  return time; // HH:MM — formato 24h brasileiro
 }
 
 export function formatDuration(startTime: string, endTime: string): string {
