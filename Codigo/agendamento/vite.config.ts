@@ -14,6 +14,8 @@ export default defineConfig({
       '/disponibilidade':  { target: 'http://localhost:8080', changeOrigin: true },
       '/reposicao':        { target: 'http://localhost:8080', changeOrigin: true },
       '/google':           { target: 'http://localhost:8080', changeOrigin: true },
+      '/chat':             { target: 'http://localhost:8080', changeOrigin: true },
+      '/notificacao':      { target: 'http://localhost:8080', changeOrigin: true },
     },
   },
 })

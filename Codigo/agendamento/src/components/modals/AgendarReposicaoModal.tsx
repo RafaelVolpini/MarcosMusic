@@ -7,6 +7,7 @@ import { Button } from '../ui/Button';
 import { criarReposicao, type ReposicaoDTO } from '../../services/reposicaoService';
 import type { DisponibilidadeResponseDTO } from '../../services/aulaService';
 import { DAY_LABELS } from '../../utils/reposicaoHelpers';
+import { useLanguage } from '../../context/LanguageContext';
 
 export interface AgendarReposicaoModalProps {
   slot: DisponibilidadeResponseDTO;
@@ -22,6 +23,7 @@ export function AgendarReposicaoModal({ slot, defaultDate, alunos, onClose, onCr
   const [observacao, setObservacao] = useState('');
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');
+  const { t } = useLanguage();
 
   const toggle = (id: string) =>
     setSelected(prev => {
@@ -43,7 +45,7 @@ export function AgendarReposicaoModal({ slot, defaultDate, alunos, onClose, onCr
       onCreated(result);
       onClose();
     } catch (e) {
-      setError(e instanceof Error ? e.message : 'Erro ao criar reposição.');
+      setError(e instanceof Error ? e.message : t('modals.reposicao.createError'));
     } finally {
       setSaving(false);
     }
@@ -52,7 +54,7 @@ export function AgendarReposicaoModal({ slot, defaultDate, alunos, onClose, onCr
   const activeAlunos = alunos.filter(a => a.ativo);
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm">
+    <div className="fixed inset-0 z-[90] flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm">
       <motion.div
         initial={{ opacity: 0, scale: 0.95, y: 10 }}
         animate={{ opacity: 1, scale: 1, y: 0 }}
@@ -75,7 +77,7 @@ export function AgendarReposicaoModal({ slot, defaultDate, alunos, onClose, onCr
         <div className="p-5 space-y-4">
           {/* Data */}
           <div>
-            <label className="block text-xs font-medium text-[var(--muted)] mb-1">Data da reposição</label>
+            <label className="block text-xs font-medium text-[var(--muted)] mb-1">{t('modals.reposicao.dateLabel')}</label>
             <input
               type="date"
               value={dataAula}
@@ -87,8 +89,8 @@ export function AgendarReposicaoModal({ slot, defaultDate, alunos, onClose, onCr
           {/* Alunos */}
           <div>
             <label className="block text-xs font-medium text-[var(--muted)] mb-2">
-              Alunos{' '}
-              <span className="font-normal">({selected.size} selecionado{selected.size !== 1 ? 's' : ''})</span>
+              {t('modals.reposicao.studentsLabel')}{' '}
+              <span className="font-normal">({t('modals.reposicao.selectedCount').replace('{n}', String(selected.size))})</span>
             </label>
             <div className="max-h-52 overflow-y-auto space-y-1 rounded-xl border border-[var(--border)] p-2">
               {activeAlunos.map(aluno => {
@@ -111,19 +113,19 @@ export function AgendarReposicaoModal({ slot, defaultDate, alunos, onClose, onCr
                 );
               })}
               {activeAlunos.length === 0 && (
-                <p className="text-xs text-[var(--muted)] text-center py-4">Carregando alunos…</p>
+                <p className="text-xs text-[var(--muted)] text-center py-4">{t('modals.reposicao.loadingStudents')}</p>
               )}
             </div>
           </div>
 
           {/* Observação */}
           <div>
-            <label className="block text-xs font-medium text-[var(--muted)] mb-1">Observação (opcional)</label>
+            <label className="block text-xs font-medium text-[var(--muted)] mb-1">{t('modals.reposicao.obsLabel')}</label>
             <input
               type="text"
               value={observacao}
               onChange={e => setObservacao(e.target.value)}
-              placeholder="Ex: Reposição da aula de 30/04"
+              placeholder={t('modals.reposicao.obsPH')}
               className="w-full text-sm border border-[var(--input-border)] rounded-xl px-3 py-2 bg-[var(--input-bg)] text-[var(--text)] placeholder:text-[var(--muted)] focus:outline-none focus:ring-2 focus:ring-[color-mix(in_srgb,var(--accent-500)_30%,transparent)]"
             />
           </div>
@@ -144,9 +146,9 @@ export function AgendarReposicaoModal({ slot, defaultDate, alunos, onClose, onCr
           </AnimatePresence>
 
           <div className="flex gap-2 pt-1">
-            <Button variant="ghost" size="sm" onClick={onClose} className="flex-1">Cancelar</Button>
+            <Button variant="ghost" size="sm" onClick={onClose} className="flex-1">{t('modals.reposicao.cancel')}</Button>
             <Button size="sm" onClick={handleSubmit} disabled={saving} className="flex-1">
-              {saving ? 'Salvando…' : 'Criar reposição'}
+              {saving ? t('modals.reposicao.saving') : t('modals.reposicao.createBtn')}
             </Button>
           </div>
         </div>

@@ -1,4 +1,4 @@
-﻿package com.marcos.music.service;
+package com.marcos.music.service;
 
 import com.marcos.music.dto.Disponibilidade.DisponibilidadeResponseDTO;
 import com.marcos.music.dto.Disponibilidade.SalvarDisponibilidadeRequestDTO;
@@ -82,7 +82,6 @@ public class DisponibilidadeService {
                 slot.setReposicao(horariosRepos.contains(horario));
                 Disponibilidade saved = repository.save(slot);
 
-                // Auto-cria Reposicao da semana atual para slots marcados como reposição
                 if (Boolean.TRUE.equals(saved.getReposicao())) {
                     LocalDate dataAula = thisWeekDate(dia);
                     if (dataAula != null && !reposicaoRepository.existsConflito(dataAula, horario)) {
@@ -95,7 +94,6 @@ public class DisponibilidadeService {
                 }
             }
 
-            // Slots que existem no banco para este dia mas nÃ£o vieram nos mapas â†’ indisponÃ­vel
             repository.findAllByOrderByDiaSemanaAscHorarioAsc().stream()
                     .filter(s -> s.getDiaSemana().equals(dia) && !todosHorarios.contains(s.getHorario()))
                     .forEach(s -> {

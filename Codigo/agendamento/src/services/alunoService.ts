@@ -1,4 +1,3 @@
-import { getToken } from '../lib/auth';
 import type { Aluno } from '../types';
 
 export interface AlunoFormData {
@@ -9,13 +8,8 @@ export interface AlunoFormData {
   ativo: boolean;
 }
 
-function authHeaders(): HeadersInit {
-  const token = getToken();
-  return token ? { Authorization: `Bearer ${token}` } : {};
-}
-
 export async function listarAlunos(): Promise<Aluno[]> {
-  const res = await fetch('/aluno', { method: 'GET', headers: authHeaders() });
+  const res = await fetch('/aluno', { method: 'GET', credentials: 'include' });
   if (!res.ok) throw new Error(`Erro ${res.status}`);
   const data = await res.json() as Array<{ id: string; nome: string | null; email: string | null; telefone: string | null; status: boolean; apelido?: string | null; reposicoes?: number | null }>;
   return data.map(d => ({
@@ -39,7 +33,8 @@ export async function criarAluno(data: AlunoFormData): Promise<Aluno> {
   };
   const res = await fetch('/aluno/salvar', {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json', ...authHeaders() },
+    headers: { 'Content-Type': 'application/json' },
+    credentials: 'include',
     body: JSON.stringify(body),
   });
   if (!res.ok) throw new Error(`Erro ${res.status}`);
@@ -65,7 +60,8 @@ export async function atualizarAluno(id: string, data: AlunoFormData): Promise<A
   };
   const res = await fetch('/aluno/salvar', {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json', ...authHeaders() },
+    headers: { 'Content-Type': 'application/json' },
+    credentials: 'include',
     body: JSON.stringify(body),
   });
   if (!res.ok) throw new Error(`Erro ${res.status}`);
@@ -83,7 +79,7 @@ export async function atualizarAluno(id: string, data: AlunoFormData): Promise<A
 export async function deletarAluno(id: string): Promise<void> {
   const res = await fetch(`/aluno/${id}`, {
     method: 'DELETE',
-    headers: authHeaders(),
+    credentials: 'include',
   });
   if (!res.ok && res.status !== 404) throw new Error(`Erro ${res.status}`);
 }

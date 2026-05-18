@@ -15,7 +15,7 @@ export function CalendarCellOverlay({ visible }: CalendarCellOverlayProps) {
 
   return (
     <>
-      {/* Fundo colorido — aparece no hover via classe `group-hover` do pai */}
+      {/* Fundo colorido aparece no hover via classe `group-hover` do pai */}
       <div className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-100 cursor-pointer bg-[var(--accent-icon-bg)] pointer-events-none" />
       {/* Ícone "+" centralizado */}
       <Plus

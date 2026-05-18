@@ -60,6 +60,11 @@ public class AuthService {
         String jwt = jwtService.generateToken(user);
 
         Aluno aluno = alunoRepository.findById(user.getId()).orElse(null);
+
+        if (aluno != null && Boolean.FALSE.equals(aluno.getStatus())) {
+            throw new RuntimeException("Conta desativada. Entre em contato com o professor.");
+        }
+
         Boolean termos = aluno != null ? aluno.getTermos() : null;
         String nome = aluno != null ? aluno.getNome() : null;
         String telefone = aluno != null ? aluno.getTelefone() : null;

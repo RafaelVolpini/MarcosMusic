@@ -1,5 +1,3 @@
-import { getToken } from '../lib/auth';
-
 // ─── DTOs ────────────────────────────────────────────────────────────────────
 
 export interface AlunoResumo {
@@ -29,14 +27,6 @@ export interface CriarReposicaoPayload {
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
 
-function authHeaders(): HeadersInit {
-  const token = getToken();
-  return {
-    'Content-Type': 'application/json',
-    ...(token ? { Authorization: `Bearer ${token}` } : {}),
-  };
-}
-
 async function handleResponse<T>(res: Response): Promise<T> {
   if (!res.ok) {
     const text = await res.text().catch(() => res.statusText);
@@ -49,14 +39,15 @@ async function handleResponse<T>(res: Response): Promise<T> {
 // ─── API ──────────────────────────────────────────────────────────────────────
 
 export async function listarReposicoes(): Promise<ReposicaoDTO[]> {
-  const res = await fetch('/reposicao', { headers: authHeaders() });
+  const res = await fetch('/reposicao', { credentials: 'include' });
   return handleResponse<ReposicaoDTO[]>(res);
 }
 
 export async function criarReposicao(payload: CriarReposicaoPayload): Promise<ReposicaoDTO> {
   const res = await fetch('/reposicao', {
     method: 'POST',
-    headers: authHeaders(),
+    headers: { 'Content-Type': 'application/json' },
+    credentials: 'include',
     body: JSON.stringify(payload),
   });
   return handleResponse<ReposicaoDTO>(res);
@@ -65,7 +56,7 @@ export async function criarReposicao(payload: CriarReposicaoPayload): Promise<Re
 export async function adicionarAluno(id: number, alunoId: string): Promise<ReposicaoDTO> {
   const res = await fetch(`/reposicao/${id}/aluno/${alunoId}`, {
     method: 'POST',
-    headers: authHeaders(),
+    credentials: 'include',
   });
   return handleResponse<ReposicaoDTO>(res);
 }
@@ -73,7 +64,7 @@ export async function adicionarAluno(id: number, alunoId: string): Promise<Repos
 export async function removerAluno(id: number, alunoId: string): Promise<ReposicaoDTO> {
   const res = await fetch(`/reposicao/${id}/aluno/${alunoId}`, {
     method: 'DELETE',
-    headers: authHeaders(),
+    credentials: 'include',
   });
   return handleResponse<ReposicaoDTO>(res);
 }
@@ -81,7 +72,7 @@ export async function removerAluno(id: number, alunoId: string): Promise<Reposic
 export async function deletarReposicao(id: number): Promise<void> {
   const res = await fetch(`/reposicao/${id}`, {
     method: 'DELETE',
-    headers: authHeaders(),
+    credentials: 'include',
   });
   return handleResponse<void>(res);
 }

@@ -9,6 +9,7 @@ import { StatCard, Card } from '../ui/Card';
 import { Badge } from '../ui/Badge';
 import { Avatar } from '../ui/Avatar';
 import { formatTime, timeToMinutes } from '../../utils';
+import { useLanguage } from '../../context/LanguageContext';
 
 interface DashboardProps {
   lessons: Lesson[];
@@ -19,6 +20,7 @@ interface DashboardProps {
 function NextLessonBanner({ lesson }: { lesson: Lesson }) {
   const [now, setNow] = useState(new Date());
   const [copied, setCopied] = useState(false);
+  const { t } = useLanguage();
 
   useEffect(() => {
     const id = setInterval(() => setNow(new Date()), 30_000);
@@ -31,7 +33,7 @@ function NextLessonBanner({ lesson }: { lesson: Lesson }) {
   const diffMs = lessonStart.getTime() - now.getTime();
 
   const countdownLabel = (() => {
-    if (isHappening) return 'Acontecendo agora';
+    if (isHappening) return t('dashboard.happeningNow');
     if (diffMs <= 0) return '';
     const mins = Math.floor(diffMs / 60_000);
     const h = Math.floor(mins / 60);
@@ -67,7 +69,7 @@ function NextLessonBanner({ lesson }: { lesson: Lesson }) {
                 <Clock size={12} className="shrink-0 text-white/70" />
               )}
               <span className="text-xs font-semibold uppercase tracking-wide text-white/80">
-                Próxima aula{countdownLabel ? ` — ${countdownLabel}` : ''}
+                {t('dashboard.nextLesson')}{countdownLabel ? ` ${countdownLabel}` : ''}
               </span>
             </div>
 
@@ -88,7 +90,7 @@ function NextLessonBanner({ lesson }: { lesson: Lesson }) {
               className="flex items-center gap-1.5 rounded-xl bg-white/20 px-3 py-1.5 text-xs font-semibold text-white transition-colors hover:bg-white/30 disabled:opacity-40 disabled:cursor-not-allowed"
             >
               {copied ? <Check size={12} /> : <Copy size={12} />}
-              {copied ? 'Copiado!' : 'Copiar link'}
+              {copied ? t('dashboard.copied') : t('dashboard.copyLink')}
             </button>
           </div>
         </div>
@@ -100,6 +102,7 @@ function NextLessonBanner({ lesson }: { lesson: Lesson }) {
 export function Dashboard({ lessons, students, onNavigate }: DashboardProps) {
   const now = new Date();
   const today = now.toISOString().split('T')[0];
+  const { t } = useLanguage();
   const currentMonthPrefix = today.slice(0, 7);
   const todayLessons = lessons.filter(l => l.date === today);
   const scheduledToday = todayLessons.filter(l => l.status === 'scheduled');
@@ -138,9 +141,9 @@ export function Dashboard({ lessons, students, onNavigate }: DashboardProps) {
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
         <motion.div variants={{ initial: { opacity: 0, y: 16 }, animate: { opacity: 1, y: 0 } }}>
           <StatCard
-            title="Alunos ativos"
+            title={t('dashboard.activeStudents')}
             value={students.length}
-            subtitle="matriculados"
+            subtitle={t('dashboard.enrolled')}
             icon={<Users size={18} />}
             trend={{ value: '+2 este mês', positive: true }}
             color="purple"
@@ -148,7 +151,7 @@ export function Dashboard({ lessons, students, onNavigate }: DashboardProps) {
         </motion.div>
         <motion.div variants={{ initial: { opacity: 0, y: 16 }, animate: { opacity: 1, y: 0 } }}>
           <StatCard
-            title="Aulas no mês"
+            title={t('dashboard.monthLessons')}
             value={lessonsThisMonth}
             subtitle={monthLabel}
             icon={<Music size={18} />}
@@ -157,20 +160,20 @@ export function Dashboard({ lessons, students, onNavigate }: DashboardProps) {
         </motion.div>
         <motion.div variants={{ initial: { opacity: 0, y: 16 }, animate: { opacity: 1, y: 0 } }}>
           <StatCard
-            title="Aulas hoje"
+            title={t('dashboard.todayLessons')}
             value={scheduledToday.length}
-            subtitle={`${todayLessons.length} no total`}
+            subtitle={`${todayLessons.length} ${t('dashboard.total')}`}
             icon={<CalendarDays size={18} />}
             color="green"
           />
         </motion.div>
         <motion.div variants={{ initial: { opacity: 0, y: 16 }, animate: { opacity: 1, y: 0 } }}>
           <StatCard
-            title="Concluidas hoje"
+            title={t('dashboard.completedToday')}
             value={completedToday.length}
-            subtitle={`${cancelledToday.length} canceladas`}
+            subtitle={`${cancelledToday.length} ${t('dashboard.cancelled')}`}
             icon={<CheckCircle size={18} />}
-            trend={{ value: completedToday.length > 0 ? 'Progresso em andamento' : 'Dia iniciando', positive: true }}
+            trend={{ value: completedToday.length > 0 ? t('dashboard.progress') : t('dashboard.dayStarting'), positive: true }}
             color="yellow"
           />
         </motion.div>
@@ -184,9 +187,9 @@ export function Dashboard({ lessons, students, onNavigate }: DashboardProps) {
         >
           <Card className="p-5">
             <div className="flex items-center justify-between mb-4">
-              <h3 className="text-sm font-bold text-[var(--heading)]">Próximas Aulas</h3>
+              <h3 className="text-sm font-bold text-[var(--heading)]">{t('dashboard.upcomingLessons')}</h3>
               <button onClick={() => onNavigate('agenda')} className="text-xs text-[var(--accent-600)] hover:text-[var(--accent-700)] font-semibold transition-colors">
-                Ver agenda →
+                {t('dashboard.viewSchedule')}
               </button>
             </div>
             <div className="space-y-2">
@@ -210,7 +213,7 @@ export function Dashboard({ lessons, students, onNavigate }: DashboardProps) {
                 </div>
               ))}
               {upcomingLessons.length === 0 && (
-                <p className="text-sm text-[var(--muted)] text-center py-6">Nenhuma aula agendada</p>
+                <p className="text-sm text-[var(--muted)] text-center py-6">{t('dashboard.noLesson')}</p>
               )}
             </div>
           </Card>
@@ -223,14 +226,14 @@ export function Dashboard({ lessons, students, onNavigate }: DashboardProps) {
         >
           {/* Alerts */}
           <Card className="p-5">
-            <h3 className="text-sm font-bold text-[var(--heading)] mb-3">Alertas</h3>
+            <h3 className="text-sm font-bold text-[var(--heading)] mb-3">{t('dashboard.alerts')}</h3>
             <div className="space-y-2">
               {todayLessons.filter(l => l.status === 'cancelled').map(l => (
                 <div key={l.id} className="flex items-start gap-2 p-2.5 rounded-xl border bg-rose-50 border-rose-100 dark:bg-rose-950/40 dark:border-rose-900/50">
                   <AlertCircle size={14} className="text-rose-500 shrink-0 mt-0.5" />
                   <div>
                     <p className="text-xs font-semibold text-[var(--heading)]">{l.studentName}</p>
-                    <p className="text-xs text-rose-600 dark:text-rose-400 font-medium">Aula cancelada hoje</p>
+                    <p className="text-xs text-rose-600 dark:text-rose-400 font-medium">{t('dashboard.lessonCancelled')}</p>
                   </div>
                 </div>
               ))}
@@ -239,14 +242,14 @@ export function Dashboard({ lessons, students, onNavigate }: DashboardProps) {
                   <Clock size={14} className="text-amber-500 shrink-0 mt-0.5" />
                   <div>
                     <p className="text-xs font-semibold text-[var(--heading)]">{l.studentName}</p>
-                    <p className="text-xs text-amber-600 dark:text-amber-400 font-medium">Aula reagendada</p>
+                    <p className="text-xs text-amber-600 dark:text-amber-400 font-medium">{t('dashboard.lessonRescheduled')}</p>
                   </div>
                 </div>
               ))}
               {todayLessons.filter(l => l.status === 'cancelled' || l.status === 'rescheduled').length === 0 && (
                 <div className="flex items-center gap-2 p-2.5 rounded-xl border bg-emerald-50 border-emerald-100 dark:bg-emerald-950/40 dark:border-emerald-900/50">
                   <CheckCircle size={14} className="text-emerald-500" />
-                  <p className="text-xs text-emerald-700 dark:text-emerald-400 font-semibold">Agenda sem alertas no momento</p>
+                  <p className="text-xs text-emerald-700 dark:text-emerald-400 font-semibold">{t('dashboard.noAlerts')}</p>
                 </div>
               )}
             </div>
@@ -254,7 +257,7 @@ export function Dashboard({ lessons, students, onNavigate }: DashboardProps) {
 
           {/* Recent Students */}
           <Card className="p-5">
-            <h3 className="text-sm font-bold text-[var(--heading)] mb-3">Alunos Recentes</h3>
+            <h3 className="text-sm font-bold text-[var(--heading)] mb-3">{t('dashboard.recentStudents')}</h3>
             <div className="space-y-2">
               {students.slice(0, 4).map(s => (
                 <div key={s.id} className="flex items-center gap-3 p-2 rounded-lg hover:bg-[var(--hover-bg)] transition-colors">
@@ -264,7 +267,7 @@ export function Dashboard({ lessons, students, onNavigate }: DashboardProps) {
                     <p className="text-xs text-[var(--muted)] truncate">{s.email}</p>
                   </div>
                   <Badge variant={s.ativo ? 'success' : 'warning'} className="text-[10px]">
-                    {s.ativo ? 'Ativo' : 'Inativo'}
+                    {s.ativo ? t('common.active') : t('common.inactive')}
                   </Badge>
                 </div>
               ))}

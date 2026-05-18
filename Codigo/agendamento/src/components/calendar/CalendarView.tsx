@@ -5,19 +5,39 @@ import type { AuthUser } from '../../lib/auth';
 import type { ReposicaoDTO } from '../../services/reposicaoService';
 import {
   getWeekDays, formatDateISO, isToday,
-  timeToMinutes, cn, getDayKeyFromISODate,
+  timeToMinutes, cn, getDayKeyFromISODate, getNowInTimezone,
 } from '../../utils';
 import { CalendarCellOverlay } from './CalendarCellOverlay';
 import { ReposicaoBlock } from './ReposicaoBlock';
+import { useAppSettings } from '../../context/AppSettingsContext';
+import { useLanguage } from '../../context/LanguageContext';
+
+// ─── Time helpers ─────────────────────────────────────────────────────────────
+
+/** Formats a HH:mm string according to locale: 24h for PT, 12h AM/PM for EN */
+export function formatTime(time: string, lang: string): string {
+  if (lang !== 'en') return time;
+  const [hStr, mStr] = time.split(':');
+  const h = parseInt(hStr, 10);
+  const period = h < 12 ? 'AM' : 'PM';
+  const h12 = h % 12 || 12;
+  return `${h12}:${mStr} ${period}`;
+}
+
+/** Formats an hour integer as a column label */
+function formatHourLabel(hour: number, lang: string): string {
+  if (lang !== 'en') return `${hour}:00`;
+  const period = hour < 12 ? 'AM' : 'PM';
+  const h12 = hour % 12 || 12;
+  return `${h12} ${period}`;
+}
 
 // ─── Constants ───────────────────────────────────────────────────────────────
 
 const HOUR_START = 7;
-const HOUR_END = 23;
+const HOUR_END = 24;
 const HOURS = Array.from({ length: HOUR_END - HOUR_START }, (_, i) => HOUR_START + i);
 const CELL_HEIGHT = 64; // px per hour
-
-const DAY_LABELS = ['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb'];
 
 // ─── Types ───────────────────────────────────────────────────────────────────
 
@@ -33,6 +53,7 @@ interface CalendarProps {
   onNewLesson: (date: string, time: string) => void;
   onLessonMove: (lessonId: string, newDate: string, newStartTime: string) => void;
   onSyncCalendar?: () => void;
+  syncingCalendar?: boolean;
   /** Chamado toda vez que a semana/dia visível muda. Recebe [dataInicio, dataFim] ISO. */
   onWeekChange?: (dataInicio: string, dataFim: string) => void;
   onReposicaoClick?: (reposicao: ReposicaoDTO) => void;
@@ -56,6 +77,7 @@ export function CalendarView({
   onNewLesson,
   onLessonMove,
   onSyncCalendar,
+  syncingCalendar,
   onWeekChange,
   onReposicaoClick,
 }: CalendarProps) {
@@ -63,12 +85,21 @@ export function CalendarView({
   const [currentDate, setCurrentDate] = useState(new Date());
   const [dragging, setDragging] = useState<{ lesson: Lesson; offsetMinutes: number } | null>(null);
   const [dragOver, setDragOver] = useState<{ date: string; time: string } | null>(null);
-  const [nowTime, setNowTime] = useState(new Date());
+  const { appSettings } = useAppSettings();
+  const { timezone } = appSettings;
+  const { t, lang } = useLanguage();
+  const locale = lang === 'en' ? 'en-US' : 'pt-BR';
+  const DAY_LABELS = [
+    t('calendar.days.sun'), t('calendar.days.mon'), t('calendar.days.tue'),
+    t('calendar.days.wed'), t('calendar.days.thu'), t('calendar.days.fri'), t('calendar.days.sat'),
+  ];
+  const [nowTime, setNowTime] = useState(() => getNowInTimezone(timezone));
 
   useEffect(() => {
-    const id = setInterval(() => setNowTime(new Date()), 60_000);
+    setNowTime(getNowInTimezone(timezone));
+    const id = setInterval(() => setNowTime(getNowInTimezone(timezone)), 60_000);
     return () => clearInterval(id);
-  }, []);
+  }, [timezone]);
 
   const weekDays = getWeekDays(currentDate);
 
@@ -108,8 +139,8 @@ export function CalendarView({
   }, [availability, availabilityReposicao]);
 
   const headerLabel = view === 'week'
-    ? `${weekDays[0].toLocaleDateString('pt-BR', { day: 'numeric', month: 'short' })} – ${weekDays[6].toLocaleDateString('pt-BR', { day: 'numeric', month: 'short', year: 'numeric' })}`
-    : currentDate.toLocaleDateString('pt-BR', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' });
+    ? `${weekDays[0].toLocaleDateString(locale, { day: 'numeric', month: 'short' })} – ${weekDays[6].toLocaleDateString(locale, { day: 'numeric', month: 'short', year: 'numeric' })}`
+    : currentDate.toLocaleDateString(locale, { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' });
 
   // Drag handlers
   const handleDragStart = useCallback((lesson: Lesson, e: React.DragEvent) => {
@@ -146,7 +177,7 @@ export function CalendarView({
   return (
     <div className="flex flex-col h-full">
       {/* Toolbar */}
-      <div className="flex items-center gap-3 px-6 py-4 border-b border-[var(--border)] bg-[var(--surface)] shrink-0">
+      <div className="flex items-center gap-3 px-6 py-4 border-b border-[var(--border)] bg-[var(--surface)] shrink-0 sticky top-0 z-[50]">
         <div className="flex items-center gap-1">
           <button
             onClick={() => navigate(-1)}
@@ -158,7 +189,7 @@ export function CalendarView({
             onClick={goToday}
             className="px-3 h-8 text-xs font-semibold text-[var(--accent-600)] hover:bg-[var(--accent-icon-bg)] rounded-lg transition-colors"
           >
-            Hoje
+            {t('calendar.today')}
           </button>
           <button
             onClick={() => navigate(1)}
@@ -174,17 +205,36 @@ export function CalendarView({
         <div className="hidden lg:flex items-center gap-3 ml-1 text-[11px] text-[var(--muted)]">
             <span className="inline-flex items-center gap-1 text-[var(--muted)] italic">
               <MousePointerClick size={11} />
-              Clique em um horário para agendar
+              {t('calendar.clickHint')}
             </span>
         </div>
 
         {onSyncCalendar && (
-          <button
-            onClick={onSyncCalendar}
-            className="ml-2 flex items-center gap-2 rounded-lg border border-[var(--border)] px-3 h-8 text-xs font-semibold text-[var(--text)] hover:bg-[var(--hover-bg)] transition-colors"
-          >
-            <RefreshCw size={12} /> Sincronizar Google
-          </button>
+          <div className="relative group">
+            <button
+              onClick={onSyncCalendar}
+              disabled={syncingCalendar}
+              className="w-7 h-7 flex items-center justify-center rounded-lg text-[var(--muted)] hover:text-[var(--accent-600)] hover:bg-[var(--accent-icon-bg)] transition-colors disabled:opacity-40"
+            >
+              <RefreshCw size={13} className={syncingCalendar ? 'animate-spin' : ''} />
+            </button>
+            {/* Google sync tooltip popup */}
+            <div className="pointer-events-none absolute right-0 top-9 z-50 opacity-0 group-hover:opacity-100 transition-opacity duration-150">
+              <div className="flex items-center gap-2 px-3 py-2 rounded-xl shadow-lg border border-[var(--border)] bg-[var(--dropdown-bg)] whitespace-nowrap">
+                <span
+                  className="w-5 h-5 rounded-md flex items-center justify-center text-white font-bold text-[11px] shrink-0"
+                  style={{ backgroundColor: '#4285F4' }}
+                >
+                  G
+                </span>
+                <span className="text-xs font-medium text-[var(--text)]">
+                  {syncingCalendar ? t('calendar.syncing') : t('calendar.syncGoogle')}
+                </span>
+              </div>
+              {/* arrow */}
+              <div className="absolute -top-1.5 right-2.5 w-3 h-3 rotate-45 bg-[var(--dropdown-bg)] border-l border-t border-[var(--border)]" />
+            </div>
+          </div>
         )}
 
         <div className="flex items-center bg-[var(--surface-soft)] border border-[var(--border)] rounded-xl p-0.5">
@@ -199,14 +249,14 @@ export function CalendarView({
                   : 'text-[var(--muted)] hover:text-[var(--text)]',
               )}
             >
-              {v === 'week' ? 'Semana' : 'Dia'}
+              {v === 'week' ? t('calendar.week') : t('calendar.day')}
             </button>
           ))}
         </div>
       </div>
 
       {/* Calendar grid */}
-      <div className="flex-1 overflow-auto bg-[var(--surface)]">
+      <div className="flex-1 overflow-auto bg-[var(--surface)] isolate">
         <div className="grid h-full" style={{ gridTemplateColumns: `56px repeat(${displayDays.length}, 1fr)` }}>
           {/* Day headers */}
           <div className="border-b border-[var(--border)] sticky top-0 z-10 bg-[var(--surface)]" />
@@ -238,7 +288,7 @@ export function CalendarView({
             <div key={hour} className="contents">
               {/* Hour label */}
               <div className="pr-2 pt-1 text-right border-r border-[var(--border)] select-none" style={{ height: CELL_HEIGHT }}>
-                <span className="text-xs text-[var(--muted)] font-medium">{hour}:00</span>
+                <span className="text-xs text-[var(--muted)] font-medium">{formatHourLabel(hour, lang)}</span>
               </div>
 
               {/* Day columns */}
@@ -246,10 +296,11 @@ export function CalendarView({
                 const dateStr = formatDateISO(day);
                 const cellTime = `${String(hour).padStart(2, '0')}:00`;
 
-                // Passado: dia anterior ao hoje, ou mesma hora já passou
-                const now = new Date();
-                const todayStr = formatDateISO(now);
-                const isPast = dateStr < todayStr || (dateStr === todayStr && hour < now.getHours());
+                // Passado: dia anterior ao hoje, ou mesma hora já passou (precisão de minuto)
+                const now = getNowInTimezone(timezone);
+                const todayStr = `${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}-${String(now.getDate()).padStart(2,'0')}`;
+                const nowTotalMins = now.getHours() * 60 + now.getMinutes();
+                const isPast = dateStr < todayStr || (dateStr === todayStr && hour * 60 < nowTotalMins);
 
                 // Indisponível só vale para datas a partir de hoje
                 const unavailable = !isPast && !isAvailable(dateStr, cellTime);
@@ -305,7 +356,7 @@ export function CalendarView({
                         }}
                       >
                         <span
-                          className="text-[9px] font-bold uppercase tracking-widest select-none text-center leading-tight px-1.5 py-0.5 rounded pointer-events-none"
+                          className="text-[9px] font-bold uppercase tracking-widest select-none text-center leading-tight px-1.5 py-0.5 rounded pointer-events-none whitespace-pre-line"
                           style={{
                             color: 'var(--accent-600)',
                             backgroundColor: 'color-mix(in srgb, var(--surface) 88%, transparent)',
@@ -313,20 +364,20 @@ export function CalendarView({
                             zIndex: 1,
                           }}
                         >
-                          Horário<br />indisponível
+                          {t('calendar.unavailableLabel')}
                         </span>
                       </div>
                     )}
 
-                    {/* Tooltip contextual no hover — só quando não há aulas nem reposições */}
+                    {/* Tooltip contextual no hover só quando não há aulas nem reposições */}
                     {dayLessons.length === 0 && dayReposicoes.length === 0 && (
                       <CellStateTooltip state={isPast ? 'past' : unavailable ? 'unavailable' : 'available'} />
                     )}
 
-                    {/* Hover overlay — só células disponíveis */}
+                    {/* Hover overlay só células disponíveis */}
                     <CalendarCellOverlay visible={!blocked} />
 
-                    {/* Drag capture overlay — garante que o drop sempre aterrissa na célula */}
+                    {/* Drag capture overlay garante que o drop sempre aterrissa na célula */}
                     {dragging && !blocked && (
                       <div
                         className="absolute inset-0 z-30"
@@ -364,14 +415,27 @@ export function CalendarView({
                           />
                         );
                       }
+                      // Em andamento: startTime <= agora < endTime (mesmo dia) timezone-aware
+                      const tzNow = getNowInTimezone(timezone);
+                      const tzNowStr = `${tzNow.getFullYear()}-${String(tzNow.getMonth()+1).padStart(2,'0')}-${String(tzNow.getDate()).padStart(2,'0')}`;
+                      const nowMins = tzNow.getHours() * 60 + tzNow.getMinutes();
+                      const lessonStartMins = timeToMinutes(lesson.startTime);
+                      const lessonEndMins = timeToMinutes(lesson.endTime);
+                      const isLessonInProgress =
+                        dateStr === tzNowStr &&
+                        lessonStartMins <= nowMins &&
+                        lessonEndMins > nowMins;
+                      const effectivePast = isPast || isLessonInProgress;
                       return (
                         <LessonBlock
                           key={lesson.id}
                           lesson={lesson}
                           hourStart={hour}
-                          isPast={isPast}
-                          blurContent={isPast && !!currentUser && currentUser.role !== 'teacher'}
+                          isPast={effectivePast}
+                          isInProgress={isLessonInProgress}
+                          blurContent={effectivePast && !!currentUser && currentUser.role !== 'teacher'}
                           isUnavailable={!isAvailable(dateStr, lesson.startTime)}
+                          lang={lang}
                           onClick={(e) => { e.stopPropagation(); onLessonClick(lesson); }}
                           onDragStart={(e) => handleDragStart(lesson, e)}
                         />
@@ -402,21 +466,22 @@ export function CalendarView({
 // ─── Cell State Tooltip ──────────────────────────────────────────────────────
 
 function CellStateTooltip({ state }: { state: 'available' | 'unavailable' | 'past' }) {
+  const { t } = useLanguage();
   const configs = {
     available: {
-      label: 'Disponível',
+      label: t('calendar.stateAvailable'),
       bg: 'color-mix(in srgb, #22c55e 12%, var(--surface))',
       border: '#16a34a',
       color: '#16a34a',
     },
     unavailable: {
-      label: 'Indisponível',
+      label: t('calendar.stateUnavailable'),
       bg: 'color-mix(in srgb, var(--accent-500) 14%, var(--surface))',
       border: 'var(--accent-500)',
       color: 'var(--accent-600)',
     },
     past: {
-      label: 'Encerrado',
+      label: t('calendar.statePast'),
       bg: 'var(--surface-soft)',
       border: 'var(--border)',
       color: 'var(--muted)',
@@ -444,12 +509,15 @@ interface LessonBlockProps {
   hourStart: number;
   isUnavailable: boolean;
   isPast?: boolean;
+  isInProgress?: boolean;
   blurContent?: boolean;
+  lang: string;
   onClick: (e: React.MouseEvent) => void;
   onDragStart: (e: React.DragEvent) => void;
 }
 
-function LessonBlock({ lesson, hourStart, isUnavailable, isPast, blurContent, onClick, onDragStart }: LessonBlockProps) {
+function LessonBlock({ lesson, hourStart, isUnavailable, isPast, isInProgress, blurContent, lang, onClick, onDragStart }: LessonBlockProps) {
+  const { t } = useLanguage();
   const startMins = timeToMinutes(lesson.startTime);
   const endMins = timeToMinutes(lesson.endTime);
   const durationMins = endMins - startMins;
@@ -460,7 +528,7 @@ function LessonBlock({ lesson, hourStart, isUnavailable, isPast, blurContent, on
 
   const isOnline = lesson.type === 'online';
   const isCompleted = lesson.status === 'completed';
-  const timeRange = `${lesson.startTime} - ${lesson.endTime}`;
+  const timeRange = `${formatTime(lesson.startTime, lang)} - ${formatTime(lesson.endTime, lang)}`;
 
   return (
     <div
@@ -498,14 +566,19 @@ function LessonBlock({ lesson, hourStart, isUnavailable, isPast, blurContent, on
           {lesson.instrument}
         </p>
       )}
-      {isOnline && (
+      {isOnline && !isInProgress && (
         <span className="absolute top-1 right-1">
           <span className="text-[9px] bg-[var(--accent-icon-bg)] text-[var(--accent-600)] font-semibold px-1 rounded">ONLINE</span>
         </span>
       )}
+      {isInProgress && (
+        <span className="absolute top-1 right-1">
+          <span className="text-[9px] bg-amber-100 text-amber-700 font-semibold px-1 rounded">{t('calendar.inProgress')}</span>
+        </span>
+      )}
       {isUnavailable && (
         <span className="absolute bottom-1 right-1">
-          <span className="text-[9px] bg-rose-100 text-rose-600 font-semibold px-1 rounded">CONFLITO</span>
+          <span className="text-[9px] bg-rose-100 text-rose-600 font-semibold px-1 rounded">{t('calendar.conflict')}</span>
         </span>
       )}
     </div>
@@ -535,6 +608,7 @@ interface ReservedBlockProps {
 }
 
 function ReservedBlock({ lesson, hourStart }: ReservedBlockProps) {
+  const { t, lang } = useLanguage();
   const startMins = timeToMinutes(lesson.startTime);
   const endMins = timeToMinutes(lesson.endTime);
   const durationMins = endMins - startMins;
@@ -554,7 +628,7 @@ function ReservedBlock({ lesson, hourStart }: ReservedBlockProps) {
           className="px-2 py-0.5 rounded text-[9px] font-bold uppercase tracking-wider border shadow-md whitespace-nowrap"
           style={{ backgroundColor: 'var(--surface)', borderColor: 'var(--border)', color: 'var(--muted)' }}
         >
-          Reservado · {lesson.startTime} – {lesson.endTime}
+          {t('calendar.reserved')} · {formatTime(lesson.startTime, lang)} – {formatTime(lesson.endTime, lang)}
         </div>
         <div style={{ width: 0, height: 0, borderLeft: '5px solid transparent', borderRight: '5px solid transparent', borderTop: `6px solid var(--border)` }} />
       </div>
@@ -571,7 +645,7 @@ function ReservedBlock({ lesson, hourStart }: ReservedBlockProps) {
       <div className="relative flex items-center gap-1 px-1.5 h-full">
         <span className="w-2 h-2 rounded-full shrink-0 bg-rose-400" />
         {height > 28 && (
-          <span className="text-[10px] font-semibold text-[var(--muted)] truncate">Reservado</span>
+          <span className="text-[10px] font-semibold text-[var(--muted)] truncate">{t('calendar.reserved')}</span>
         )}
       </div>
     </div>

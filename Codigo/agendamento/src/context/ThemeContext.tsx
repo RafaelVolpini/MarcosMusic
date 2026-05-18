@@ -68,7 +68,7 @@ interface BgPalette {
   dark: BgPaletteMode;
 }
 
-const STORAGE_KEY = 'musga-ui-settings';
+const STORAGE_KEY = 'marcos-music:ui-settings';
 
 const DEFAULT_SETTINGS: UiSettings = {
   mode: 'system',
@@ -81,12 +81,12 @@ const DEFAULT_SETTINGS: UiSettings = {
 
 const BG_PALETTES: Record<ThemeBgColor, BgPalette> = {
   default: {
-    // Cool blue-gray tint — noticeably off-white, not harsh
+    // Cool blue-gray tint noticeably off-white, not harsh
     light: { bg: '#e8eaf3', surface: '#f4f5fb', surfaceSoft: '#dfe2ef', border: '#c5cce6', hoverBg: '#d8dcee', inputBg: '#f4f5fb', inputBorder: '#c5cce6', dropdownBg: '#f4f5fb', dropdownBorder: '#d8dcee', heading: '#0f172a' },
     dark:  { bg: '#020617', surface: '#0f172a', surfaceSoft: '#111827', border: '#1f2937', hoverBg: '#1e293b', inputBg: '#1e293b', inputBorder: '#334155', dropdownBg: '#1e293b', dropdownBorder: '#334155', heading: '#f1f5f9' },
   },
   warm: {
-    // Warm sand — genuinely warm, not just off-white
+    // Warm sand genuinely warm, not just off-white
     light: { bg: '#f5ede2', surface: '#fffdf9', surfaceSoft: '#f0e6d8', border: '#e5cdb3', hoverBg: '#eeddc5', inputBg: '#fffdf9', inputBorder: '#e5cdb3', dropdownBg: '#fffdf9', dropdownBorder: '#eeddc5', heading: '#1c1917' },
     dark:  { bg: '#1c1917', surface: '#292524', surfaceSoft: '#1c1917', border: '#44403c', hoverBg: '#3c3733', inputBg: '#292524', inputBorder: '#57534e', dropdownBg: '#292524', dropdownBorder: '#44403c', heading: '#fafaf9' },
   },

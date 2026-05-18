@@ -17,6 +17,7 @@ import {
 } from '../../services/reposicaoService';
 import { ReposicaoViewModal } from '../modals/ReposicaoViewModal';
 import { AgendarReposicaoModal } from '../modals/AgendarReposicaoModal';
+import { useLanguage } from '../../context/LanguageContext';
 import {
   DAY_LABELS, STATUS_COLOR, STATUS_LABEL,
   getThisWeek, thisWeekDate, normalizeName,
@@ -37,6 +38,7 @@ function minutesUntilStart(dataAula: string, horario: string): number {
 export function ReschedulingPage({ sessionUser }: ReschedulingPageProps) {
   const isTeacher = sessionUser.role === 'teacher';
   const toast = useToast();
+  const { t } = useLanguage();
 
   const [alunos, setAlunos] = useState<Aluno[]>([]);
   const [slots, setSlots] = useState<DisponibilidadeResponseDTO[]>([]);
@@ -106,6 +108,7 @@ export function ReschedulingPage({ sessionUser }: ReschedulingPageProps) {
   const handleCreated = (r: ReposicaoDTO) => {
     setReposicoes(prev => [...prev, r].sort((a, b) => a.dataAula.localeCompare(b.dataAula)));
     setAgendarSlot(null);
+      toast(t('rescheduling.created'), 'success');
   };
 
   const handleDelete = async (id: number) => {
@@ -113,6 +116,9 @@ export function ReschedulingPage({ sessionUser }: ReschedulingPageProps) {
     try {
       await deletarReposicao(id);
       setReposicoes(prev => prev.filter(r => r.id !== id));
+      toast(t('rescheduling.deleted'), 'info');
+    } catch {
+      toast(t('rescheduling.deleteError'), 'error');
     } finally {
       setDeletingId(null);
     }
@@ -125,6 +131,9 @@ export function ReschedulingPage({ sessionUser }: ReschedulingPageProps) {
       const updated = await removerAluno(reposicaoId, alunoId);
       setReposicoes(prev => prev.map(r => r.id === reposicaoId ? updated : r));
       setViewModal(prev => prev?.id === reposicaoId ? updated : prev);
+      toast(t('rescheduling.studentRemoved'), 'info');
+    } catch {
+      toast(t('rescheduling.studentRemoveError'), 'error');
     } finally {
       setRemovingKey(null);
     }
@@ -136,6 +145,9 @@ export function ReschedulingPage({ sessionUser }: ReschedulingPageProps) {
       const updated = await adicionarAluno(reposicaoId, alunoId);
       setReposicoes(prev => prev.map(r => r.id === reposicaoId ? updated : r));
       setViewModal(prev => prev?.id === reposicaoId ? updated : prev);
+      toast(t('rescheduling.enrolled'), 'success');
+    } catch {
+      toast(t('rescheduling.enrollError'), 'error');
     } finally {
       setEnrollingId(null);
     }
@@ -147,6 +159,9 @@ export function ReschedulingPage({ sessionUser }: ReschedulingPageProps) {
       const updated = await removerAluno(reposicaoId, alunoId);
       setReposicoes(prev => prev.map(r => r.id === reposicaoId ? updated : r));
       setViewModal(prev => prev?.id === reposicaoId ? updated : prev);
+      toast(t('rescheduling.unenrolled'), 'info');
+    } catch {
+      toast(t('rescheduling.unenrollError'), 'error');
     } finally {
       setEnrollingId(null);
     }
@@ -159,11 +174,11 @@ export function ReschedulingPage({ sessionUser }: ReschedulingPageProps) {
         <div className="flex items-start gap-3">
           <Users size={18} className="text-[var(--accent-600)] shrink-0 mt-0.5" />
           <div>
-            <h3 className="text-sm font-semibold text-[var(--heading)]">Reposições</h3>
+            <h3 className="text-sm font-semibold text-[var(--heading)]">{t('rescheduling.title')}</h3>
             <p className="text-xs text-[var(--muted)] mt-0.5">
               {isTeacher
-                ? 'Agende reposições nos horários disponíveis e gerencie quais alunos participarão.'
-                : 'Veja as reposições disponíveis esta semana e inscreva-se nas que quiser participar.'}
+                ? t('rescheduling.teacherInfo')
+                : t('rescheduling.studentInfo')}
             </p>
           </div>
         </div>
@@ -179,13 +194,12 @@ export function ReschedulingPage({ sessionUser }: ReschedulingPageProps) {
           {isTeacher && (
             <section>
               <h2 className="text-xs font-semibold uppercase tracking-widest text-[var(--muted)] mb-3">
-                Horários disponíveis ({slots.length})
+                {t('rescheduling.slotsTitle')} ({slots.length})
               </h2>
               {slots.length === 0 ? (
                 <Card className="p-6 app-surface text-center">
                   <p className="text-sm text-[var(--muted)]">
-                    Nenhum horário marcado como reposição. Configure na aba{' '}
-                    <span className="font-medium text-[var(--text)]">Disponibilidade</span>.
+                    {t('rescheduling.noSlots')}
                   </p>
                 </Card>
               ) : (
@@ -200,10 +214,10 @@ export function ReschedulingPage({ sessionUser }: ReschedulingPageProps) {
                     </div>
                     <div className="flex-1 min-w-0">
                       <p className="text-sm font-semibold text-[var(--heading)]">
-                        {slots.length} horário{slots.length !== 1 ? 's' : ''} disponível{slots.length !== 1 ? 'is' : ''}
+                        {slots.length} {t('rescheduling.slotsCount')}
                       </p>
                       <p className="text-xs text-[var(--muted)]">
-                        Clique para selecionar um horário e agendar uma reposição
+                        {t('rescheduling.click')}
                       </p>
                     </div>
                     <ChevronRight size={16} className="text-[var(--muted)] group-hover:text-[var(--accent-600)] transition-colors shrink-0" />
@@ -216,15 +230,15 @@ export function ReschedulingPage({ sessionUser }: ReschedulingPageProps) {
           {/* Reposicoes list */}
           <section>
             <h2 className="text-xs font-semibold uppercase tracking-widest text-[var(--muted)] mb-3">
-              {isTeacher ? 'Reposições agendadas' : 'Reposições disponíveis'}{' '}
+              {isTeacher ? t('rescheduling.scheduledTitle') : t('rescheduling.availableTitle')}{' '}
               ({reposicoes.length})
             </h2>
             {reposicoes.length === 0 ? (
               <Card className="p-6 app-surface text-center">
                 <p className="text-sm text-[var(--muted)]">
                   {isTeacher
-                    ? 'Nenhuma reposição agendada esta semana.'
-                    : 'Nenhuma reposição disponível esta semana.'}
+                    ? t('rescheduling.noScheduled')
+                    : t('rescheduling.noAvailable')}
                 </p>
               </Card>
             ) : (
@@ -241,23 +255,25 @@ export function ReschedulingPage({ sessionUser }: ReschedulingPageProps) {
                         exit={{ opacity: 0, scale: 0.95 }}
                         transition={{ delay: i * 0.04 }}
                       >
-                        <button
-                          type="button"
-                          className="w-full text-left"
+                        <div
+                          role="button"
+                          tabIndex={0}
+                          className="w-full text-left cursor-pointer"
                           onClick={() => {
                             if (!isTeacher && r.status === 'ABERTA') {
                               const mins = minutesUntilStart(r.dataAula, r.horario);
                               if (mins < 0) {
-                                toast('Esta reposição já foi iniciada. Inscrições não são mais possíveis.', 'warning');
+                                toast(t('rescheduling.started'), 'warning');
                               } else if (mins < 30) {
                                 toast(
-                                  `Inscrições encerradas. É necessário pelo menos 30 minutos de antecedência (faltam ${Math.ceil(mins)} min).`,
+                                  t('rescheduling.closed30').replace('{n}', String(Math.ceil(mins))),
                                   'warning',
                                 );
                               }
                             }
                             setViewModal(r);
                           }}
+                          onKeyDown={e => { if (e.key === 'Enter' || e.key === ' ') e.currentTarget.click(); }}
                         >
                         <Card
                           className="p-4 app-surface cursor-pointer hover:border-[var(--accent-400)] transition-colors group"
@@ -287,11 +303,11 @@ export function ReschedulingPage({ sessionUser }: ReschedulingPageProps) {
                               <div className="flex items-center gap-2 mt-1.5 flex-wrap">
                                 <span className="text-xs text-[var(--muted)] flex items-center gap-1">
                                   <Users size={11} />
-                                  {r.alunos.length} inscrito{r.alunos.length !== 1 ? 's' : ''}
+                                  {r.alunos.length} {t('rescheduling.inscribed')}
                                 </span>
                                 {!isTeacher && isEnrolled && (
                                   <span className="inline-flex items-center gap-1 text-[10px] font-medium text-emerald-600 bg-emerald-50 dark:bg-emerald-950/30 px-2 py-0.5 rounded-full">
-                                    <CheckCircle2 size={10} /> Inscrito
+                                    <CheckCircle2 size={10} /> {t('rescheduling.enrolled')}
                                   </span>
                                 )}
                                 {isTeacher && r.alunos.length > 0 && (
@@ -315,7 +331,7 @@ export function ReschedulingPage({ sessionUser }: ReschedulingPageProps) {
                                 onClick={e => { e.stopPropagation(); handleDelete(r.id); }}
                                 disabled={deletingId === r.id}
                                 className="p-1.5 rounded-lg text-[var(--muted)] hover:text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-950/30 transition-colors disabled:opacity-40 shrink-0 self-start"
-                                title="Excluir reposição"
+                                title={t('rescheduling.deleteTitle')}
                               >
                                 {deletingId === r.id ? (
                                   <div className="w-4 h-4 rounded-full border-2 border-current border-t-transparent animate-spin" />
@@ -326,7 +342,7 @@ export function ReschedulingPage({ sessionUser }: ReschedulingPageProps) {
                             )}
                           </div>
                         </Card>
-                        </button>
+                        </div>
                       </motion.div>
                     );
                   })}
@@ -423,7 +439,7 @@ function SlotsPickerModal({ slots, onClose, onSelect }: SlotsPickerModalProps) {
           <div className="flex items-center justify-between px-5 py-4 border-b border-[var(--border)] shrink-0">
             <div className="flex items-center gap-2">
               <CalendarPlus size={15} className="text-[var(--accent-600)]" />
-              <span className="font-semibold text-[var(--heading)] text-sm">Selecionar horário</span>
+              <span className="font-semibold text-[var(--heading)] text-sm">{t('rescheduling.selectSlot')}</span>
               <span className="text-xs text-[var(--muted)] bg-[var(--surface-soft)] px-2 py-0.5 rounded-full border border-[var(--border)]">
                 {slots.length}
               </span>
@@ -465,7 +481,7 @@ function SlotsPickerModal({ slots, onClose, onSelect }: SlotsPickerModalProps) {
           </div>
 
           <div className="px-5 py-3 border-t border-[var(--border)] shrink-0">
-            <Button variant="ghost" size="sm" onClick={onClose} className="w-full">Cancelar</Button>
+            <Button variant="ghost" size="sm" onClick={onClose} className="w-full">{t('common.cancel')}</Button>
           </div>
         </div>
       </motion.div>

@@ -1,9 +1,11 @@
 import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Music2, Lock, Mail, CheckCircle2, AlertCircle, Eye, EyeOff } from 'lucide-react';
+import { Lock, Mail, CheckCircle2, AlertCircle, Eye, EyeOff } from 'lucide-react';
 import { Button } from '../ui/Button';
 import type { AuthUser } from '../../lib/auth';
 import { login } from '../../lib/auth';
+import { MarcosLogoMark } from '../ui/MarcosLogo';
+import { useLanguage } from '../../context/LanguageContext';
 
 // ─── Regex ───────────────────────────────────────────────────────────────────
 
@@ -108,19 +110,21 @@ export function LoginPage({ onLoginSuccess }: LoginPageProps) {
   const [email, setEmail]       = useState('');
   const [password, setPassword] = useState('');
   const [showPass, setShowPass] = useState(false);
+  const [rememberMe, setRememberMe] = useState(false);
   const [touched, setTouched]   = useState({ email: false, password: false });
   const [apiError, setApiError] = useState('');
   const [loading, setLoading]   = useState(false);
+  const { t } = useLanguage();
 
   // Validação em tempo real
   const emailTrimmed  = email.trim().toLowerCase();
   const emailValid    = EMAIL_RE.test(emailTrimmed);
   const emailError    = touched.email && !emailTrimmed
-    ? 'E-mail obrigatório'
+    ? t('auth.errEmailRequired')
     : touched.email && emailTrimmed && !emailValid
-      ? 'Formato de e-mail inválido'
+      ? t('auth.errEmailInvalid')
       : '';
-  const passwordError = touched.password && !password.trim() ? 'Senha obrigatória' : '';
+  const passwordError = touched.password && !password.trim() ? t('auth.errPasswordRequired') : '';
 
   function clearApiError() { if (apiError) setApiError(''); }
 
@@ -132,14 +136,11 @@ export function LoginPage({ onLoginSuccess }: LoginPageProps) {
 
     setLoading(true);
     try {
-      const user = await login(emailTrimmed, password.trim());
-      if (!user) {
-        setApiError('E-mail ou senha incorretos. Verifique e tente novamente.');
-        return;
-      }
+      const user = await login(emailTrimmed, password.trim(), rememberMe);
       onLoginSuccess(user);
-    } catch {
-      setApiError('Não foi possível conectar ao servidor. Tente novamente.');
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : '';
+      setApiError(msg || t('auth.errInvalid'));
     } finally {
       setLoading(false);
     }
@@ -168,20 +169,31 @@ export function LoginPage({ onLoginSuccess }: LoginPageProps) {
             style={{ background: 'linear-gradient(135deg, var(--accent-gradient-from), var(--accent-gradient-to))' }}
           >
             <div className="absolute -left-8 -top-8 h-28 w-28 rounded-full bg-white/15 blur-xl" />
-            <div className="absolute bottom-8 right-6 h-36 w-36 rounded-full bg-cyan-200/20 blur-xl" />
+            <div className="absolute bottom-8 right-6 h-36 w-36 rounded-full bg-white/10 blur-xl" />
+            {/* Orbital ring decoration */}
+            <motion.div
+              aria-hidden
+              className="absolute rounded-full border border-white/10 pointer-events-none"
+              style={{ width: 320, height: 320, bottom: -80, right: -80 }}
+              animate={{ rotate: 360 }}
+              transition={{ duration: 30, repeat: Infinity, ease: 'linear' }}
+            />
             <div className="relative z-10">
-              <div className="inline-flex items-center gap-2 rounded-xl bg-white/10 px-3 py-2 text-sm font-semibold backdrop-blur-sm">
-                <Music2 size={16} />
-                marcos-music
+              <div className="flex items-center gap-3 mb-2">
+                <MarcosLogoMark size={42} />
+                <div className="leading-none">
+                  <p className="text-base font-black">Marcos Music</p>
+                  <p className="text-xs font-bold uppercase tracking-widest text-white/70">Agenda</p>
+                </div>
               </div>
               <h1 className="mt-8 max-w-sm text-4xl font-black leading-tight">
-                Seu estúdio organizado, aula por aula.
+                {t('auth.subtitle')}
               </h1>
-              <p className="mt-4 max-w-sm text-sm text-indigo-100">
-                Controle agenda, alunos e confirmações em um fluxo simples e seguro para o dia a dia da escola.
+              <p className="mt-4 max-w-sm text-sm text-white/75">
+                {t('auth.desc')}
               </p>
               <div className="mt-10 flex flex-col gap-3">
-                {['Agenda semanal inteligente', 'Confirmação de presenças', 'Gestão de alunos e reposições'].map(txt => (
+                {[t('auth.feat1'), t('auth.feat2'), t('auth.feat3')].map(txt => (
                   <div key={txt} className="flex items-center gap-2 text-sm text-white/80">
                     <CheckCircle2 size={14} className="text-white/60 shrink-0" />
                     {txt}
@@ -200,23 +212,24 @@ export function LoginPage({ onLoginSuccess }: LoginPageProps) {
               className="mx-auto w-full max-w-md"
             >
               {/* Logo mobile */}
-              <div className="mb-6 flex items-center gap-2 lg:hidden">
-                <div className="rounded-xl p-2" style={{ backgroundColor: 'var(--accent-100)', color: 'var(--accent-600)' }}>
-                  <Music2 size={16} />
+              <div className="mb-6 flex items-center gap-2.5 lg:hidden">
+                <MarcosLogoMark size={32} />
+                <div className="leading-none">
+                  <span className="text-xs font-black block" style={{ color: 'var(--text)' }}>Marcos Music</span>
+                  <span className="text-[10px] font-bold uppercase tracking-widest" style={{ color: 'var(--accent-600)' }}>Agenda</span>
                 </div>
-                <span className="text-sm font-semibold" style={{ color: 'var(--text)' }}>marcos-music</span>
               </div>
 
-              <h2 className="text-2xl font-black" style={{ color: 'var(--text)' }}>Bem-vindo de volta</h2>
+              <h2 className="text-2xl font-black" style={{ color: 'var(--text)' }}>{t('auth.welcome')}</h2>
               <p className="mt-1 text-sm" style={{ color: 'var(--muted)' }}>
-                Acesse com seu e-mail e senha para continuar.
+                {t('auth.accessHint')}
               </p>
 
               <form onSubmit={handleSubmit} noValidate className="mt-8 space-y-5">
 
                 {/* E-mail */}
                 <FieldInput
-                  label="E-mail"
+                  label={t('auth.emailLabel')}
                   icon={Mail}
                   error={emailError}
                   valid={!!emailTrimmed && emailValid && touched.email}
@@ -226,7 +239,7 @@ export function LoginPage({ onLoginSuccess }: LoginPageProps) {
                     value={email}
                     onChange={e => { setEmail(e.target.value); clearApiError(); }}
                     onBlur={() => setTouched(p => ({ ...p, email: true }))}
-                    placeholder="voce@email.com"
+                    placeholder={t('auth.emailPH')}
                     className={inputCls(!!emailError, !!emailTrimmed && emailValid && touched.email)}
                     style={inputStyle}
                     autoComplete="email"
@@ -236,7 +249,7 @@ export function LoginPage({ onLoginSuccess }: LoginPageProps) {
 
                 {/* Senha */}
                 <FieldInput
-                  label="Senha"
+                  label={t('auth.passwordLabel')}
                   icon={Lock}
                   error={passwordError}
                 >
@@ -256,11 +269,38 @@ export function LoginPage({ onLoginSuccess }: LoginPageProps) {
                     onClick={() => setShowPass(v => !v)}
                     className="absolute right-3 top-1/2 -translate-y-1/2 transition-colors"
                     style={{ color: 'var(--muted)' }}
-                    aria-label={showPass ? 'Ocultar senha' : 'Mostrar senha'}
+                    aria-label={showPass ? t('auth.hidePassword') : t('auth.showPassword')}
                   >
                     {showPass ? <EyeOff size={14} /> : <Eye size={14} />}
                   </button>
                 </FieldInput>
+
+                {/* Lembrar sessão */}
+                <label className="flex items-center gap-2 cursor-pointer select-none">
+                  <div className="relative flex-shrink-0">
+                    <input
+                      type="checkbox"
+                      checked={rememberMe}
+                      onChange={e => setRememberMe(e.target.checked)}
+                      className="sr-only"
+                      id="remember-me"
+                    />
+                    <div
+                      className={`w-4 h-4 rounded border-2 flex items-center justify-center transition-all ${
+                        rememberMe
+                          ? 'border-[var(--accent-500)] bg-[var(--accent-500)]'
+                          : 'border-[var(--border)] bg-[var(--surface)]'
+                      }`}
+                    >
+                      {rememberMe && (
+                        <svg width="9" height="7" viewBox="0 0 9 7" fill="none">
+                          <path d="M1 3.5L3.5 6L8 1" stroke="white" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+                        </svg>
+                      )}
+                    </div>
+                  </div>
+                  <span className="text-xs" style={{ color: 'var(--muted)' }}>{t('auth.remember')}</span>
+                </label>
 
                 {/* Erro da API */}
                 <AnimatePresence>
@@ -282,8 +322,8 @@ export function LoginPage({ onLoginSuccess }: LoginPageProps) {
 
                 <Button type="submit" className="mt-2 w-full justify-center" disabled={loading}>
                   {loading
-                    ? <><span className="w-4 h-4 border-2 border-white/40 border-t-white rounded-full animate-spin" /> Entrando...</>
-                    : 'Entrar na plataforma'
+                    ? <><span className="w-4 h-4 border-2 border-white/40 border-t-white rounded-full animate-spin" /> {t('auth.logging')}</>
+                    : t('auth.login')
                   }
                 </Button>
               </form>

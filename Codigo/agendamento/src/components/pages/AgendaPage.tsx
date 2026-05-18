@@ -10,6 +10,8 @@ import { listarAlunos } from '../../services/alunoService';
 import { listarReposicoes, type ReposicaoDTO } from '../../services/reposicaoService';
 import { toLesson } from '../../adapters/aulaAdapter';
 import { timeToMinutes, minutesToTime } from '../../utils';
+import { useToast } from '../ui/Toast';
+import { syncGoogleCalendar, getGoogleConnectedFlag } from '../../services/googleService';
 
 interface AgendaPageProps {
   lessons: Lesson[];
@@ -27,16 +29,39 @@ export function AgendaPage({
   availability, availabilityReposicao, currentUser,
   onUpdateLesson, onDeleteLesson, onNavigate,
 }: AgendaPageProps) {
+  const toast = useToast();
   const [selectedLesson, setSelectedLesson] = useState<Lesson | null>(null);
   const [newLessonModal, setNewLessonModal] = useState<{ date: string; time: string } | null>(null);
   const [apiStudents, setApiStudents] = useState<Aluno[]>([]);
   const [reposicoes, setReposicoes] = useState<ReposicaoDTO[]>([]);
   const [selectedReposicao, setSelectedReposicao] = useState<ReposicaoDTO | null>(null);
-
-  // Aulas reais vindas do backend; fallback para as props enquanto não há dados da API
   const [apiLessons, setApiLessons] = useState<Lesson[] | null>(null);
   const [loadingLessons, setLoadingLessons] = useState(false);
   const [apiError, setApiError] = useState<string | null>(null);
+  const [googleBanner, setGoogleBanner] = useState(false);
+  const [syncingGoogle, setSyncingGoogle] = useState(false);
+
+  // ── Auto-sync Google Calendar ao entrar na agenda (apenas professor) ──
+  useEffect(() => {
+    if (currentUser.role === 'teacher' && getGoogleConnectedFlag()) {
+      const now = new Date();
+      const fmt = (d: Date) =>
+        `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+      const start = new Date(now.getFullYear(), now.getMonth(), 1);
+      const end   = new Date(now.getFullYear(), now.getMonth() + 1, 0, 23, 59, 59);
+      syncGoogleCalendar(`${fmt(start)}T00:00:00`, `${fmt(end)}T23:59:59`)
+        .then(r => { if (r.success > 0) toast(`${r.success} aula(s) sincronizadas com Google Calendar.`, 'info'); })
+        .catch(err => {
+          if (err instanceof Error && err.message === 'GOOGLE_RECONNECT') {
+            setGoogleBanner(true); // show reconnect banner
+          }
+          // outros erros silenciosos — não bloqueia o calendário
+        });
+    } else {
+      setGoogleBanner(true);
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const fetchAulas = useCallback(async (dataInicio: string, dataFim: string) => {
     setLoadingLessons(true);
@@ -70,13 +95,41 @@ export function AgendaPage({
     fetchAulas(dataInicio, dataFim);
   }, [fetchAulas]);
 
-  // Busca alunos reais do backend (para o modal de criar aula)
+  const handleSyncGoogle = useCallback(async () => {
+    if (!getGoogleConnectedFlag() || syncingGoogle) return;
+    setSyncingGoogle(true);
+    try {
+      const now = new Date();
+      const fmt = (d: Date) =>
+        `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+      const start = new Date(now.getFullYear(), now.getMonth(), 1);
+      const end   = new Date(now.getFullYear(), now.getMonth() + 1, 0, 23, 59, 59);
+      const r = await syncGoogleCalendar(`${fmt(start)}T00:00:00`, `${fmt(end)}T23:59:59`);
+      toast(`${r.success} aula(s) sincronizada(s) com Google Calendar.`, 'success');
+    } catch (err) {
+      if (err instanceof Error && err.message === 'GOOGLE_RECONNECT') {
+        setGoogleBanner(true);
+        toast('Reconecte o Google Calendar nas configurações.', 'info');
+      } else {
+        toast('Erro ao sincronizar com Google Calendar.', 'error');
+      }
+    } finally {
+      setSyncingGoogle(false);
+    }
+  }, [syncingGoogle, toast]);
+
+  // Busca alunos 
   useEffect(() => {
     listarAlunos()
       .then(setApiStudents)
       .catch(() => { /* mantém lista vazia como fallback */ });
     listarReposicoes()
-      .then(setReposicoes)
+      .then(dtos => setReposicoes(
+        dtos.filter(r => {
+          const slots = availabilityReposicao[r.diaSemana as import('../../types').DayKey];
+          return slots && slots.includes(r.horario);
+        })
+      ))
       .catch(() => {});
   }, []);
 
@@ -90,22 +143,27 @@ export function AgendaPage({
   const handleDeleteLesson = async (id: string) => {
     try {
       await cancelarAula(id);
-      // Remove da lista local imediatamente (otimista)
       if (apiLessons) {
         setApiLessons((prev) => prev?.filter((l) => l.id !== id) ?? null);
       }
       onDeleteLesson(id);
+      toast('Aula cancelada com sucesso.', 'success');
     } catch (err) {
       const msg = err instanceof Error ? err.message : 'Erro ao cancelar aula.';
-      alert(msg);
+      toast(msg, 'error');
     }
   };
 
   const handleReschedule = async (id: string, dataInicio: string, dataFim: string) => {
-    const dto = await reagendarAula(id, dataInicio, dataFim);
-    const updated = toLesson(dto);
-    setApiLessons((prev) => prev?.map((l) => l.id === id ? updated : l) ?? null);
-    setSelectedLesson(null);
+    try {
+      const dto = await reagendarAula(id, dataInicio, dataFim);
+      const updated = toLesson(dto);
+      setApiLessons((prev) => prev?.map((l) => l.id === id ? updated : l) ?? null);
+      setSelectedLesson(null);
+      toast('Aula reagendada com sucesso.', 'success');
+    } catch (err) {
+      toast(err instanceof Error ? err.message : 'Erro ao reagendar aula.', 'error');
+    }
   };
 
   const handleMoveLesson = useCallback(async (id: string, newDate: string, newStartTime: string) => {
@@ -119,10 +177,11 @@ export function AgendaPage({
       const dto = await reagendarAula(id, dataInicio, dataFim);
       const updated = toLesson(dto);
       setApiLessons(prev => prev?.map(l => l.id === id ? updated : l) ?? null);
+      toast('Aula movida com sucesso.', 'success');
     } catch (err) {
-      alert(err instanceof Error ? err.message : 'Erro ao reagendar aula.');
+      toast(err instanceof Error ? err.message : 'Erro ao mover aula.', 'error');
     }
-  }, [apiLessons]);
+  }, [apiLessons, toast]);
 
   const handleConfirmPresence = async (id: string) => {
     const dto = await confirmarPresenca(id);
@@ -136,6 +195,22 @@ export function AgendaPage({
       {loadingLessons && (
         <div className="px-6 py-1.5 text-xs text-[var(--muted)] bg-[var(--surface-soft)] border-b border-[var(--border)] shrink-0">
           Carregando aulas…
+        </div>
+      )}
+      {googleBanner && (
+        <div className="flex items-center gap-3 px-5 py-2 text-xs bg-[var(--surface-soft)] border-b border-[var(--border)] shrink-0">
+          <span className="w-5 h-5 rounded-md flex items-center justify-center text-white font-bold text-[11px] shrink-0" style={{ backgroundColor: '#0F9D58' }}>G</span>
+          <span className="text-[var(--muted)] flex-1">Sincronize suas aulas com o Google Calendar para manter tudo atualizado.</span>
+          <button
+            onClick={() => {
+              sessionStorage.setItem('marcos-music:settings:section', 'integrations');
+              onNavigate?.('settings');
+            }}
+            className="text-[var(--accent-600)] font-semibold hover:underline shrink-0"
+          >
+            Conectar agora
+          </button>
+          <button onClick={() => setGoogleBanner(false)} className="text-[var(--muted)] hover:text-[var(--text)] ml-1 shrink-0">✕</button>
         </div>
       )}
       {apiError && !loadingLessons && (
@@ -155,6 +230,8 @@ export function AgendaPage({
         onLessonMove={handleMoveLesson}
         onWeekChange={handleWeekChange}
         onReposicaoClick={(r) => setSelectedReposicao(r)}
+        onSyncCalendar={getGoogleConnectedFlag() ? handleSyncGoogle : undefined}
+        syncingCalendar={syncingGoogle}
       />
 
       {selectedReposicao && (
@@ -203,8 +280,14 @@ export function AgendaPage({
               recorrente: data.recorrente,
             });
             setApiLessons(prev => [...(prev ?? []), ...novasAulas.map(toLesson)]);
+            toast(
+              novasAulas.length > 1
+                ? `${novasAulas.length} aulas recorrentes criadas com sucesso.`
+                : 'Aula marcada com sucesso.',
+              'success',
+            );
           } catch (err) {
-            alert(err instanceof Error ? err.message : 'Erro ao criar aula.');
+            toast(err instanceof Error ? err.message : 'Erro ao criar aula.', 'error');
           }
           setNewLessonModal(null);
         }}

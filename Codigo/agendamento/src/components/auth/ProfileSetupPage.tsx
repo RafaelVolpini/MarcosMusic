@@ -3,9 +3,9 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { User, Phone, Mail, CheckCircle2, Music2, ShieldCheck, AlertCircle } from 'lucide-react';
 import { Button } from '../ui/Button';
 import type { AuthUser } from '../../lib/auth';
-import { getToken } from '../../lib/auth';
+import { useLanguage } from '../../context/LanguageContext';
 
-const SESSION_KEY = 'musga:auth:session';
+const SESSION_KEY = 'marcos-music:auth:session';
 
 // ─── Validação e máscara de telefone ──────────────────────────────────────────
 
@@ -36,6 +36,7 @@ export function ProfileSetupPage({ user, onComplete, inApp = false }: ProfileSet
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [saved, setSaved] = useState(false);
+  const { t } = useLanguage();
 
   const initials = nome.trim()
     ? nome.trim().split(' ').map(p => p[0]).slice(0, 2).join('').toUpperCase()
@@ -53,11 +54,11 @@ export function ProfileSetupPage({ user, onComplete, inApp = false }: ProfileSet
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!nome.trim()) {
-      setError('Nome é obrigatório.');
+      setError(t('profileSetup.errName'));
       return;
     }
     if (telefone.trim() && !isPhoneValid(telefone)) {
-      setError('Telefone inválido. Use (XX) XXXXX-XXXX ou (XX) XXXX-XXXX.');
+      setError(t('profileSetup.errPhone'));
       return;
     }
     setLoading(true);
@@ -65,13 +66,10 @@ export function ProfileSetupPage({ user, onComplete, inApp = false }: ProfileSet
     setSaved(false);
 
     try {
-      const token = getToken();
       const res = await fetch('/aluno/salvar', {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          ...(token ? { Authorization: `Bearer ${token}` } : {}),
-        },
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
         body: JSON.stringify({
           id: user.id ?? null,
           email: user.email,
@@ -104,7 +102,7 @@ export function ProfileSetupPage({ user, onComplete, inApp = false }: ProfileSet
         onComplete(updatedUser);
       }
     } catch {
-      setError('Não foi possível salvar o perfil. Tente novamente.');
+      setError(t('profileSetup.errSave'));
     } finally {
       setLoading(false);
     }
@@ -142,7 +140,7 @@ export function ProfileSetupPage({ user, onComplete, inApp = false }: ProfileSet
 
       {/* Email (read-only) */}
       <div>
-        <label className={labelCls} style={{ color: 'var(--muted)' }}>E-mail</label>
+        <label className={labelCls} style={{ color: 'var(--muted)' }}>{t('profileSetup.emailLabel')}</label>
         <div className="relative">
           <Mail size={14} className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2" style={{ color: 'var(--muted)' }} />
           <input
@@ -154,19 +152,19 @@ export function ProfileSetupPage({ user, onComplete, inApp = false }: ProfileSet
           />
           <ShieldCheck size={14} className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2" style={{ color: 'var(--accent-500)' }} />
         </div>
-        <p className="mt-1 text-[11px]" style={{ color: 'var(--muted)' }}>O e-mail não pode ser alterado.</p>
+        <p className="mt-1 text-[11px]" style={{ color: 'var(--muted)' }}>{t('profileSetup.emailReadonly')}</p>
       </div>
 
       {/* Divider */}
       <div className="flex items-center gap-3">
         <div className="flex-1 h-px" style={{ backgroundColor: 'var(--border)' }} />
-        <span className="text-[11px] font-semibold uppercase tracking-wider" style={{ color: 'var(--muted)' }}>Dados pessoais</span>
+        <span className="text-[11px] font-semibold uppercase tracking-wider" style={{ color: 'var(--muted)' }}>{t('profileSetup.personal')}</span>
         <div className="flex-1 h-px" style={{ backgroundColor: 'var(--border)' }} />
       </div>
 
       {/* Nome */}
       <div>
-        <label className={labelCls} style={{ color: 'var(--muted)' }}>Nome completo *</label>
+        <label className={labelCls} style={{ color: 'var(--muted)' }}>{t('profileSetup.nameLabel')}</label>
         <div className="relative">
           <User size={14} className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2" style={{ color: 'var(--muted)' }} />
           <input
@@ -174,7 +172,7 @@ export function ProfileSetupPage({ user, onComplete, inApp = false }: ProfileSet
             style={inputStyle}
             value={nome}
             onChange={(e) => setNome(e.target.value)}
-            placeholder="Seu nome completo"
+            placeholder={t('profileSetup.namePH')}
             autoFocus={!inApp}
           />
         </div>
@@ -182,7 +180,7 @@ export function ProfileSetupPage({ user, onComplete, inApp = false }: ProfileSet
 
       {/* Telefone */}
       <div>
-        <label className={labelCls} style={{ color: 'var(--muted)' }}>Telefone</label>
+        <label className={labelCls} style={{ color: 'var(--muted)' }}>{t('profileSetup.phoneLabel')}</label>
         <div className="relative">
           <Phone size={14} className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 transition-colors"
             style={{ color: telefone && isPhoneValid(telefone) ? 'var(--accent-500)' : 'var(--muted)' }}
@@ -199,7 +197,7 @@ export function ProfileSetupPage({ user, onComplete, inApp = false }: ProfileSet
             }}
             value={telefone}
             onChange={(e) => { setTelefone(formatPhone(e.target.value)); if (error) setError(''); }}
-            placeholder="(11) 99999-9999"
+            placeholder={t('profileSetup.phonePH')}
             type="tel"
             inputMode="numeric"
           />
@@ -231,7 +229,7 @@ export function ProfileSetupPage({ user, onComplete, inApp = false }: ProfileSet
           </AnimatePresence>
         </div>
         {telefone && !isPhoneValid(telefone) && (
-          <p className="mt-1 text-xs text-rose-500">Use o formato (XX) XXXXX-XXXX ou (XX) XXXX-XXXX</p>
+          <p className="mt-1 text-xs text-rose-500">{t('profileSetup.phoneHint')}</p>
         )}
       </div>
 
@@ -260,13 +258,13 @@ export function ProfileSetupPage({ user, onComplete, inApp = false }: ProfileSet
             style={{ backgroundColor: 'var(--accent-50)', borderColor: 'var(--accent-100)', color: 'var(--accent-700)' }}
           >
             <CheckCircle2 size={14} />
-            <span className="text-xs font-semibold">Perfil salvo com sucesso!</span>
+            <span className="text-xs font-semibold">{t('profileSetup.saved')}</span>
           </motion.div>
         )}
       </AnimatePresence>
 
       <Button type="submit" className="w-full justify-center" disabled={loading}>
-        {loading ? 'Salvando...' : (inApp ? 'Salvar alterações' : 'Continuar')}
+      {loading ? t('profileSetup.saving') : (inApp ? t('profileSetup.save') : t('profileSetup.continue'))}
       </Button>
     </form>
   );
@@ -276,8 +274,8 @@ export function ProfileSetupPage({ user, onComplete, inApp = false }: ProfileSet
       <div className="page-padding">
         <div className="max-w-lg">
           <div className="mb-6">
-            <h1 className="text-2xl font-black" style={{ color: 'var(--heading)' }}>Meu Perfil</h1>
-            <p className="mt-1 text-sm" style={{ color: 'var(--muted)' }}>Gerencie suas informações pessoais.</p>
+            <h1 className="text-2xl font-black" style={{ color: 'var(--heading)' }}>{t('profileSetup.title')}</h1>
+            <p className="mt-1 text-sm" style={{ color: 'var(--muted)' }}>{t('profileSetup.info')}</p>
           </div>
           <motion.div
             initial={{ opacity: 0, y: 12 }}
@@ -309,7 +307,7 @@ export function ProfileSetupPage({ user, onComplete, inApp = false }: ProfileSet
             </div>
             <span className="text-sm font-semibold" style={{ color: 'var(--text)' }}>marcos-music</span>
           </div>
-          <h2 className="text-2xl font-black mb-6" style={{ color: 'var(--text)' }}>Complete seu perfil</h2>
+          <h2 className="text-2xl font-black mb-6" style={{ color: 'var(--text)' }}>{t('profileSetup.title')}</h2>
           {form}
         </motion.div>
       </div>

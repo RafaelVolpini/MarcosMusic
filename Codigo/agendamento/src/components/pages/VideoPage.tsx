@@ -6,6 +6,7 @@ import { Card } from '../ui/Card';
 import { Button } from '../ui/Button';
 import { formatBytes, formatSeconds } from '../../utils';
 import { VideoPreviewModal } from '../modals/VideoPreviewModal';
+import { useLanguage } from '../../context/LanguageContext';
 
 interface VideoPageProps {
   videos: VideoRecording[];
@@ -17,6 +18,7 @@ export function VideoPage({ videos }: VideoPageProps) {
   const [uploadedName, setUploadedName] = useState('');
   const [activeVideo, setActiveVideo] = useState<string | null>(null);
   const fileRef = useRef<HTMLInputElement>(null);
+  const { t } = useLanguage();
 
   const simulateUpload = (name: string) => {
     setUploading(true);
@@ -46,8 +48,8 @@ export function VideoPage({ videos }: VideoPageProps) {
         <div className="flex items-start gap-4 flex-wrap">
           {/* Upload panel */}
           <div className="flex-1 min-w-64">
-            <h3 className="text-sm font-semibold text-[var(--heading)] mb-1">Enviar Gravação</h3>
-            <p className="text-xs text-[var(--muted)] mb-3">Faça upload de vídeos das aulas para os alunos</p>
+            <h3 className="text-sm font-semibold text-[var(--heading)] mb-1">{t('video.uploadTitle')}</h3>
+            <p className="text-xs text-[var(--muted)] mb-3">{t('video.uploadDesc')}</p>
             <input
               ref={fileRef}
               type="file"
@@ -57,7 +59,7 @@ export function VideoPage({ videos }: VideoPageProps) {
             />
             <Button variant="secondary" onClick={() => fileRef.current?.click()}>
               <UploadCloud size={14} />
-              Selecionar vídeo
+              {t('video.selectVideo')}
             </Button>
           </div>
         </div>
@@ -88,7 +90,7 @@ export function VideoPage({ videos }: VideoPageProps) {
                   />
                 </div>
                 {uploadProgress >= 100 && (
-                  <p className="text-xs text-emerald-600 mt-1.5 font-medium">✓ Upload concluído!</p>
+                  <p className="text-xs text-emerald-600 mt-1.5 font-medium">✓ {t('video.uploadDone')}</p>
                 )}
               </div>
             </motion.div>
@@ -98,7 +100,7 @@ export function VideoPage({ videos }: VideoPageProps) {
 
       {/* Video library */}
       <div>
-        <h2 className="text-sm font-semibold text-[var(--heading)] mb-4">Biblioteca de Vídeos ({videos.length})</h2>
+        <h2 className="text-sm font-semibold text-[var(--heading)] mb-4">{t('video.libraryTitle')} ({videos.length})</h2>
         <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
           {videos.map((video, i) => (
             <motion.div

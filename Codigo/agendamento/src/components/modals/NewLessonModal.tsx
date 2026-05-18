@@ -5,6 +5,7 @@ import type { Lesson, LessonType, Aluno } from '../../types';
 import type { AuthUser } from '../../lib/auth';
 import { generateMeetLink, minutesToTime, timeToMinutes } from '../../utils';
 import { Button } from '../ui/Button';
+import { useLanguage } from '../../context/LanguageContext';
 
 const ALL_HOURS = Array.from({ length: 17 }, (_, i) => `${String(i + 7).padStart(2, '0')}:00`);
 
@@ -131,6 +132,7 @@ export function NewLessonModal({
 
   const inputClass = 'w-full border border-[var(--input-border)] rounded-xl px-3 py-2 text-sm text-[var(--text)] focus:outline-none focus:ring-2 focus:ring-[var(--accent-100)] bg-[var(--input-bg)]';
   const labelClass = 'text-xs font-medium text-[var(--muted)] mb-1 block';
+  const { t } = useLanguage();
 
   return (
     <AnimatePresence>
@@ -140,7 +142,7 @@ export function NewLessonModal({
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="fixed inset-0 bg-black/40 backdrop-blur-sm z-40"
+            className="fixed inset-0 bg-black/40 backdrop-blur-sm z-[80]"
             onClick={onClose}
           />
           <motion.div
@@ -148,7 +150,7 @@ export function NewLessonModal({
             animate={{ opacity: 1, scale: 1, y: 0 }}
             exit={{ opacity: 0, scale: 0.96, y: 16 }}
             transition={{ type: 'spring', stiffness: 360, damping: 30 }}
-            className="fixed inset-0 z-50 flex items-center justify-center pointer-events-none px-4"
+            className="fixed inset-0 z-[90] flex items-center justify-center pointer-events-none px-4"
           >
             <div className="app-surface rounded-3xl shadow-2xl w-full max-w-md pointer-events-auto overflow-hidden">
               {/* Header */}
@@ -157,7 +159,7 @@ export function NewLessonModal({
                   <div className="w-8 h-8 bg-(--accent-50) rounded-xl flex items-center justify-center">
                     <Plus size={16} className="text-(--accent-600)" />
                   </div>
-                  <h2 className="text-base font-bold text-[var(--heading)]">Nova Aula</h2>
+                  <h2 className="text-base font-bold text-[var(--heading)]">{t('modals.newLesson.title')}</h2>
                 </div>
                 <button onClick={onClose} className="w-8 h-8 flex items-center justify-center rounded-xl text-[var(--muted)] hover:text-[var(--text)] hover:bg-[var(--hover-bg)]">
                   <X size={16} />
@@ -173,7 +175,7 @@ export function NewLessonModal({
                 )}
 
                 <div>
-                  <label className={labelClass}>Aluno *</label>
+                  <label className={labelClass}>{t('modals.newLesson.student')}</label>
                   <select value={studentId} onChange={e => setStudentId(e.target.value)} className={inputClass} disabled={!isTeacher}>
                     {selectableStudents.map((student) => (
                       <option key={student.id} value={student.id}>{student.nome}</option>
@@ -182,7 +184,7 @@ export function NewLessonModal({
                 </div>
 
                 <div>
-                  <label className={labelClass}>Instrumento *</label>
+                  <label className={labelClass}>{t('modals.newLesson.instrument')}</label>
                   <select value={instrument} onChange={e => setInstrument(e.target.value)} className={inputClass}>
                     {INSTRUMENTS.map((inst) => (
                       <option key={inst} value={inst}>{inst}</option>
@@ -192,7 +194,7 @@ export function NewLessonModal({
 
                 <div>
                   <div>
-                    <label className={labelClass}>Professor</label>
+                    <label className={labelClass}>{t('modals.newLesson.teacher')}</label>
                     <input
                       value="Marcos Mello"
                       disabled
@@ -202,13 +204,13 @@ export function NewLessonModal({
                 </div>
 
                 <div>
-                  <label className={labelClass}>Data</label>
+                  <label className={labelClass}>{t('modals.newLesson.date')}</label>
                   <input type="date" value={date} onChange={e => setDate(e.target.value)} className={inputClass} />
                 </div>
 
                 <div className="grid grid-cols-2 gap-3">
                   <div>
-                    <label className={labelClass}>Início</label>
+                    <label className={labelClass}>{t('modals.newLesson.start')}</label>
                     <select value={startTime} onChange={e => setStartTime(e.target.value)} className={inputClass}>
                       {ALL_HOURS.map((time) => (
                         <option key={time} value={time}>{time}</option>
@@ -216,17 +218,17 @@ export function NewLessonModal({
                     </select>
                   </div>
                   <div>
-                    <label className={labelClass}>Fim (automático)</label>
+                    <label className={labelClass}>{t('modals.newLesson.end')}</label>
                     <input type="time" value={endTime} readOnly disabled className={`${inputClass} bg-[var(--surface-soft)] text-[var(--muted)]`} />
                   </div>
                 </div>
 
-                <p className="text-[11px] text-[var(--muted)] -mt-2">Todas as aulas possuem duração fixa de 50 minutos.</p>
+                <p className="text-[11px] text-[var(--muted)] -mt-2">{t('modals.newLesson.duration50')}</p>
 
                 <label className="flex items-center justify-between rounded-xl border border-[var(--border)] px-3 py-2 text-sm text-[var(--text)]">
                   <span className="flex items-center gap-2">
                     <Video size={14} className="text-(--accent-600)" />
-                    Criar com Google Meet
+                    {t('modals.newLesson.meetCheck')}
                   </span>
                   <input
                     type="checkbox"
@@ -239,7 +241,7 @@ export function NewLessonModal({
                 <label className="flex items-center justify-between rounded-xl border border-[var(--border)] px-3 py-2 text-sm text-[var(--text)]">
                   <span className="flex items-center gap-2">
                     <Repeat size={14} className="text-(--accent-600)" />
-                    Aula recorrente (repete toda semana)
+                    {t('modals.newLesson.recurringCheck')}
                   </span>
                   <input
                     type="checkbox"
@@ -250,26 +252,26 @@ export function NewLessonModal({
                 </label>
                 {recorrente && (
                   <p className="text-[11px] text-(--muted) -mt-2">
-                    Serão criadas 4 aulas semanais consecutivas a partir desta data.
+                    {t('modals.newLesson.recurringInfo')}
                   </p>
                 )}
 
                 {selectedStudent && (
                   <p className="text-xs text-[var(--muted)]">
-                    Contato do aluno: {selectedStudent.telefone || 'sem telefone cadastrado'}
+                    {t('modals.newLesson.contact')} {selectedStudent.telefone || t('modals.newLesson.noPhone')}
                   </p>
                 )}
 
                 <div>
-                  <label className={labelClass}>Observações</label>
-                  <textarea value={notes} onChange={e => setNotes(e.target.value)} rows={2} placeholder="Objetivos da aula, materiais..." className={`${inputClass} resize-none`} />
+                  <label className={labelClass}>{t('modals.newLesson.notes')}</label>
+                  <textarea value={notes} onChange={e => setNotes(e.target.value)} rows={2} placeholder={t('modals.newLesson.notesPH')} className={`${inputClass} resize-none`} />
                 </div>
               </div>
 
               {/* Footer */}
               <div className="px-6 py-4 border-t border-[var(--border)] flex items-center gap-2 justify-end">
-                <Button variant="secondary" onClick={onClose}>Cancelar</Button>
-                <Button onClick={handleSubmit}>Criar Aula</Button>
+                <Button variant="secondary" onClick={onClose}>{t('modals.newLesson.cancel')}</Button>
+                <Button onClick={handleSubmit}>{t('modals.newLesson.create')}</Button>
               </div>
             </div>
           </motion.div>

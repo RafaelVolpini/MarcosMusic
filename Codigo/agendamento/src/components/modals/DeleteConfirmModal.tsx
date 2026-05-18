@@ -1,6 +1,7 @@
 import { AnimatePresence, motion } from 'framer-motion';
 import { Trash2, AlertTriangle } from 'lucide-react';
 import type { Aluno } from '../../types';
+import { useLanguage } from '../../context/LanguageContext';
 
 export interface DeleteConfirmModalProps {
   aluno: Aluno | null;
@@ -10,13 +11,14 @@ export interface DeleteConfirmModalProps {
 }
 
 export function DeleteConfirmModal({ aluno, onConfirm, onCancel, loading }: DeleteConfirmModalProps) {
+  const { t } = useLanguage();
   return (
     <AnimatePresence>
       {aluno && (
         <>
           {/* Backdrop */}
           <motion.div
-            className="fixed inset-0 bg-black/40 backdrop-blur-[2px] z-40"
+            className="fixed inset-0 bg-black/40 backdrop-blur-[2px] z-[80]"
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
@@ -25,7 +27,7 @@ export function DeleteConfirmModal({ aluno, onConfirm, onCancel, loading }: Dele
 
           {/* Modal */}
           <motion.div
-            className="fixed inset-0 z-50 flex items-center justify-center p-4"
+            className="fixed inset-0 z-[90] flex items-center justify-center p-4"
             initial={{ opacity: 0, scale: 0.92, y: 16 }}
             animate={{ opacity: 1, scale: 1, y: 0 }}
             exit={{ opacity: 0, scale: 0.92, y: 16 }}
@@ -52,18 +54,17 @@ export function DeleteConfirmModal({ aluno, onConfirm, onCancel, loading }: Dele
                 </motion.div>
 
                 <h2 className="text-base font-bold text-[var(--heading)] text-center">
-                  Excluir aluno?
+                  {t('modals.deleteStudent.title')}
                 </h2>
                 <p className="text-sm text-[var(--muted)] text-center mt-1.5 leading-relaxed">
                   <span className="font-semibold text-[var(--text)]">{aluno.nome}</span>
-                  {' '}será removido permanentemente.{' '}
-                  Esta ação não pode ser desfeita.
+                  {' '}{t('modals.deleteStudent.permanent')}
                 </p>
 
                 <div className="flex items-center gap-1.5 mt-3 px-3 py-2 rounded-xl bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-900/40">
                   <AlertTriangle size={12} className="text-amber-500 shrink-0" />
                   <span className="text-[11px] text-amber-700 dark:text-amber-400">
-                    O login e todos os dados do aluno serão apagados.
+                    {t('modals.deleteStudent.loginData')}
                   </span>
                 </div>
               </div>
@@ -75,7 +76,7 @@ export function DeleteConfirmModal({ aluno, onConfirm, onCancel, loading }: Dele
                   disabled={loading}
                   className="flex-1 h-10 rounded-xl text-sm font-medium text-[var(--muted)] hover:text-[var(--text)] hover:bg-[var(--hover-bg)] transition-colors disabled:opacity-50"
                 >
-                  Cancelar
+                  {t('modals.deleteStudent.cancel')}
                 </button>
                 <button
                   onClick={onConfirm}
@@ -86,7 +87,7 @@ export function DeleteConfirmModal({ aluno, onConfirm, onCancel, loading }: Dele
                     ? <span className="w-4 h-4 border-2 border-white/40 border-t-white rounded-full animate-spin" />
                     : <Trash2 size={14} />
                   }
-                  {loading ? 'Excluindo...' : 'Excluir'}
+                  {loading ? t('modals.deleteStudent.deleting') : t('modals.deleteStudent.delete')}
                 </button>
               </div>
             </div>

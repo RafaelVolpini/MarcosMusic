@@ -1,4 +1,4 @@
-debora ludmila## Sistema de Gestão de Aulas de Música — Casos de Uso
+## Sistema de Gestão de Aulas de Música Casos de Uso
 
 ### Atores
 - **Professor**
@@ -8,7 +8,7 @@ debora ludmila## Sistema de Gestão de Aulas de Música — Casos de Uso
 
 
 
-### UC-01 — Cadastrar-se
+### UC-01 Cadastrar-se
 **Atores principais:** Professor, Aluno  
 **Objetivo:** Permitir criação de conta na plataforma.  
 **Pré-condições:** Usuário não autenticado.  
@@ -27,7 +27,7 @@ debora ludmila## Sistema de Gestão de Aulas de Música — Casos de Uso
 
 
 
-### UC-02 — Autenticação
+### UC-02 Autenticação
 **Atores principais:** Professor, Aluno  
 **Objetivo:** Permitir acesso à área autenticada do sistema.  
 **Pré-condições:** Conta existente.  
@@ -43,7 +43,7 @@ debora ludmila## Sistema de Gestão de Aulas de Música — Casos de Uso
 
 
 
-### UC-03 — Definir disponibilidade
+### UC-03 Definir disponibilidade
 **Ator principal:** Professor  
 **Objetivo:** Registrar horários disponíveis para aulas.  
 **Pré-condições:** Professor autenticado.  
@@ -60,7 +60,7 @@ debora ludmila## Sistema de Gestão de Aulas de Música — Casos de Uso
 
 
 
-### UC-04 — Visualizar agenda
+### UC-04 Visualizar agenda
 **Atores principais:** Professor, Aluno  
 **Objetivo:** Consultar compromissos e horários disponíveis/ocupados.  
 **Pré-condições:** Usuário autenticado.  
@@ -73,7 +73,7 @@ debora ludmila## Sistema de Gestão de Aulas de Música — Casos de Uso
 
 
 
-### UC-05 — Agendar aula
+### UC-05 Agendar aula
 **Atores principais:** Aluno (e/ou Professor)  
 **Objetivo:** Criar um novo compromisso de aula.  
 **Pré-condições:** Usuário autenticado; horário disponível.  
@@ -96,7 +96,7 @@ debora ludmila## Sistema de Gestão de Aulas de Música — Casos de Uso
 
 
 
-### UC-06 — Remarcar aula
+### UC-06 Remarcar aula
 **Atores principais:** Aluno, Professor  
 **Objetivo:** Alterar data/horário de aula já agendada.  
 **Pré-condições:** Aula existente; usuários com permissão.  
@@ -116,7 +116,7 @@ debora ludmila## Sistema de Gestão de Aulas de Música — Casos de Uso
 
 
 
-### UC-07 — Gerenciar reposições
+### UC-07 Gerenciar reposições
 **Atores principais:** Aluno, Professor  
 **Objetivo:** Controlar reposições decorrentes de faltas/cancelamentos/remarcações.  
 **Pré-condições:** Existência de ocorrência que gere reposição.  
@@ -133,7 +133,7 @@ debora ludmila## Sistema de Gestão de Aulas de Música — Casos de Uso
 
 
 
-### UC-08 — Acessar videoaulas
+### UC-08 Acessar videoaulas
 **Atores principais:** Aluno (e possivelmente Professor)  
 **Objetivo:** Consumir conteúdo de videoaulas disponibilizado na plataforma.  
 **Pré-condições:** Usuário com permissão de acesso.  
@@ -146,7 +146,7 @@ debora ludmila## Sistema de Gestão de Aulas de Música — Casos de Uso
 
 
 
-### UC-09 — Visualizar página "sobre mim"
+### UC-09 Visualizar página "sobre mim"
 **Atores principais:** Usuário sem login, Aluno, Professor  
 **Objetivo:** Exibir informações institucionais/profissionais da escola/professor.  
 **Pré-condições:** Nenhuma.  
@@ -158,7 +158,7 @@ debora ludmila## Sistema de Gestão de Aulas de Música — Casos de Uso
 
 
 
-### UC-10 — Informações de contato
+### UC-10 Informações de contato
 **Atores principais:** Usuário sem login, Aluno, Professor  
 **Objetivo:** Exibir canais de contato da escola/professor.  
 **Pré-condições:** Nenhuma.  
@@ -170,7 +170,7 @@ debora ludmila## Sistema de Gestão de Aulas de Música — Casos de Uso
 
 
 
-### UC-11 — Enviar notificação
+### UC-11 Enviar notificação
 **Atores principais:** Sistema  
 **Objetivo:** Notificar envolvidos sobre criação/alteração de aula.  
 **Pré-condições:** Evento de agenda gerado (ex.: agendamento).  
@@ -183,7 +183,7 @@ debora ludmila## Sistema de Gestão de Aulas de Música — Casos de Uso
 
 
 
-### UC-12 — Confirmar presença
+### UC-12 Confirmar presença
 **Atores principais:** Sistema (com resposta de Aluno/Professor)  
 **Objetivo:** Registrar confirmação de participação na aula.  
 **Pré-condições:** Aula agendada e notificada.  
@@ -196,7 +196,7 @@ debora ludmila## Sistema de Gestão de Aulas de Música — Casos de Uso
 
 
 
-### UC-13 — Agendar reunião online
+### UC-13 Agendar reunião online
 **Atores principais:** Aluno, Professor  
 **Objetivo:** Gerar sessão remota para aulas online.  
 **Pré-condições:** Aula definida como remota.  
@@ -209,7 +209,7 @@ debora ludmila## Sistema de Gestão de Aulas de Música — Casos de Uso
 
 
 
-### UC-14 — Aplicar regra de contrato
+### UC-14 Aplicar regra de contrato
 **Atores principais:** Sistema  
 **Objetivo:** Validar ações de reposição/remarcação conforme contrato.  
 **Pré-condições:** Solicitação sujeita a regras contratuais.  
@@ -220,7 +220,7 @@ debora ludmila## Sistema de Gestão de Aulas de Música — Casos de Uso
 2. Avalia limite de faltas, reposições e prazos.
 3. Retorna decisão para o caso de uso chamador.
 
-### UC-15 — Verificar disponibilidade de horários
+### UC-15 Verificar disponibilidade de horários
 **Ator principal:** Sistema  
 **Objetivo:** Verificar se um horário está disponível para reagendamento.  
 **Pré-condições:** Existe solicitação de remarcação.  
@@ -230,22 +230,5 @@ debora ludmila## Sistema de Gestão de Aulas de Música — Casos de Uso
 1. Sistema recebe solicitação de remarcação.
 2. Verifica horários disponíveis.
 3. Retorna resultado para o caso chamador.
-
-## UC-16 - Cancelar aula
-
-**Ator principal:** Aluno, Professor  
-**Objetivo:** Cancelar uma aula já agendada.
-**Pré-condições:** Aula existente; usuário com permissão.  
-**Pós-condições:** Aula marcada como cancelada e envolvidos notificados.
-
-**Fluxo principal:**
-
-1. Usuário seleciona a aula.
-2. Sistema solicita confirmação do cancelamento.
-3. Usuário confirma.
-4. Sistema marca a aula como cancelada.
-5. Sistema notifica os envolvidos.
-
-
 
 ---

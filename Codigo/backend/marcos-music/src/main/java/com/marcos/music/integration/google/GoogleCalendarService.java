@@ -190,7 +190,7 @@ public class GoogleCalendarService {
         // Adiciona a solicitação de criação de link do Google Meet
         payloadMap.put("conferenceData", Map.of(
                 "createRequest", Map.of(
-                        "requestId", "musga-" + lesson.getId() + "-" + System.currentTimeMillis(),
+                        "requestId", "Marcos-Music" + lesson.getId() + "-" + System.currentTimeMillis(),
                         "conferenceSolutionKey", Map.of("type", "hangoutsMeet")
                 )
         ));

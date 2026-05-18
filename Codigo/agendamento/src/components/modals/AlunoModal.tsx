@@ -3,6 +3,8 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { X, User, Mail, Phone, Tag, Save, UserPlus, Info, Lock, CheckCircle2, AlertCircle } from 'lucide-react';
 import type { Aluno } from '../../types';
 import type { AlunoFormData } from '../../services/alunoService';
+import { formatPhoneGlobal } from '../../utils';
+import { useLanguage } from '../../context/LanguageContext';
 
 // ─── tipos ────────────────────────────────────────────────────────────────────
 
@@ -17,22 +19,24 @@ interface AlunoModalProps {
 // ─── helpers ──────────────────────────────────────────────────────────────────
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/;
-const PHONE_DIGITS_MIN = 10; // (XX) XXXX-XXXX
-const PHONE_DIGITS_MAX = 11; // (XX) XXXXX-XXXX
-
-/** Formata telefone brasileiro: (XX) XXXXX-XXXX ou (XX) XXXX-XXXX */
-function formatPhone(raw: string): string {
-  const d = raw.replace(/\D/g, '').slice(0, PHONE_DIGITS_MAX);
-  if (d.length === 0) return '';
-  if (d.length <= 2)  return `(${d}`;
-  if (d.length <= 6)  return `(${d.slice(0, 2)}) ${d.slice(2)}`;
-  if (d.length <= 10) return `(${d.slice(0, 2)}) ${d.slice(2, 6)}-${d.slice(6)}`;
-  return `(${d.slice(0, 2)}) ${d.slice(2, 7)}-${d.slice(7)}`;
-}
-
+// Aceita 10-11 dígitos locais OU com DDI 55 (12-13 dígitos)
 function isPhoneValid(phone: string): boolean {
   const d = phone.replace(/\D/g, '');
-  return d.length >= PHONE_DIGITS_MIN && d.length <= PHONE_DIGITS_MAX;
+  const local = d.startsWith('55') && d.length >= 12 ? d.slice(2) : d;
+  return local.length >= 10 && local.length <= 11;
+}
+
+/** Formata input para +55 XX XXXXX-XXXX enquanto o usuário digita */
+function formatPhone(raw: string): string {
+  // Extrai só dígitos, remove DDI 55 se digitado
+  let d = raw.replace(/\D/g, '');
+  if (d.startsWith('55') && d.length > 11) d = d.slice(2);
+  d = d.slice(0, 11);
+  if (d.length === 0) return '';
+  if (d.length <= 2)  return `+55 ${d}`;
+  if (d.length <= 6)  return `+55 ${d.slice(0, 2)} ${d.slice(2)}`;
+  if (d.length <= 10) return `+55 ${d.slice(0, 2)} ${d.slice(2, 6)}-${d.slice(6)}`;
+  return `+55 ${d.slice(0, 2)} ${d.slice(2, 7)}-${d.slice(7)}`;
 }
 
 const EMPTY: AlunoFormData = {
@@ -47,7 +51,7 @@ function toFormData(a: Aluno): AlunoFormData {
   return {
     nome: a.nome,
     email: a.email,
-    telefone: a.telefone ?? '',
+    telefone: a.telefone ? formatPhoneGlobal(a.telefone) : '',
     apelido: a.apelido ?? '',
     ativo: a.ativo,
   };
@@ -171,6 +175,7 @@ function TextInput({
 
 export function AlunoModal({ aluno, open, onClose, onSave }: AlunoModalProps) {
   const isEdit = !!aluno;
+  const { t } = useLanguage();
 
   const [form, setForm] = useState<AlunoFormData>(EMPTY);
   const [errors, setErrors] = useState<Partial<Record<keyof AlunoFormData, string>>>({});
@@ -204,17 +209,17 @@ export function AlunoModal({ aluno, open, onClose, onSave }: AlunoModalProps) {
   function validate(): boolean {
     const e: typeof errors = {};
     if (!form.nome.trim()) {
-      e.nome = 'Nome é obrigatório';
+      e.nome = t('modals.student.errName');
     }
     if (!isEdit) {
       if (!form.email.trim()) {
-        e.email = 'E-mail é obrigatório';
+        e.email = t('modals.student.errEmail');
       } else if (!EMAIL_RE.test(form.email.trim())) {
-        e.email = 'Formato de e-mail inválido';
+        e.email = t('modals.student.errEmailFmt');
       }
     }
     if (form.telefone && form.telefone.trim() && !isPhoneValid(form.telefone)) {
-      e.telefone = 'Telefone inválido — use (XX) XXXXX-XXXX ou (XX) XXXX-XXXX';
+      e.telefone = t('modals.student.errPhone');
     }
     setErrors(e);
     return Object.keys(e).length === 0;
@@ -247,7 +252,7 @@ export function AlunoModal({ aluno, open, onClose, onSave }: AlunoModalProps) {
         <>
           {/* Backdrop */}
           <motion.div
-            className="fixed inset-0 bg-black/30 backdrop-blur-[2px] z-40"
+            className="fixed inset-0 bg-black/30 backdrop-blur-[2px] z-[80]"
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
@@ -256,7 +261,7 @@ export function AlunoModal({ aluno, open, onClose, onSave }: AlunoModalProps) {
 
           {/* Modal */}
           <motion.div
-            className="fixed inset-0 z-50 flex items-center justify-center p-4"
+            className="fixed inset-0 z-[90] flex items-center justify-center p-4"
             initial={{ opacity: 0, scale: 0.96, y: 12 }}
             animate={{ opacity: 1, scale: 1, y: 0 }}
             exit={{ opacity: 0, scale: 0.96, y: 12 }}
@@ -286,10 +291,10 @@ export function AlunoModal({ aluno, open, onClose, onSave }: AlunoModalProps) {
                   )}
                   <div>
                     <h2 className="text-sm font-bold text-[var(--heading)]">
-                      {isEdit ? 'Editar aluno' : 'Novo aluno'}
+                      {isEdit ? t('modals.student.editTitle') : t('modals.student.newTitle')}
                     </h2>
                     <p className="text-xs text-[var(--muted)]">
-                      {isEdit ? aluno.nome : 'Preencha os dados do aluno'}
+                      {isEdit ? aluno.nome : t('modals.student.subtitle')}
                     </p>
                   </div>
                 </div>
@@ -310,28 +315,28 @@ export function AlunoModal({ aluno, open, onClose, onSave }: AlunoModalProps) {
                 <div className="px-6 py-5 flex flex-col gap-4">
 
                   {/* Campos obrigatórios */}
-                  <Field label="Nome completo" icon={User} error={errors.nome} required>
+                  <Field label={t('modals.student.nameLabel')} icon={User} error={errors.nome} required>
                     <TextInput
                       value={form.nome}
                       onChange={v => set('nome', v)}
-                      placeholder="Ex: João da Silva"
+                      placeholder={t('modals.student.namePH')}
                       hasError={!!errors.nome}
                       isValid={!!form.nome.trim() && !errors.nome}
                     />
                   </Field>
 
                   <Field
-                    label="E-mail"
+                    label={t('modals.student.emailLabel')}
                     icon={Mail}
                     error={errors.email}
                     required={!isEdit}
-                    hint={isEdit ? 'O e-mail não pode ser alterado após o cadastro.' : undefined}
+                    hint={isEdit ? t('modals.student.emailHint') : undefined}
                   >
                     <TextInput
                       type="email"
                       value={form.email}
                       onChange={v => set('email', v)}
-                      placeholder="aluno@email.com"
+                      placeholder={t('modals.student.emailPH')}
                       hasError={!!errors.email}
                       isValid={!isEdit && !!form.email.trim() && EMAIL_RE.test(form.email.trim()) && !errors.email}
                       disabled={isEdit}
@@ -339,7 +344,7 @@ export function AlunoModal({ aluno, open, onClose, onSave }: AlunoModalProps) {
                     />
                   </Field>
 
-                  {/* Senha padrão — somente no cadastro */}
+                  {/* Senha padrão somente no cadastro */}
                   {!isEdit && (
                     <div
                       className="flex items-start gap-2 px-3 py-2.5 rounded-xl border"
@@ -350,9 +355,9 @@ export function AlunoModal({ aluno, open, onClose, onSave }: AlunoModalProps) {
                     >
                       <Info size={13} className="text-[var(--accent-500)] mt-0.5 shrink-0" />
                       <p className="text-xs text-[var(--muted)] leading-relaxed">
-                        A senha inicial do aluno será{' '}
+                        {t('modals.student.passwordHintPre')}{' '}
                         <span className="font-bold text-[var(--text)]">123456</span>.
-                        {' '}Oriente-o a alterá-la no primeiro acesso.
+                        {' '}{t('modals.student.passwordHintPost')}
                       </p>
                     </div>
                   )}
@@ -360,41 +365,41 @@ export function AlunoModal({ aluno, open, onClose, onSave }: AlunoModalProps) {
                   {/* Divisor campos opcionais */}
                   <div className="flex items-center gap-2 pt-1">
                     <div className="flex-1 h-px bg-[var(--border)]" />
-                    <span className="text-[10px] font-semibold uppercase tracking-widest text-[var(--muted)]">Opcional</span>
+                    <span className="text-[10px] font-semibold uppercase tracking-widest text-[var(--muted)]">{t('common.optional')}</span>
                     <div className="flex-1 h-px bg-[var(--border)]" />
                   </div>
 
-                  <Field label="Telefone" icon={Phone} error={errors.telefone}
-                    hint={!errors.telefone ? 'Celular: (XX) XXXXX-XXXX · Fixo: (XX) XXXX-XXXX' : undefined}
+                  <Field label={t('modals.student.phoneLabel')} icon={Phone} error={errors.telefone}
+                    hint={!errors.telefone ? t('modals.student.phoneFormat') : undefined}
                   >
                     <TextInput
                       type="tel"
                       value={form.telefone}
                       onChange={v => set('telefone', formatPhone(v))}
-                      placeholder="(31) 99999-9999"
+                      placeholder={t('modals.student.phonePH')}
                       hasError={!!errors.telefone}
                       isValid={!!form.telefone && isPhoneValid(form.telefone) && !errors.telefone}
                     />
                   </Field>
 
                   <Field
-                    label="Apelido"
+                    label={t('modals.student.nicknameLabel')}
                     icon={Tag}
-                    hint="Como o aluno prefere ser chamado (aparece no cartão)"
+                    hint={t('modals.student.nicknameHint')}
                   >
                     <TextInput
                       value={form.apelido ?? ''}
                       onChange={v => set('apelido', v)}
-                      placeholder="Ex: João, Jotinha..."
+                      placeholder={t('modals.student.nicknamePH')}
                     />
                   </Field>
 
                   {/* Toggle ativo */}
                   <div className="flex items-center justify-between py-1">
                     <div>
-                      <span className="text-sm text-[var(--text)] font-medium">Status da conta</span>
+                      <span className="text-sm text-[var(--text)] font-medium">{t('modals.student.statusLabel')}</span>
                       <p className="text-[11px] text-[var(--muted)] mt-0.5">
-                        {form.ativo ? 'O aluno pode fazer login normalmente.' : 'O aluno não conseguirá acessar o sistema.'}
+                        {form.ativo ? t('modals.student.activeDesc') : t('modals.student.inactiveDesc')}
                       </p>
                     </div>
                     <button
@@ -404,7 +409,7 @@ export function AlunoModal({ aluno, open, onClose, onSave }: AlunoModalProps) {
                       aria-label={form.ativo ? 'Desativar aluno' : 'Ativar aluno'}
                     >
                       <span className={`text-xs font-semibold ${form.ativo ? 'text-emerald-600' : 'text-[var(--muted)]'}`}>
-                        {form.ativo ? 'Ativo' : 'Inativo'}
+                        {form.ativo ? t('modals.student.activeLabel') : t('modals.student.inactiveLabel')}
                       </span>
                       <div
                         className={`
@@ -462,7 +467,7 @@ export function AlunoModal({ aluno, open, onClose, onSave }: AlunoModalProps) {
                       ? <span className="w-3.5 h-3.5 border-2 border-white/40 border-t-white rounded-full animate-spin" />
                       : <Save size={13} />
                     }
-                    {loading ? 'Salvando...' : isEdit ? 'Salvar' : 'Cadastrar'}
+                    {loading ? t('modals.student.saving') : isEdit ? t('modals.student.save') : t('modals.student.create')}
                   </button>
                 </div>
               </form>

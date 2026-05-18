@@ -27,8 +27,6 @@ import com.marcos.music.repository.Aula.AulaCustomRepository;
 import com.marcos.music.repository.Aula.AulaRepository;
 import com.marcos.music.repository.ReposicaoRepository;
 import com.marcos.music.repository.UsuarioRepository;
-
-
 @Service
 public class AulaService {
     private final AulaRepository repository;
@@ -38,6 +36,7 @@ public class AulaService {
     private final UsuarioRepository usuarioRepository;
     private final AlunoRepository alunoRepository;
     private final ReposicaoRepository reposicaoRepository;
+    private final NotificacaoService notificacaoService;
 
 
     public AulaService(
@@ -47,7 +46,8 @@ public class AulaService {
         AulaCustomRepository aulaCustomRepository,
         UsuarioRepository usuarioRepository,
         AlunoRepository alunoRepository,
-        ReposicaoRepository reposicaoRepository
+        ReposicaoRepository reposicaoRepository,
+        NotificacaoService notificacaoService
     ){
         this.repository = repository;
         this.aulaAlunoRepository = aulaAlunoRepository;
@@ -56,6 +56,7 @@ public class AulaService {
         this.usuarioRepository = usuarioRepository;
         this.alunoRepository = alunoRepository;
         this.reposicaoRepository = reposicaoRepository;
+        this.notificacaoService = notificacaoService;
     }
 
     public Aula salvar(Aula a) throws RuntimeException{
@@ -99,6 +100,7 @@ public class AulaService {
 
         Aula primeira = salvar(new Aula(dto.getDataInicio(), dto.getDataFim(), aluno, recorrente));
         logAula(primeira, "AGENDADO");
+        notificacaoService.aulaAgendada(aluno.getId(), primeira.getId(), primeira.getDataInicio());
         aulas.add(primeira);
 
         if (recorrente) {
@@ -177,6 +179,7 @@ public class AulaService {
 
             repository.save(a);
             logAula(a, "CANCELADO");
+            notificacaoService.alunoCancelou(a.getAluno().getNome(), a.getId(), a.getDataInicio());
 
             return a;
         } catch (RuntimeException e){
@@ -200,6 +203,7 @@ public class AulaService {
         a.setDataFim(novaDataFim);
         Aula salva = repository.save(a);
         logAula(salva, "REAGENDADO");
+        notificacaoService.aulaReagendada(a.getAluno().getId(), salva.getId(), novaDataInicio);
         return salva;
     }
 
@@ -208,7 +212,9 @@ public class AulaService {
         Aula a = repository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Aula n\u00e3o encontrada"));
         a.setPresencaConfirmada(true);
-        return repository.save(a);
+        Aula salva = repository.save(a);
+        notificacaoService.alunoConfirmouPresenca(a.getAluno().getNome(), salva.getId(), a.getDataInicio());
+        return salva;
     }
 
     public List<AulaAluno> findDeletedsHorarios(UUID idAluno, List<Long> ids){

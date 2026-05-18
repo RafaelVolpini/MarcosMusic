@@ -12,6 +12,7 @@ import {
   XCircle,
   RefreshCw,
   Music,
+  Trash2,
 } from "lucide-react";
 import type { Lesson } from "../../types";
 import type { AuthUser } from "../../lib/auth";
@@ -21,10 +22,14 @@ import {
   generateMeetLink,
   timeToMinutes,
   minutesToTime,
+  getNowInTimezone,
 } from "../../utils";
 import { Button } from "../ui/Button";
 import { Badge } from "../ui/Badge";
 import { Avatar } from "../ui/Avatar";
+import { useAppSettings } from "../../context/AppSettingsContext";
+import { useToast } from "../ui/Toast";
+import { useLanguage } from "../../context/LanguageContext";
 
 interface LessonModalProps {
   lesson: Lesson | null;
@@ -39,26 +44,6 @@ interface LessonModalProps {
   ) => Promise<void>;
   onConfirmPresence?: (lessonId: string) => Promise<void>;
 }
-
-const TYPE_LABELS: Record<string, string> = {
-  individual: "Individual",
-  group: "Em grupo",
-  online: "Online",
-  trial: "Experimental",
-};
-
-const STATUS_BADGE: Record<
-  string,
-  {
-    variant: "success" | "info" | "danger" | "warning" | "default";
-    label: string;
-  }
-> = {
-  scheduled: { variant: "info", label: "Agendada" },
-  completed: { variant: "success", label: "Concluída" },
-  cancelled: { variant: "danger", label: "Cancelada" },
-  rescheduled: { variant: "warning", label: "Reagendada" },
-};
 
 export function LessonModal({
   lesson,
@@ -90,6 +75,25 @@ export function LessonModal({
     setRescheduleTime(lesson.startTime);
   }, [lesson]);
 
+  // Hooks that must be called unconditionally (before any early return)
+  const { appSettings } = useAppSettings();
+  const toast = useToast();
+  const { t } = useLanguage();
+
+  const TYPE_LABELS: Record<string, string> = {
+    individual: t('modals.lesson.types.individual'),
+    group:      t('modals.lesson.types.group'),
+    online:     t('modals.lesson.types.online'),
+    trial:      t('modals.lesson.types.trial'),
+  };
+
+  const STATUS_BADGE: Record<string, { variant: 'success' | 'info' | 'danger' | 'warning' | 'default'; label: string }> = {
+    scheduled:   { variant: 'info',    label: t('modals.lesson.status.scheduled') },
+    completed:   { variant: 'success', label: t('modals.lesson.status.completed') },
+    cancelled:   { variant: 'danger',  label: t('modals.lesson.status.cancelled') },
+    rescheduled: { variant: 'warning', label: t('modals.lesson.status.rescheduled') },
+  };
+
   if (!lesson) return null;
 
   const statusInfo = STATUS_BADGE[lesson.status];
@@ -104,13 +108,31 @@ export function LessonModal({
       lesson.studentName.trim().toLowerCase() ===
         currentUser.name.trim().toLowerCase());
   const canModify = currentUser.role === "teacher" || isOwner;
+
+  // Aula passada ou em andamento → modo somente leitura (timezone-aware)
+  const nowDt = getNowInTimezone(appSettings.timezone);
+  const todayStr = `${nowDt.getFullYear()}-${String(nowDt.getMonth()+1).padStart(2,'0')}-${String(nowDt.getDate()).padStart(2,'0')}`;
+  const nowTimeStr = `${String(nowDt.getHours()).padStart(2, '0')}:${String(nowDt.getMinutes()).padStart(2, '0')}`;
+  const isOngoing = lesson.date === todayStr && lesson.startTime <= nowTimeStr && lesson.endTime > nowTimeStr;
+  const isPastLesson = lesson.date < todayStr || (lesson.date === todayStr && lesson.endTime <= nowTimeStr);
+  const isReadOnly = isPastLesson || isOngoing;
+
   const ALL_HOURS = Array.from(
     { length: 17 },
     (_, i) => `${String(i + 7).padStart(2, "0")}:00`,
   );
 
+  const availableHours =
+    rescheduleDate === todayStr
+      ? ALL_HOURS.filter((h) => h > nowTimeStr)
+      : ALL_HOURS;
+
   const handleRescheduleConfirm = async () => {
     if (!rescheduleDate || !rescheduleTime) return;
+    if (rescheduleDate < todayStr) {
+      toast(t('modals.lesson.pastDateError'), 'error');
+      return;
+    }
     const endTime = minutesToTime(
       timeToMinutes(rescheduleTime) + LESSON_DURATION_MINUTES,
     );
@@ -123,6 +145,7 @@ export function LessonModal({
   const handleConfirmPresenceClick = () => {
     onConfirmPresence?.(lesson.id);
     setAttendanceConfirmed(true);
+    toast('Presença confirmada com sucesso.', 'success');
   };
 
   const handleGenerateMeet = () => {
@@ -153,7 +176,7 @@ export function LessonModal({
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="fixed inset-0 bg-black/40 backdrop-blur-sm z-40"
+            className="fixed inset-0 bg-black/40 backdrop-blur-sm z-[80]"
             onClick={onClose}
           />
 
@@ -163,7 +186,7 @@ export function LessonModal({
             animate={{ opacity: 1, scale: 1, y: 0 }}
             exit={{ opacity: 0, scale: 0.95, y: 20 }}
             transition={{ type: "spring", stiffness: 340, damping: 28 }}
-            className="fixed inset-0 z-50 flex items-center justify-center pointer-events-none px-4"
+            className="fixed inset-0 z-[90] flex items-center justify-center pointer-events-none px-4"
           >
             <div className="app-surface rounded-3xl shadow-2xl w-full max-w-lg pointer-events-auto overflow-hidden">
               {/* Header with color accent */}
@@ -209,7 +232,7 @@ export function LessonModal({
               <div className="px-6 py-4 space-y-4 max-h-[60vh] overflow-y-auto">
                 {/* Student & Time */}
                 <div className="grid grid-cols-2 gap-4">
-                  <InfoRow icon={<User size={14} />} label="Aluno">
+                  <InfoRow icon={<User size={14} />} label={t('modals.lesson.labelStudent')}>
                     <div className="flex items-center gap-2">
                       <Avatar name={lesson.studentName} size="sm" />
                       <span className="text-sm font-medium text-[var(--heading)]">
@@ -217,7 +240,7 @@ export function LessonModal({
                       </span>
                     </div>
                   </InfoRow>
-                  <InfoRow icon={<Clock size={14} />} label="Horário">
+                  <InfoRow icon={<Clock size={14} />} label={t('modals.lesson.labelTime')}>
                     <span className="text-sm text-[var(--heading)]">
                       {formatTime(lesson.startTime)} –{" "}
                       {formatTime(lesson.endTime)}
@@ -230,7 +253,7 @@ export function LessonModal({
 
                 {/* Meet link */}
                 <div className="grid grid-cols-2 gap-4">
-                  <InfoRow icon={<Video size={14} />} label="Link da Aula">
+                  <InfoRow icon={<Video size={14} />} label={t('modals.lesson.labelLink')}>
                     {meetLink ? (
                       <div className="flex items-center gap-2">
                         <a
@@ -261,11 +284,11 @@ export function LessonModal({
                         disabled={!canManageMeet}
                       >
                         <Video size={12} />
-                        Gerar link Meet
+                        {t('modals.lesson.generateMeet')}
                       </Button>
                     )}
                   </InfoRow>
-                  <InfoRow icon={<CheckCircle size={14} />} label="Presença">
+                  <InfoRow icon={<CheckCircle size={14} />} label={t('modals.lesson.labelAttendance')}>
                     {editing ? (
                       <label className="flex items-center gap-2 text-sm text-[var(--text)]">
                         <input
@@ -276,18 +299,18 @@ export function LessonModal({
                           }
                           className="rounded border-[var(--input-border)]"
                         />
-                        Confirmada
+                        {t('modals.lesson.confirmed')}
                       </label>
                     ) : (
                       <span className="text-sm text-[var(--heading)]">
-                        {attendanceConfirmed ? "Confirmada" : "Pendente"}
+                        {attendanceConfirmed ? t('modals.lesson.confirmed') : t('modals.lesson.pending')}
                       </span>
                     )}
                   </InfoRow>
                 </div>
 
                 {/* Notes */}
-                <InfoRow icon={<FileText size={14} />} label="Observações">
+                <InfoRow icon={<FileText size={14} />} label={t('modals.lesson.labelNotes')}>
                   {editing ? (
                     <textarea
                       value={notes}
@@ -300,7 +323,7 @@ export function LessonModal({
                     <p className="text-sm text-[var(--text)]">
                       {notes || (
                         <span className="text-[var(--muted)] italic">
-                          Sem observações
+                          {t('modals.lesson.noNotes')}
                         </span>
                       )}
                     </p>
@@ -309,7 +332,7 @@ export function LessonModal({
 
                 {/* Recording */}
                 {lesson.recording && (
-                  <InfoRow icon={<Music size={14} />} label="Gravação">
+                  <InfoRow icon={<Music size={14} />} label={t('modals.lesson.labelRecording')}>
                     <div className="flex items-center gap-2 bg-[var(--surface-soft)] rounded-xl px-3 py-2">
                       <div className="w-8 h-8 rounded-lg bg-(--accent-50) flex items-center justify-center">
                         <Video size={14} className="text-(--accent-600)" />
@@ -338,13 +361,23 @@ export function LessonModal({
                 {rescheduling ? (
                   <div className="flex flex-col gap-3 w-full">
                     <p className="text-sm font-semibold text-[var(--heading)]">
-                      Novo horário
+                      {t('modals.lesson.newTime')}
                     </p>
                     <div className="flex gap-2">
                       <input
                         type="date"
                         value={rescheduleDate}
-                        onChange={(e) => setRescheduleDate(e.target.value)}
+                        min={todayStr}
+                        onChange={(e) => {
+                          const newDate = e.target.value;
+                          setRescheduleDate(newDate);
+                          if (newDate === todayStr) {
+                            const avail = ALL_HOURS.filter((h) => h > nowTimeStr);
+                            if (avail.length > 0 && rescheduleTime <= nowTimeStr) {
+                              setRescheduleTime(avail[0]);
+                            }
+                          }
+                        }}
                         className="flex-1 border border-[var(--input-border)] rounded-xl px-3 py-2 text-sm text-[var(--text)] bg-[var(--input-bg)] focus:outline-none focus:ring-2 focus:ring-[var(--accent-100)]"
                       />
                       <select
@@ -352,7 +385,7 @@ export function LessonModal({
                         onChange={(e) => setRescheduleTime(e.target.value)}
                         className="flex-1 border border-[var(--input-border)] rounded-xl px-3 py-2 text-sm text-[var(--text)] bg-[var(--input-bg)] focus:outline-none focus:ring-2 focus:ring-[var(--accent-100)]"
                       >
-                        {ALL_HOURS.map((h) => (
+                        {availableHours.map((h) => (
                           <option key={h} value={h}>
                             {h}
                           </option>
@@ -360,108 +393,116 @@ export function LessonModal({
                       </select>
                     </div>
                     <div className="flex gap-2 justify-end">
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => setRescheduling(false)}
-                      >
-                        Cancelar
+                      <Button variant="ghost" size="sm" onClick={() => setRescheduling(false)}>
+                        {t('modals.lesson.cancel')}
                       </Button>
                       <Button size="sm" onClick={handleRescheduleConfirm}>
                         <CheckCircle size={13} />
-                        Confirmar reagendamento
+                        {t('modals.lesson.confirmReschedule')}
                       </Button>
                     </div>
                   </div>
                 ) : !editing ? (
                   <>
-                    {currentUser.role === "teacher" && (
-                      <Button
-                        variant="secondary"
-                        size="sm"
-                        onClick={() => setEditing(true)}
-                      >
-                        Editar
-                      </Button>
-                    )}
-                    {lesson.status !== "cancelled" && canModify && (
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => setRescheduling(true)}
-                      >
-                        <RefreshCw size={13} />
-                        Reagendar
-                      </Button>
-                    )}
-                    {lesson.status === "scheduled" &&
-                      !attendanceConfirmed &&
-                      canModify && (
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          className="text-emerald-600 hover:bg-emerald-50"
-                          onClick={handleConfirmPresenceClick}
-                        >
-                          <CheckCircle size={13} />
-                          Confirmar presença
-                        </Button>
-                      )}
-                    {lesson.status === "scheduled" && attendanceConfirmed && (
-                      <span className="text-xs text-emerald-600 flex items-center gap-1">
-                        <CheckCircle size={12} /> Presença confirmada
-                      </span>
-                    )}
-                    {!canModify && (
-                      <span className="text-xs text-[var(--muted)] italic">
-                        Somente visualização
-                      </span>
-                    )}
-                    {canModify &&
-                      (!confirmDelete ? (
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          className="text-rose-500 hover:bg-rose-50 ml-auto"
-                          onClick={() => setConfirmDelete(true)}
-                        >
-                          <XCircle size={13} />
-                          Cancelar aula
-                        </Button>
-                      ) : (
-                        <div className="ml-auto flex items-center gap-2">
-                          <span className="text-xs text-[var(--muted)]">
-                            Tem certeza?
+                    {isReadOnly ? (
+                      // Aula passada ou em andamento: apenas professor pode apagar
+                      <>
+                        {currentUser.role === "teacher" &&
+                          (!confirmDelete ? (
+                            <Button variant="ghost" size="sm" className="text-rose-500 hover:bg-rose-50 ml-auto" onClick={() => setConfirmDelete(true)}>
+                              <Trash2 size={13} />
+                              {t('modals.lesson.deleteLesson')}
+                            </Button>
+                          ) : (
+                            <div className="ml-auto flex items-center gap-2">
+                              <span className="text-xs text-[var(--muted)]">
+                                {t('modals.lesson.deleteConfirmQ')}
+                              </span>
+                              <Button variant="danger" size="sm" onClick={() => onDelete(lesson.id)}>
+                                {t('modals.lesson.deleteYes')}
+                              </Button>
+                              <Button variant="ghost" size="sm" onClick={() => setConfirmDelete(false)}>
+                                {t('modals.lesson.no')}
+                              </Button>
+                            </div>
+                          ))}
+                        {currentUser.role !== "teacher" && (
+                          <span className="text-xs text-[var(--muted)] italic">
+                            {t('modals.lesson.readOnly')}
                           </span>
-                          <Button
-                            variant="danger"
-                            size="sm"
-                            onClick={() => onDelete(lesson.id)}
-                          >
-                            Sim, cancelar
+                        )}
+                      </>
+                    ) : (
+                      // Aula futura: controles completos
+                      <>
+                        {currentUser.role === "teacher" && (
+                          <Button variant="secondary" size="sm" onClick={() => setEditing(true)}>
+                            {t('modals.lesson.edit')}
                           </Button>
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            onClick={() => setConfirmDelete(false)}
-                          >
-                            Não
+                        )}
+                        {lesson.status !== "cancelled" && canModify && (
+                          <Button variant="ghost" size="sm" onClick={() => setRescheduling(true)}>
+                            <RefreshCw size={13} />
+                            {t('modals.lesson.reschedule')}
                           </Button>
-                        </div>
-                      ))}
+                        )}
+                        {lesson.status === "scheduled" &&
+                          !attendanceConfirmed &&
+                          canModify && (
+                            <Button variant="ghost" size="sm" className="text-emerald-600 hover:bg-emerald-50" onClick={handleConfirmPresenceClick}>
+                              <CheckCircle size={13} />
+                              {t('modals.lesson.confirmPresence')}
+                            </Button>
+                          )}
+                        {lesson.status === "scheduled" && attendanceConfirmed && (
+                          <span className="text-xs text-emerald-600 flex items-center gap-1">
+                            <CheckCircle size={12} /> {t('modals.lesson.presenceConfirmed')}
+                          </span>
+                        )}
+                        {!canModify && (
+                          <span className="text-xs text-[var(--muted)] italic">
+                            {t('modals.lesson.readOnly')}
+                          </span>
+                        )}
+                        {canModify &&
+                          (!confirmDelete ? (
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              className="text-rose-500 hover:bg-rose-50 ml-auto"
+                              onClick={() => setConfirmDelete(true)}
+                            >
+                              <XCircle size={13} />
+                              {t('modals.lesson.deleteLesson')}
+                            </Button>
+                          ) : (
+                            <div className="ml-auto flex items-center gap-2">
+                              <span className="text-xs text-[var(--muted)]">
+                                {t('modals.lesson.deleteConfirmQ')}
+                              </span>
+                              <Button variant="danger" size="sm" onClick={() => onDelete(lesson.id)}>
+                                {t('modals.lesson.deleteYes')}
+                              </Button>
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                onClick={() => setConfirmDelete(false)}
+                              >
+                                Não
+                              </Button>
+                            </div>
+                          ))}
+                      </>
+                    )}
                   </>
                 ) : (
                   <>
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => setEditing(false)}
-                    >
-                      Cancelar
+                    <Button variant="ghost" size="sm" onClick={() => setEditing(false)}>
+                      {t('modals.lesson.cancel')}
                     </Button>
                     <Button size="sm" onClick={handleSave} className="ml-auto">
                       <CheckCircle size={13} />
-                      Salvar
+                      {t('modals.lesson.save')}
                     </Button>
                   </>
                 )}

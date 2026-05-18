@@ -24,16 +24,19 @@ public class ReposicaoService {
     private final DisponibilidadeRepository disponibilidadeRepository;
     private final AlunoRepository alunoRepository;
     private final AulaRepository aulaRepository;
+    private final NotificacaoService notificacaoService;
 
     public ReposicaoService(
             ReposicaoRepository repository,
             DisponibilidadeRepository disponibilidadeRepository,
             AlunoRepository alunoRepository,
-            AulaRepository aulaRepository) {
+            AulaRepository aulaRepository,
+            NotificacaoService notificacaoService) {
         this.repository = repository;
         this.disponibilidadeRepository = disponibilidadeRepository;
         this.alunoRepository = alunoRepository;
         this.aulaRepository = aulaRepository;
+        this.notificacaoService = notificacaoService;
     }
 
     public List<ReposicaoResponseDTO> listar() {
@@ -86,6 +89,8 @@ public class ReposicaoService {
             r.getAlunos().add(aluno);
             aluno.setReposicoes(atual - 1);
             alunoRepository.save(aluno);
+            notificacaoService.reposicaoAgendada(alunoId, r.getId(), r.getDataAula(),
+                    r.getDisponibilidade().getHorario());
         }
         return toDTO(repository.save(r));
     }
@@ -105,6 +110,8 @@ public class ReposicaoService {
                 aluno.setReposicoes(atual + 1);
                 alunoRepository.save(aluno);
             });
+            notificacaoService.reposicaoRemovida(alunoId, r.getId(), r.getDataAula(),
+                    r.getDisponibilidade().getHorario());
         }
         return toDTO(repository.save(r));
     }

@@ -5,6 +5,7 @@ import { Avatar } from '../ui/Avatar';
 import { Button } from '../ui/Button';
 import { DAY_LABELS, STATUS_COLOR, STATUS_LABEL } from '../../utils/reposicaoHelpers';
 import { useToast } from '../ui/Toast';
+import { useLanguage } from '../../context/LanguageContext';
 import type { ReposicaoDTO } from '../../services/reposicaoService';
 
 export interface ReposicaoViewModalProps {
@@ -24,6 +25,7 @@ export function ReposicaoViewModal({
 }: ReposicaoViewModalProps) {
   const [busy, setBusy] = useState(false);
   const toast = useToast();
+  const { t } = useLanguage();
   const isEnrolled = !!currentAlunoId && reposicao.alunos.some(a => a.id === currentAlunoId);
 
   // Minutes until start (negative = already started)
@@ -38,8 +40,8 @@ export function ReposicaoViewModal({
     // Block enrollment when < 30 min to start
     if (!isEnrolled && !enrollmentOpen) {
       const reason = minsUntilStart < 0
-        ? 'Esta reposição já foi iniciada.'
-        : `Inscrições encerradas. É necessário pelo menos 30 minutos de antecedência (faltam ${Math.ceil(minsUntilStart)} min).`;
+        ? t('modals.reposicao.alreadyStarted')
+        : t('modals.reposicao.enrollClosed').replace('{n}', String(Math.ceil(minsUntilStart)));
       toast(reason, 'warning');
       return;
     }
@@ -66,7 +68,7 @@ export function ReposicaoViewModal({
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm">
+    <div className="fixed inset-0 z-[90] flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm">
       <motion.div
         initial={{ opacity: 0, scale: 0.95, y: 10 }}
         animate={{ opacity: 1, scale: 1, y: 0 }}
@@ -112,8 +114,8 @@ export function ReposicaoViewModal({
               <TriangleAlert size={14} className="shrink-0 mt-0.5" />
               <span>
                 {minsUntilStart < 0
-                  ? 'Esta reposição já foi iniciada. Não é possível se inscrever.'
-                  : `Inscrições encerradas. É necessário pelo menos 30 minutos de antecedência.`}
+                  ? t('modals.reposicao.alreadyStarted')
+                  : t('modals.reposicao.enrollClosed30')}
               </span>
             </div>
           )}
@@ -121,10 +123,10 @@ export function ReposicaoViewModal({
           {/* Enrolled students */}
           <div>
             <p className="text-xs font-semibold text-[var(--muted)] mb-2 uppercase tracking-wider">
-              Alunos inscritos ({reposicao.alunos.length})
+              {t('modals.reposicao.enrolledStudents')} ({reposicao.alunos.length})
             </p>
             {reposicao.alunos.length === 0 ? (
-              <p className="text-xs text-[var(--muted)] italic py-2">Nenhum aluno inscrito ainda.</p>
+              <p className="text-xs text-[var(--muted)] italic py-2">{t('modals.reposicao.noStudents')}</p>
             ) : (
               <div className="space-y-1.5 max-h-48 overflow-y-auto">
                 {reposicao.alunos.map(aluno => (
@@ -154,11 +156,11 @@ export function ReposicaoViewModal({
           {/* Actions */}
           <div className="flex gap-2 pt-1">
             <Button variant="ghost" size="sm" onClick={onClose} className="flex-1">
-              Fechar
+              {t('modals.reposicao.close')}
             </Button>
             {isTeacher ? (
               <Button size="sm" variant="danger" onClick={handleDelete} disabled={busy} className="flex-1">
-                <Trash2 size={13} /> Excluir reposição
+                <Trash2 size={13} /> {t('modals.reposicao.deleteBtn')}
               </Button>
             ) : currentAlunoId && reposicao.status === 'ABERTA' && (
               <Button
@@ -171,9 +173,9 @@ export function ReposicaoViewModal({
                 {busy ? (
                   <span className="w-4 h-4 border-2 border-current border-t-transparent rounded-full animate-spin" />
                 ) : isEnrolled ? (
-                  <><UserMinus size={13} /> Sair da reposição</>
+                  <><UserMinus size={13} /> {t('modals.reposicao.unenroll')}</>
                 ) : (
-                  <><UserPlus size={13} /> Me inscrever</>
+                  <><UserPlus size={13} /> {t('modals.reposicao.enroll')}</>
                 )}
               </Button>
             )}

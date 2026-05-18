@@ -1,4 +1,3 @@
-import { getToken } from '../lib/auth';
 import type { WeeklyAvailability } from '../types';
 
 // ─── DTOs espelhados do backend ──────────────────────────────────────────────
@@ -22,14 +21,6 @@ export interface HorarioValidatorDTO {
 }
 
 // ─── Helpers internos ────────────────────────────────────────────────────────
-
-function authHeaders(): HeadersInit {
-  const token = getToken();
-  return {
-    'Content-Type': 'application/json',
-    ...(token ? { Authorization: `Bearer ${token}` } : {}),
-  };
-}
 
 async function handleResponse<T>(res: Response): Promise<T> {
   if (!res.ok) {
@@ -56,7 +47,8 @@ export async function buscarAulas(
   try {
     const res = await fetch('/aula/buscar', {
       method: 'POST',
-      headers: authHeaders(),
+      headers: { 'Content-Type': 'application/json' },
+      credentials: 'include',
       body: JSON.stringify({ dataInicio, dataFim }),
     });
     return handleResponse<CalendarResponseDTO[]>(res);
@@ -74,7 +66,7 @@ export async function cancelarAula(id: string): Promise<void> {
   try {
     const res = await fetch(`/aula/cancelar/${id}`, {
       method: 'GET',
-      headers: authHeaders(),
+      credentials: 'include',
     });
     if (!res.ok) {
       const msg = await res.text().catch(() => '');
@@ -102,7 +94,8 @@ export async function criarAula(dto: CriarAulaDTO): Promise<CalendarResponseDTO[
   try {
     const res = await fetch('/aula/criar', {
       method: 'POST',
-      headers: authHeaders(),
+      headers: { 'Content-Type': 'application/json' },
+      credentials: 'include',
       body: JSON.stringify(dto),
     });
     const raw = await handleResponse<CalendarResponseDTO[] | CalendarResponseDTO>(res);
@@ -124,7 +117,8 @@ export async function reagendarAula(
 ): Promise<CalendarResponseDTO> {
   const res = await fetch(`/aula/reagendar/${id}`, {
     method: 'PUT',
-    headers: authHeaders(),
+    headers: { 'Content-Type': 'application/json' },
+    credentials: 'include',
     body: JSON.stringify({ dataInicio, dataFim }),
   });
   return handleResponse<CalendarResponseDTO>(res);
@@ -137,7 +131,7 @@ export async function reagendarAula(
 export async function confirmarPresenca(id: string): Promise<CalendarResponseDTO> {
   const res = await fetch(`/aula/confirmarPresenca/${id}`, {
     method: 'PUT',
-    headers: authHeaders(),
+    credentials: 'include',
   });
   return handleResponse<CalendarResponseDTO>(res);
 }
@@ -150,7 +144,8 @@ export async function validarHorario(dto: HorarioValidatorDTO): Promise<boolean>
   try {
     const res = await fetch('/aluno/validar-horario', {
       method: 'POST',
-      headers: authHeaders(),
+      headers: { 'Content-Type': 'application/json' },
+      credentials: 'include',
       body: JSON.stringify(dto),
     });
     return handleResponse<boolean>(res);
@@ -175,7 +170,7 @@ export interface DisponibilidadeResponseDTO {
  * Lista todos os slots de disponibilidade cadastrados no banco.
  */
 export async function buscarDisponibilidade(): Promise<DisponibilidadeResponseDTO[]> {
-  const res = await fetch('/disponibilidade', { headers: authHeaders() });
+  const res = await fetch('/disponibilidade', { credentials: 'include' });
   return handleResponse<DisponibilidadeResponseDTO[]>(res);
 }
 
@@ -189,7 +184,8 @@ export async function salvarDisponibilidade(
 ): Promise<DisponibilidadeResponseDTO[]> {
   const res = await fetch('/disponibilidade/salvar', {
     method: 'POST',
-    headers: authHeaders(),
+    headers: { 'Content-Type': 'application/json' },
+    credentials: 'include',
     body: JSON.stringify({ availability, availabilityReposicao }),
   });
   return handleResponse<DisponibilidadeResponseDTO[]>(res);

@@ -63,7 +63,7 @@
   --accent-700: #4338ca;
   --accent-gradient-from: #6366f1;
   --accent-gradient-to: #9333ea;
-  /* Icon bg tints — auto-adapt to accent palette + surface color */
+  /* Icon bg tints auto-adapt to accent palette + surface color */
   --accent-icon-bg: color-mix(in srgb, var(--accent-500) 12%, var(--surface));
   --accent-icon-bg-active: color-mix(in srgb, var(--accent-500) 20%, var(--surface));
   --accent-icon-fg: var(--accent-600);
@@ -151,4 +151,15 @@ body {
 
 .page-padding {
   padding: var(--page-padding);
+}
+
+/* Calendar picker icon primary indigo color */
+input[type="date"]::-webkit-calendar-picker-indicator {
+  cursor: pointer;
+  opacity: 1;
+  filter: invert(37%) sepia(82%) saturate(703%) hue-rotate(220deg) brightness(105%) contrast(93%);
+}
+
+:root[data-theme='dark'] input[type="date"]::-webkit-calendar-picker-indicator {
+  filter: invert(62%) sepia(72%) saturate(480%) hue-rotate(218deg) brightness(108%) contrast(88%);
 }

@@ -4,13 +4,12 @@ import { Layout } from './components/layout/Layout';
 import { Dashboard } from './components/pages/Dashboard';
 import { AgendaPage } from './components/pages/AgendaPage';
 import { StudentsPage } from './components/pages/StudentsPage';
-import { RoomsPage } from './components/pages/Disponibilidade';
+import { DisponibilidadePage } from './components/pages/Disponibilidade';
 import { ReschedulingPage } from './components/pages/ReschedulingPage';
 import { VideoPage } from './components/pages/VideoPage';
-import { LessonAlertsPage } from './components/pages/PaymentsPage';
+import { LessonAlertsPage } from './components/pages/AlertsPage';
 import { SettingsPage } from './components/pages/SettingsPage';
 import { LoginPage } from './components/auth/LoginPage';
-import { ProfileSetupPage } from './components/auth/ProfileSetupPage';
 import { ContractGate } from './components/auth/ContractGate';
 import { LandingPage } from './components/pages/LandingPage';
 import type { Page, Lesson, WeeklyAvailability, Aluno } from './types';
@@ -25,6 +24,7 @@ import {
 import { listarAlunos } from './services/alunoService';
 import { buscarDisponibilidade, buscarAulas } from './services/aulaService';
 import { toLesson } from './adapters/aulaAdapter';
+import { getGoogleConnectedFlag, getAutoSyncFlag, syncGoogleCalendar } from './services/googleService';
 
 const LESSON_DURATION_MINUTES = 50;
 
@@ -94,6 +94,18 @@ function App() {
     }
   };
 
+  /** Sincroniza com Google Calendar uma vez ao iniciar, se a flag estiver ativa */
+  const syncOnStartupIfEnabled = (user: AuthUser) => {
+    if (user.role !== 'teacher') return;
+    if (!getGoogleConnectedFlag() || !getAutoSyncFlag()) return;
+    const now = new Date();
+    const start = new Date(now.getFullYear(), now.getMonth(), 1);
+    const end   = new Date(now.getFullYear(), now.getMonth() + 1, 0, 23, 59, 59);
+    const fmt = (d: Date) =>
+      `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+    void syncGoogleCalendar(`${fmt(start)}T00:00:00`, `${fmt(end)}T23:59:59`).catch(() => {});
+  };
+
   // Tenta restaurar a sessão ao carregar a página
   useEffect(() => {
     const savedUser = getUser();
@@ -102,10 +114,12 @@ function App() {
       setAppState('app');
       loadAvailability();
       loadLessons();
+      syncOnStartupIfEnabled(savedUser);
       // Se for professor, já aceitou contrato. Se for aluno, verifica o campo termos.
       if (savedUser.role === 'teacher' || savedUser.termos === true) {
         setContractAccepted(true);
       }
+      return;
     }
   }, []);
 
@@ -149,6 +163,7 @@ function App() {
     setAppState('app');
     loadAvailability();
     loadLessons();
+    syncOnStartupIfEnabled(user);
     // Teachers (ADMIN) never need to accept student contract
     if (user.role === 'teacher') {
       setContractAccepted(true);
@@ -162,7 +177,7 @@ function App() {
   };
 
   const handleLogout = () => {
-    logout();
+    void logout(); // async clears HttpOnly cookie on the server
     setSessionUser(null);
     setContractAccepted(false);
     setActivePage('dashboard');
@@ -292,10 +307,9 @@ function App() {
         );
       case 'rooms':
         return (
-          <RoomsPage
+          <DisponibilidadePage
             availability={availability}
             availabilityReposicao={availabilityReposicao}
-            lessons={visibleLessons}
             onChangeAvailability={setAvailability}
             onChangeAvailabilityReposicao={setAvailabilityReposicao}
           />
@@ -305,11 +319,11 @@ function App() {
       case 'video':
         return <VideoPage videos={mockVideos} />;
       case 'lessonAlerts':
-        return <LessonAlertsPage lessons={visibleLessons} students={alunos} />;
+        return <LessonAlertsPage />;
       case 'settings':
-        return <SettingsPage />;
+        return <SettingsPage user={sessionUser!} onProfileUpdate={handleProfileUpdate} />;
       case 'profile':
-        return <ProfileSetupPage user={sessionUser!} onComplete={handleProfileUpdate} inApp />;
+        return <SettingsPage user={sessionUser!} onProfileUpdate={handleProfileUpdate} initialSection="profile" />;
     }
   };
 

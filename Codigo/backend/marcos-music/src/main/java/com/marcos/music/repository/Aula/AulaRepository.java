@@ -33,4 +33,6 @@ public interface AulaRepository extends JpaRepository<Aula, Long>{
     );
 
     List<Aula> findByFlagCanceladaFalseAndFlagRealizadaFalseAndDataFimBefore(LocalDateTime dateTime);
+
+    List<Aula> findByFlagCanceladaFalseAndFlagRealizadaFalseAndDataFimAfter(LocalDateTime dateTime);
 }

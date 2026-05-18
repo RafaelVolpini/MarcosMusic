@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
-import { Search, Plus, Phone, Mail, Tag, ChevronLeft, ChevronRight, Trash2 } from 'lucide-react';
+import { Search, Plus, Phone, Mail, Tag, ChevronLeft, ChevronRight, Trash2, MessageSquare } from 'lucide-react';
 import { DeleteConfirmModal } from '../modals/DeleteConfirmModal';
 import type { Aluno } from '../../types';
 import type { AuthUser } from '../../lib/auth';
@@ -10,6 +10,9 @@ import { Avatar } from '../ui/Avatar';
 import { Button } from '../ui/Button';
 import { AlunoModal } from '../modals/AlunoModal';
 import { criarAluno, atualizarAluno, deletarAluno, type AlunoFormData } from '../../services/alunoService';
+import { chatBus } from '../../lib/chatBus';
+import { formatPhoneGlobal, phoneToWhatsApp } from '../../utils';
+import { useLanguage } from '../../context/LanguageContext';
 
 const PAGE_SIZE = 9;
 
@@ -21,6 +24,7 @@ interface StudentsPageProps {
 
 export function StudentsPage({ students, currentUser, onReload }: StudentsPageProps) {
   const isTeacher = currentUser?.role === 'teacher';
+  const { t } = useLanguage();
 
   const [query, setQuery] = useState('');
   const [page, setPage] = useState(0);
@@ -108,13 +112,13 @@ export function StudentsPage({ students, currentUser, onReload }: StudentsPagePr
           <input
             value={query}
             onChange={e => { setQuery(e.target.value); setPage(0); }}
-            placeholder="Buscar por nome, e-mail ou apelido..."
+            placeholder={t('students.searchPlaceholder')}
             className="w-full h-10 pl-9 pr-4 bg-[var(--input-bg)] border border-[var(--input-border)] rounded-xl text-sm text-[var(--text)] focus:outline-none focus:ring-2 focus:ring-[var(--accent-500)]/30 placeholder:text-[var(--muted)]"
           />
         </div>
         {isTeacher && (
           <Button size="sm" onClick={handleNovoAluno}>
-            <Plus size={14} /> Novo aluno
+            <Plus size={14} /> {t('students.new')}
           </Button>
         )}
       </div>
@@ -144,12 +148,12 @@ export function StudentsPage({ students, currentUser, onReload }: StudentsPagePr
                 className={`p-5 relative group ${isTeacher ? 'cursor-pointer' : ''}`}
                 onClick={() => handleEditarAluno(aluno)}
               >
-                {/* Botão excluir — só professor */}
+                {/* Botão excluir só professor */}
                 {isTeacher && (
                   <button
                     onClick={(e) => handleDelete(e, aluno)}
                     disabled={deletingId === aluno.id}
-                    title="Excluir aluno"
+                    title={t('students.delete')}
                     className="
                       absolute top-3 right-3 w-7 h-7 rounded-lg
                       flex items-center justify-center
@@ -166,6 +170,23 @@ export function StudentsPage({ students, currentUser, onReload }: StudentsPagePr
                     }
                   </button>
                 )}
+                {/* Botão de chat — professor abre conversa direto com o aluno */}
+                {isTeacher && (
+                  <button
+                    onClick={(e) => { e.stopPropagation(); chatBus.open(aluno.id); }}
+                    title="Abrir chat com aluno"
+                    className="
+                      absolute top-3 right-12 w-7 h-7 rounded-lg
+                      flex items-center justify-center
+                      text-[var(--muted)] hover:text-(--accent-600)
+                      hover:bg-[var(--hover-bg)]
+                      opacity-0 group-hover:opacity-100
+                      transition-all duration-150
+                    "
+                  >
+                    <MessageSquare size={13} />
+                  </button>
+                )}
 
                 <div className="flex items-start gap-3 mb-3">
                   <Avatar name={aluno.nome} size="lg" />
@@ -178,7 +199,7 @@ export function StudentsPage({ students, currentUser, onReload }: StudentsPagePr
                       </p>
                     )}
                     <Badge variant={aluno.ativo ? 'success' : 'warning'} className="mt-1.5">
-                      {aluno.ativo ? 'Ativo' : 'Inativo'}
+                      {aluno.ativo ? t('common.active') : t('common.inactive')}
                     </Badge>
                   </div>
                 </div>
@@ -191,7 +212,15 @@ export function StudentsPage({ students, currentUser, onReload }: StudentsPagePr
                   {aluno.telefone && (
                     <div className="flex items-center gap-2 text-xs text-[var(--muted)]">
                       <Phone size={12} className="text-[var(--accent-500)] shrink-0" />
-                      <span>{aluno.telefone}</span>
+                      <a
+                        href={`https://api.whatsapp.com/send/?phone=${phoneToWhatsApp(aluno.telefone)}&type=phone_number&app_absent=0`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        onClick={e => e.stopPropagation()}
+                        className="hover:text-green-500 transition-colors"
+                      >
+                        {formatPhoneGlobal(aluno.telefone)}
+                      </a>
                     </div>
                   )}
                 </div>
@@ -204,7 +233,7 @@ export function StudentsPage({ students, currentUser, onReload }: StudentsPagePr
 
       {filtered.length === 0 && (
         <div className="text-center py-16 text-[var(--muted)]">
-          <p className="text-sm">Nenhum aluno encontrado</p>
+          <p className="text-sm">{t('students.none')}</p>
         </div>
       )}
 
@@ -212,7 +241,7 @@ export function StudentsPage({ students, currentUser, onReload }: StudentsPagePr
       {totalPages > 1 && (
         <div className="flex items-center justify-between mt-6">
           <span className="text-xs text-[var(--muted)]">
-            {safePage * PAGE_SIZE + 1}–{Math.min((safePage + 1) * PAGE_SIZE, filtered.length)} de {filtered.length} alunos
+            {safePage * PAGE_SIZE + 1}–{Math.min((safePage + 1) * PAGE_SIZE, filtered.length)} {t('common.of')} {filtered.length} {t('nav.students').toLowerCase()}
           </span>
           <div className="flex items-center gap-1">
             <button

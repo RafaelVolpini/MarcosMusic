@@ -6,7 +6,7 @@ import jsPDF from 'jspdf';
 import { Button } from '../ui/Button';
 import { acceptContract, getUser, type ContractAcceptance, type AuthUser } from '../../lib/auth';
 
-const SESSION_KEY = 'musga:auth:session';
+const SESSION_KEY = 'marcos-music:auth:session';
 
 const CONTRACT_DATA = {
   teacherName: '___________________________',
@@ -87,7 +87,7 @@ export function ContractGate({ user, onAccepted }: ContractGateProps) {
       const record = await acceptContract(user.email);
       setConfirmation(record);
     } catch {
-      // Backend offline — persiste localmente e continua
+      // Backend offline persiste localmente e continua
       const current = getUser();
       if (current) {
         sessionStorage.setItem(SESSION_KEY, JSON.stringify({ ...current, termos: true }));

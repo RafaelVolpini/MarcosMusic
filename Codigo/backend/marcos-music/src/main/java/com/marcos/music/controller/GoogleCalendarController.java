@@ -3,11 +3,11 @@ package com.marcos.music.controller;
 import com.marcos.music.entity.Role;
 import com.marcos.music.entity.Usuario;
 import com.marcos.music.integration.google.GoogleCalendarService;
-import com.marcos.music.security.JwtService;
 import com.marcos.music.repository.Aula.AulaRepository;
 import com.marcos.music.repository.UsuarioRepository;
 import com.marcos.music.entity.Aula;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
 
 import jakarta.servlet.http.HttpServletResponse;
@@ -19,29 +19,25 @@ import java.util.List;
 @RequestMapping("/google")
 public class GoogleCalendarController {
     private final GoogleCalendarService googleService;
-    private final JwtService jwtService;
     private final UsuarioRepository usuarioRepository;
     private final AulaRepository aulaRepository;
 
-    public GoogleCalendarController(GoogleCalendarService googleService, JwtService jwtService,
+    public GoogleCalendarController(GoogleCalendarService googleService,
                                     UsuarioRepository usuarioRepository, AulaRepository aulaRepository) {
         this.googleService = googleService;
-        this.jwtService = jwtService;
         this.usuarioRepository = usuarioRepository;
         this.aulaRepository = aulaRepository;
     }
 
     @PostMapping("/oauth/url")
-    public ResponseEntity<?> buildOAuthUrl(
-            @RequestBody OAuthStartRequest request,
-            @RequestHeader(value = "Authorization", required = false) String authHeader
-    ) {
+    public ResponseEntity<?> buildOAuthUrl(@RequestBody OAuthStartRequest request) {
         try {
-            if (authHeader == null || !authHeader.startsWith("Bearer ")) {
-                return ResponseEntity.status(401).body("Token não fornecido");
+            var auth = SecurityContextHolder.getContext().getAuthentication();
+            if (auth == null || !auth.isAuthenticated() || "anonymousUser".equals(auth.getPrincipal())) {
+                return ResponseEntity.status(401).body("Sessão expirada. Faça login novamente.");
             }
-            String email = jwtService.getEmailFromToken(authHeader.substring(7));
-            Usuario user = usuarioRepository.findByEmail(email)
+            String email = auth.getName();
+            Usuario user = usuarioRepository.findByEmailIgnoreCase(email)
                     .orElseThrow(() -> new RuntimeException("Usuário não encontrado"));
 
             String authUrl = googleService.buildAuthUrl(user.getId(), request.loginHint, request.returnUrl);
@@ -69,17 +65,14 @@ public class GoogleCalendarController {
     }
 
     @PostMapping("/sync")
-    public ResponseEntity<?> syncCalendar(
-            @RequestBody GoogleSyncRequest request,
-            @RequestHeader(value = "Authorization", required = false) String authHeader
-    ) {
+    public ResponseEntity<?> syncCalendar(@RequestBody GoogleSyncRequest request) {
         try {
-            if (authHeader == null || !authHeader.startsWith("Bearer ")) {
-                return ResponseEntity.status(401).body("Token não fornecido");
+            var auth = SecurityContextHolder.getContext().getAuthentication();
+            if (auth == null || !auth.isAuthenticated() || "anonymousUser".equals(auth.getPrincipal())) {
+                return ResponseEntity.status(401).body("Sessão expirada. Faça login novamente.");
             }
-
-            String email = jwtService.getEmailFromToken(authHeader.substring(7));
-            Usuario user = usuarioRepository.findByEmail(email)
+            String email = auth.getName();
+            Usuario user = usuarioRepository.findByEmailIgnoreCase(email)
                     .orElseThrow(() -> new RuntimeException("Usuário não encontrado"));
 
             List<Aula> lessons;
@@ -92,6 +85,9 @@ public class GoogleCalendarController {
             int success = googleService.syncLessons(user.getId(), lessons);
             int total = lessons.size();
             return ResponseEntity.ok(new GoogleSyncResponse(total, success, total - success));
+        } catch (IllegalStateException e) {
+            // Google token not in memory (e.g. after server restart) — tell frontend to re-connect
+            return ResponseEntity.ok(new GoogleSyncResponse(0, 0, 0, true));
         } catch (Exception e) {
             return ResponseEntity.status(400).body(e.getMessage());
         }
@@ -119,11 +115,20 @@ public class GoogleCalendarController {
         public int total;
         public int success;
         public int failed;
+        public boolean disconnected;
 
         public GoogleSyncResponse(int total, int success, int failed) {
             this.total = total;
             this.success = success;
             this.failed = failed;
+            this.disconnected = false;
+        }
+
+        public GoogleSyncResponse(int total, int success, int failed, boolean disconnected) {
+            this.total = total;
+            this.success = success;
+            this.failed = failed;
+            this.disconnected = disconnected;
         }
     }
 }

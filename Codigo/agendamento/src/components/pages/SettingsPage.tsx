@@ -1,10 +1,13 @@
 import { useState, useEffect } from 'react';
-import { motion } from 'framer-motion';
-import { Settings, Bell, Palette, Shield, Globe, Check, RotateCcw, Sliders, RefreshCw, CheckCircle2 } from 'lucide-react';
+import { motion, AnimatePresence } from 'framer-motion';
+import {
+  Settings, Bell, Palette, Globe, Check, RotateCcw, Sliders, CheckCircle2,
+  User, Phone, Mail, AlertCircle,
+} from 'lucide-react';
 import { Card } from '../ui/Card';
 import { Button } from '../ui/Button';
 import { cn } from '../../utils';
-import { startGoogleOAuth, syncGoogleCalendar } from '../../services/googleService';
+import { startGoogleOAuth, setGoogleConnectedFlag, getGoogleConnectedFlag, getAutoSyncFlag, setAutoSyncFlag } from '../../services/googleService';
 import {
   useThemeSettings,
   type ThemePreset,
@@ -12,14 +15,93 @@ import {
   type ThemeBundleDef,
   THEME_BUNDLES,
 } from '../../context/ThemeContext';
+import { useAppSettings } from '../../context/AppSettingsContext';
+import type { AuthUser } from '../../lib/auth';
+import { useToast } from '../ui/Toast';
+import { useLanguage } from '../../context/LanguageContext';
+
+const TIMEZONES: { label: string; value: string }[] = [
+  { label: 'America/Sao_Paulo UTC-3 (Brasília, SP, RJ)', value: 'America/Sao_Paulo' },
+  { label: 'America/Belem UTC-3 (Belém, PA)', value: 'America/Belem' },
+  { label: 'America/Fortaleza UTC-3 (Fortaleza, CE)', value: 'America/Fortaleza' },
+  { label: 'America/Recife UTC-3 (Recife, PE)', value: 'America/Recife' },
+  { label: 'America/Maceio UTC-3 (Maceió, AL)', value: 'America/Maceio' },
+  { label: 'America/Bahia UTC-3 (Salvador, BA)', value: 'America/Bahia' },
+  { label: 'America/Manaus UTC-4 (Manaus, AM)', value: 'America/Manaus' },
+  { label: 'America/Cuiaba UTC-4 (Cuiabá, MT)', value: 'America/Cuiaba' },
+  { label: 'America/Porto_Velho UTC-4 (Porto Velho, RO)', value: 'America/Porto_Velho' },
+  { label: 'America/Boa_Vista UTC-4 (Boa Vista, RR)', value: 'America/Boa_Vista' },
+  { label: 'America/Rio_Branco UTC-5 (Rio Branco, AC)', value: 'America/Rio_Branco' },
+  { label: 'America/Noronha UTC-2 (Fernando de Noronha)', value: 'America/Noronha' },
+  { label: '─────────────────', value: '' },
+  { label: 'America/New_York UTC-5/-4 (Nova York, EUA)', value: 'America/New_York' },
+  { label: 'America/Chicago UTC-6/-5 (Chicago, EUA)', value: 'America/Chicago' },
+  { label: 'America/Denver UTC-7/-6 (Denver, EUA)', value: 'America/Denver' },
+  { label: 'America/Los_Angeles UTC-8/-7 (Los Angeles, EUA)', value: 'America/Los_Angeles' },
+  { label: 'America/Anchorage UTC-9/-8 (Anchorage, EUA)', value: 'America/Anchorage' },
+  { label: 'America/Mexico_City UTC-6/-5 (Cidade do México)', value: 'America/Mexico_City' },
+  { label: 'America/Argentina/Buenos_Aires UTC-3 (Buenos Aires)', value: 'America/Argentina/Buenos_Aires' },
+  { label: 'America/Lima UTC-5 (Lima, Peru)', value: 'America/Lima' },
+  { label: 'America/Bogota UTC-5 (Bogotá, Colômbia)', value: 'America/Bogota' },
+  { label: 'America/Santiago UTC-4/-3 (Santiago, Chile)', value: 'America/Santiago' },
+  { label: 'America/Caracas UTC-4 (Caracas, Venezuela)', value: 'America/Caracas' },
+  { label: '─────────────────', value: '' },
+  { label: 'Europe/Lisbon UTC+0/+1 (Lisboa, Portugal)', value: 'Europe/Lisbon' },
+  { label: 'Europe/London UTC+0/+1 (Londres, Reino Unido)', value: 'Europe/London' },
+  { label: 'Europe/Madrid UTC+1/+2 (Madri, Espanha)', value: 'Europe/Madrid' },
+  { label: 'Europe/Paris UTC+1/+2 (Paris, França)', value: 'Europe/Paris' },
+  { label: 'Europe/Berlin UTC+1/+2 (Berlim, Alemanha)', value: 'Europe/Berlin' },
+  { label: 'Europe/Rome UTC+1/+2 (Roma, Itália)', value: 'Europe/Rome' },
+  { label: 'Europe/Moscow UTC+3 (Moscou, Rússia)', value: 'Europe/Moscow' },
+  { label: '─────────────────', value: '' },
+  { label: 'Africa/Luanda UTC+1 (Luanda, Angola)', value: 'Africa/Luanda' },
+  { label: 'Africa/Maputo UTC+2 (Maputo, Moçambique)', value: 'Africa/Maputo' },
+  { label: 'Africa/Lagos UTC+1 (Lagos, Nigéria)', value: 'Africa/Lagos' },
+  { label: 'Africa/Nairobi UTC+3 (Nairóbi, Quênia)', value: 'Africa/Nairobi' },
+  { label: '─────────────────', value: '' },
+  { label: 'Asia/Dubai UTC+4 (Dubai, Emirados Árabes)', value: 'Asia/Dubai' },
+  { label: 'Asia/Kolkata UTC+5:30 (Mumbai, Índia)', value: 'Asia/Kolkata' },
+  { label: 'Asia/Singapore UTC+8 (Singapura)', value: 'Asia/Singapore' },
+  { label: 'Asia/Tokyo UTC+9 (Tóquio, Japão)', value: 'Asia/Tokyo' },
+  { label: 'Asia/Shanghai UTC+8 (Xangai, China)', value: 'Asia/Shanghai' },
+  { label: 'Asia/Seoul UTC+9 (Seul, Coreia do Sul)', value: 'Asia/Seoul' },
+  { label: '─────────────────', value: '' },
+  { label: 'Australia/Sydney UTC+10/+11 (Sydney, Austrália)', value: 'Australia/Sydney' },
+  { label: 'Pacific/Auckland UTC+12/+13 (Auckland, Nova Zelândia)', value: 'Pacific/Auckland' },
+  { label: 'UTC UTC+0', value: 'UTC' },
+];
 
 const SECTIONS = [
-  { id: 'general',       label: 'Geral',         icon: <Settings size={15} /> },
-  { id: 'notifications', label: 'Notificações',   icon: <Bell size={15} /> },
-  { id: 'appearance',    label: 'Aparência',      icon: <Palette size={15} /> },
-  { id: 'security',      label: 'Segurança',      icon: <Shield size={15} /> },
-  { id: 'integrations',  label: 'Integrações',    icon: <Globe size={15} /> },
+  { id: 'profile',       labelKey: 'settings.sections.profile',       icon: <User size={15} /> },
+  { id: 'general',       labelKey: 'settings.sections.general',       icon: <Settings size={15} /> },
+  { id: 'notifications', labelKey: 'settings.sections.notifications', icon: <Bell size={15} /> },
+  { id: 'appearance',    labelKey: 'settings.sections.appearance',    icon: <Palette size={15} /> },
+  { id: 'integrations',  labelKey: 'settings.sections.integrations',  icon: <Globe size={15} /> },
 ];
+
+// ─── helpers de perfil ────────────────────────────────────────────────────────
+
+const SESSION_KEY = 'marcos-music:auth:session';
+
+function formatPhone(raw: string): string {
+  // Remove tudo que não é dígito, ignorar código do país se já digitado
+  let d = raw.replace(/\D/g, '');
+  // Se o usuário digitou o código 55 (Brasil) no início, removê-lo para re-adicionar formatado
+  if (d.startsWith('55') && d.length > 11) d = d.slice(2);
+  d = d.slice(0, 11);
+  if (d.length === 0) return '';
+  if (d.length <= 2)  return `+55 (${d}`;
+  if (d.length <= 6)  return `+55 (${d.slice(0, 2)}) ${d.slice(2)}`;
+  if (d.length <= 10) return `+55 (${d.slice(0, 2)}) ${d.slice(2, 6)}-${d.slice(6)}`;
+  return `+55 (${d.slice(0, 2)}) ${d.slice(2, 7)}-${d.slice(7)}`;
+}
+
+function isPhoneValid(phone: string): boolean {
+  const d = phone.replace(/\D/g, '');
+  // Aceita com ou sem o 55 do Brasil
+  if (d.startsWith('55')) return d.length === 12 || d.length === 13;
+  return d.length === 10 || d.length === 11;
+}
 
 const ACCENT_COLORS = [
   { name: 'Índigo',   value: 'indigo',  swatch: 'linear-gradient(135deg, #6366f1 0%, #9333ea 100%)' },
@@ -42,21 +124,111 @@ const BG_COLORS: { name: string; value: ThemeBgColor; light: string; dark: strin
   { name: 'Creme',   value: 'cream',   light: '#fdf8f0', dark: '#1a1208' },
 ];
 
-export function SettingsPage() {
+interface SettingsPageProps {
+  user?: AuthUser;
+  onProfileUpdate?: (u: AuthUser) => void;
+  initialSection?: string;
+}
+
+export function SettingsPage({ user, onProfileUpdate, initialSection }: SettingsPageProps) {
   const { settings, setSettings, resetSettings, activeBundle, resolvedMode } = useThemeSettings();
-  const [activeSection, setActiveSection] = useState('general');
+  const { appSettings, setTimezone } = useAppSettings();
+  const toast = useToast();
+  const { t } = useLanguage();
+  const [activeSection, setActiveSection] = useState(() => {
+    const stored = sessionStorage.getItem('marcos-music:settings:section');
+    if (stored) { sessionStorage.removeItem('marcos-music:settings:section'); return stored; }
+    return initialSection ?? 'profile';
+  });
   const [showAdvanced, setShowAdvanced] = useState(false);
   const [schoolName, setSchoolName] = useState('Marcos-Music-Plataform');
+  const [pendingTimezone, setPendingTimezone] = useState(appSettings.timezone);
   const [notifLessons, setNotifLessons] = useState(true);
   const [notifPayments, setNotifPayments] = useState(true);
   const [notifMessages, setNotifMessages] = useState(false);
 
-  // Google Calendar state
-  const [googleConnected, setGoogleConnected] = useState(false);
+  // ── Perfil ──
+  const [profileNome, setProfileNome] = useState(user?.name ?? '');
+  const [profileTelefone, setProfileTelefone] = useState(user?.phone ?? '');
+  const [profileLoading, setProfileLoading] = useState(false);
+  const [profileError, setProfileError] = useState('');
+  const [profileSaved, setProfileSaved] = useState(false);
+
+  const profileInitials = profileNome.trim()
+    ? profileNome.trim().split(' ').map(p => p[0]).slice(0, 2).join('').toUpperCase()
+    : (user?.email ?? '??').slice(0, 2).toUpperCase();
+  const profileFilled = [profileNome.trim(), profileTelefone.trim()].filter(Boolean).length;
+  const profilePct = Math.round((profileFilled / 2) * 100);
+
+  const handleProfileSave = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (user?.role === 'teacher' && !profileNome.trim()) { setProfileError(t('profileSetup.errName')); return; }
+    if (profileTelefone.trim() && !isPhoneValid(profileTelefone)) {
+      setProfileError(t('profileSetup.errPhone'));
+      return;
+    }
+    setProfileLoading(true);
+    setProfileError('');
+    try {
+      // Apenas alunos são salvos via API — professores têm dados geridos pelo OAuth
+      if (user?.role !== 'teacher') {
+        const res = await fetch('/aluno/salvar', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          credentials: 'include',
+          body: JSON.stringify({
+            id: user?.id ?? null,
+            email: user?.email,
+            nome: user?.name ?? profileNome.trim(),
+            telefone: profileTelefone.trim(),
+            status: true,
+            termos: user?.termos ?? false,
+          }),
+        });
+        if (!res.ok) throw new Error('Erro ao salvar perfil');
+      }
+      const savedNome = user?.role === 'teacher' ? profileNome.trim() : (user?.name ?? profileNome.trim());
+      const parts = savedNome.split(' ');
+      const updatedUser: AuthUser = {
+        ...user!,
+        firstName: parts[0] ?? '',
+        lastName: parts.slice(1).join(' '),
+        name: savedNome,
+        phone: profileTelefone.trim(),
+      };
+      // Persiste na mesma storage que o login usou (remember-me → localStorage)
+      const payload = JSON.stringify(updatedUser);
+      if (localStorage.getItem(SESSION_KEY)) {
+        localStorage.setItem(SESSION_KEY, payload);
+      } else {
+        sessionStorage.setItem(SESSION_KEY, payload);
+      }
+      setProfileSaved(true);
+      setTimeout(() => setProfileSaved(false), 3000);
+      onProfileUpdate?.(updatedUser);
+      toast(t('profileSetup.saved'), 'success');
+    } catch {
+      setProfileError(t('profileSetup.errSave'));
+    } finally {
+      setProfileLoading(false);
+    }
+  };
+
+  // ── Google Calendar ──
+  const [googleConnected, setGoogleConnectedState] = useState(getGoogleConnectedFlag);
   const [googleConnecting, setGoogleConnecting] = useState(false);
   const [googleError, setGoogleError] = useState<string | null>(null);
-  const [syncLoading, setSyncLoading] = useState(false);
-  const [syncSuccess, setSyncSuccess] = useState<number | null>(null);
+  const [autoSync, setAutoSyncState] = useState(getAutoSyncFlag);
+
+  function setAutoSync(v: boolean) {
+    setAutoSyncState(v);
+    setAutoSyncFlag(v);
+  }
+
+  function setGoogleConnected(v: boolean) {
+    setGoogleConnectedState(v);
+    setGoogleConnectedFlag(v);
+  }
 
   // Detecta retorno do OAuth do Google
   useEffect(() => {
@@ -64,7 +236,6 @@ export function SettingsPage() {
     const status = params.get('google');
     if (!status) return;
 
-    // Limpa o param da URL
     params.delete('google');
     const url = new URL(window.location.href);
     url.search = params.toString();
@@ -73,6 +244,7 @@ export function SettingsPage() {
     if (status === 'connected') {
       setGoogleConnected(true);
       setActiveSection('integrations');
+      toast('Google Calendar conectado com sucesso!', 'success');
     } else {
       setGoogleError('Não foi possível conectar ao Google Calendar.');
       setActiveSection('integrations');
@@ -84,35 +256,20 @@ export function SettingsPage() {
     setGoogleError(null);
     try {
       const returnUrl = `${window.location.origin}${window.location.pathname}`;
-      await startGoogleOAuth(undefined, returnUrl);
+      // Passa o email do professor como loginHint para o backend identificar o usuário
+      await startGoogleOAuth(user?.email, returnUrl);
     } catch (err) {
-      setGoogleError(err instanceof Error ? err.message : 'Erro ao conectar com Google.');
+      const msg = err instanceof Error ? err.message : 'Erro ao conectar com Google.';
+      setGoogleError(msg);
+      toast(msg, 'error');
       setGoogleConnecting(false);
-    }
-  };
-
-  const handleSyncGoogle = async () => {
-    setSyncLoading(true);
-    setSyncSuccess(null);
-    setGoogleError(null);
-    try {
-      // Sincroniza o mês atual
-      const now = new Date();
-      const start = new Date(now.getFullYear(), now.getMonth(), 1);
-      const end = new Date(now.getFullYear(), now.getMonth() + 1, 0, 23, 59, 59);
-      const fmt = (d: Date) =>
-        `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
-      const result = await syncGoogleCalendar(`${fmt(start)}T00:00:00`, `${fmt(end)}T23:59:59`);
-      setSyncSuccess(result.success);
-    } catch (err) {
-      setGoogleError(err instanceof Error ? err.message : 'Erro ao sincronizar.');
-    } finally {
-      setSyncLoading(false);
     }
   };
 
   const inputCls = 'w-full border border-[var(--input-border)] bg-[var(--input-bg)] rounded-xl px-3 py-2 text-sm text-[var(--input-text)] focus:outline-none focus:ring-2 focus:ring-[var(--accent-100)]';
   const labelCls = 'text-xs font-medium text-[var(--muted)] mb-1.5 block';
+
+  const profileInputStyle = { borderColor: 'var(--border)', color: 'var(--text)', backgroundColor: 'var(--input-bg, var(--surface))' };
 
   return (
     <div className="page-padding">
@@ -132,7 +289,7 @@ export function SettingsPage() {
                 )}
               >
                 <span className={activeSection === s.id ? 'text-[var(--accent-600)]' : 'text-[var(--muted)]'}>{s.icon}</span>
-                {s.label}
+                {t(s.labelKey)}
               </button>
             ))}
           </Card>
@@ -146,16 +303,154 @@ export function SettingsPage() {
             animate={{ opacity: 1, x: 0 }}
             transition={{ duration: 0.18 }}
           >
+            {activeSection === 'profile' && user && (
+              <Card className="p-6 app-surface">
+                <h2 className="text-sm font-semibold text-[var(--heading)] mb-5">{t('settings.sections.profile')}</h2>
+                <form onSubmit={handleProfileSave} className="space-y-5">
+                  {/* Avatar + progresso */}
+                  <div className="flex items-center gap-4 p-4 rounded-2xl" style={{ backgroundColor: 'var(--surface-soft)', border: '1px solid var(--border)' }}>
+                    <div
+                      className="w-14 h-14 rounded-2xl flex items-center justify-center text-lg font-black text-white shrink-0 shadow"
+                      style={{ background: 'linear-gradient(135deg, var(--accent-gradient-from), var(--accent-gradient-to))' }}
+                    >
+                      {profileInitials}
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm font-bold truncate text-[var(--heading)]">
+                        {profileNome.trim() || 'Seu nome'}
+                      </p>
+                      <p className="text-xs text-[var(--muted)] truncate mt-0.5">{user.email}</p>                    <span
+                      className="mt-1 inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-semibold"
+                      style={{ background: 'var(--accent-50)', color: 'var(--accent-700)', border: '1px solid var(--accent-100)' }}
+                    >
+                      {user.role === 'teacher' ? t('settings.profile.roleTeacher') : t('settings.profile.roleStudent')}
+                    </span>                      <div className="mt-2 flex items-center gap-2">
+                        <div className="flex-1 h-1.5 rounded-full overflow-hidden bg-[var(--border)]">
+                          <motion.div
+                            className="h-full rounded-full"
+                            style={{ background: 'linear-gradient(90deg, var(--accent-gradient-from), var(--accent-gradient-to))' }}
+                            initial={{ width: 0 }}
+                            animate={{ width: `${profilePct}%` }}
+                            transition={{ duration: 0.4 }}
+                          />
+                        </div>
+                        <span className="text-[11px] font-semibold text-[var(--accent-600)] shrink-0">{profilePct}%</span>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Email (readonly) */}
+                  <div>
+                    <label className={labelCls}>{t('profileSetup.emailLabel')}</label>
+                    <div className="relative">
+                      <Mail size={14} className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-[var(--muted)]" />
+                      <input
+                        className="w-full border rounded-xl pl-9 pr-3 py-2 text-sm opacity-60 cursor-not-allowed"
+                        style={profileInputStyle}
+                        value={user.email}
+                        readOnly
+                        tabIndex={-1}
+                      />
+                    </div>
+                    <p className="mt-1 text-[11px] text-[var(--muted)]">{t('profileSetup.emailReadonly')}</p>
+                  </div>
+
+                  {/* Nome */}
+                  <div>
+                    <label className={labelCls}>{t('profileSetup.nameLabel')} {user.role === 'teacher' ? '*' : ''}</label>
+                    <div className="relative">
+                      <User size={14} className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-[var(--muted)]" />
+                      <input
+                        className="w-full border rounded-xl pl-9 pr-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[var(--accent-100)]"
+                        style={{
+                          ...profileInputStyle,
+                          ...(user.role !== 'teacher' ? { opacity: 0.6, cursor: 'not-allowed' } : {}),
+                        }}
+                        value={profileNome}
+                        onChange={e => { if (user.role === 'teacher') setProfileNome(e.target.value); }}
+                        readOnly={user.role !== 'teacher'}
+                        placeholder={t('profileSetup.namePH')}
+                      />
+                    </div>
+                    {user.role !== 'teacher' && (
+                      <p className="mt-1 text-[11px] text-[var(--muted)]">{t('settings.profile.nameReadonlyHint')}</p>
+                    )}
+                  </div>
+
+                  {/* Telefone */}
+                  <div>
+                    <label className={labelCls}>{t('profileSetup.phoneLabel')}</label>
+                    <div className="relative">
+                      <Phone size={14} className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2"
+                        style={{ color: profileTelefone && isPhoneValid(profileTelefone) ? 'var(--accent-500)' : 'var(--muted)' }}
+                      />
+                      <input
+                        className="w-full border rounded-xl pl-9 pr-9 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[var(--accent-100)]"
+                        style={{
+                          ...profileInputStyle,
+                          borderColor: profileTelefone && !isPhoneValid(profileTelefone) ? '#f87171'
+                            : profileTelefone && isPhoneValid(profileTelefone) ? '#34d399'
+                            : 'var(--border)',
+                        }}
+                        value={profileTelefone}
+                        onChange={e => { setProfileTelefone(formatPhone(e.target.value)); if (profileError) setProfileError(''); }}
+                        placeholder="+55 (11) 99999-9999"
+                        type="tel"
+                        inputMode="tel"
+                      />
+                      <AnimatePresence>
+                        {profileTelefone && isPhoneValid(profileTelefone) && (
+                          <motion.span key="ok" initial={{ opacity: 0, scale: 0.5 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0 }}
+                            className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2">
+                            <CheckCircle2 size={14} className="text-emerald-500" />
+                          </motion.span>
+                        )}
+                        {profileTelefone && !isPhoneValid(profileTelefone) && (
+                          <motion.span key="err" initial={{ opacity: 0, scale: 0.5 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0 }}
+                            className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2">
+                            <AlertCircle size={14} className="text-rose-400" />
+                          </motion.span>
+                        )}
+                      </AnimatePresence>
+                    </div>
+                    {profileTelefone && !isPhoneValid(profileTelefone) && (
+                      <p className="mt-1 text-xs text-rose-500">{t('profileSetup.phoneHint')}</p>
+                    )}
+                  </div>
+
+                  <AnimatePresence>
+                    {profileError && (
+                      <motion.p initial={{ opacity: 0, y: -4 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }}
+                        className="rounded-xl border border-rose-200 bg-rose-50 px-3 py-2 text-xs text-rose-600">
+                        {profileError}
+                      </motion.p>
+                    )}
+                    {profileSaved && (
+                      <motion.div initial={{ opacity: 0, y: -4 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }}
+                        className="flex items-center gap-2 rounded-xl border px-3 py-2.5 text-xs font-semibold"
+                        style={{ backgroundColor: 'var(--accent-50)', borderColor: 'var(--accent-100)', color: 'var(--accent-700)' }}>
+                        <CheckCircle2 size={14} /> {t('profileSetup.saved')}
+                      </motion.div>
+                    )}
+                  </AnimatePresence>
+
+                  <Button type="submit" className="w-full justify-center" disabled={profileLoading}>
+                    {profileLoading ? t('profileSetup.saving') : t('profileSetup.save')}
+                  </Button>
+                </form>
+              </Card>
+            )}
+
             {activeSection === 'general' && (
               <Card className="p-6 space-y-5 app-surface">
-                <h2 className="text-sm font-semibold text-[var(--heading)]">Configurações Gerais</h2>
+                <h2 className="text-sm font-semibold text-[var(--heading)]">{t('settings.sections.general')}</h2>
                 <div>
                   <label className={labelCls}>Nome da escola</label>
                   <input value={schoolName} onChange={e => setSchoolName(e.target.value)} className={inputCls} />
                 </div>
                 <div>
                   <label className={labelCls}>E-mail de contato</label>
-                  <input defaultValue="contato@musga.com.br" className={inputCls} />
+                  <input defaultValue="contato@marcosmusic.com.br" className={inputCls} />
                 </div>
                 <div>
                   <label className={labelCls}>Telefone</label>
@@ -163,19 +458,25 @@ export function SettingsPage() {
                 </div>
                 <div>
                   <label className={labelCls}>Fuso horário</label>
-                  <select className={inputCls}>
-                    <option>America/Sao_Paulo (UTC-3)</option>
-                    <option>America/Manaus (UTC-4)</option>
-                    <option>America/Belem (UTC-3)</option>
+                  <select
+                    value={pendingTimezone}
+                    onChange={e => { if (e.target.value) setPendingTimezone(e.target.value); }}
+                    className={inputCls}
+                  >
+                    {TIMEZONES.map((tz, i) => (
+                      <option key={i} value={tz.value} disabled={!tz.value}>
+                        {tz.label}
+                      </option>
+                    ))}
                   </select>
                 </div>
-                <Button>Salvar alterações</Button>
+                <Button onClick={() => setTimezone(pendingTimezone)}>Salvar alterações</Button>
               </Card>
             )}
 
             {activeSection === 'notifications' && (
               <Card className="p-6 app-surface">
-                <h2 className="text-sm font-semibold text-[var(--heading)] mb-5">Notificações</h2>
+                <h2 className="text-sm font-semibold text-[var(--heading)] mb-5">{t('settings.sections.notifications')}</h2>
                 <div className="space-y-4">
                   {[
                     { label: 'Aulas agendadas', desc: 'Receber alertas sobre aulas', value: notifLessons, set: setNotifLessons },
@@ -201,7 +502,7 @@ export function SettingsPage() {
                   <div className="flex items-center justify-between mb-4">
                     <div>
                       <h2 className="text-sm font-semibold text-[var(--heading)]">Temas</h2>
-                      <p className="text-xs text-[var(--muted)] mt-0.5">Escolha um tema pronto — combina cor de destaque e fundo automaticamente</p>
+                      <p className="text-xs text-[var(--muted)] mt-0.5">Escolha um tema pronto combina cor de destaque e fundo automaticamente</p>
                     </div>
                     <button
                       onClick={resetSettings}
@@ -427,40 +728,16 @@ export function SettingsPage() {
               </div>
             )}
 
-            {activeSection === 'security' && (
-              <Card className="p-6 space-y-5 app-surface">
-                <h2 className="text-sm font-semibold text-[var(--heading)]">Segurança</h2>
-                <div>
-                  <label className={labelCls}>Senha atual</label>
-                  <input type="password" className={inputCls} placeholder="••••••••" />
-                </div>
-                <div>
-                  <label className={labelCls}>Nova senha</label>
-                  <input type="password" className={inputCls} placeholder="••••••••" />
-                </div>
-                <div>
-                  <label className={labelCls}>Confirmar nova senha</label>
-                  <input type="password" className={inputCls} placeholder="••••••••" />
-                </div>
-                <Button>Atualizar senha</Button>
-              </Card>
-            )}
-
             {activeSection === 'integrations' && (
               <Card className="p-6 app-surface">
-                <h2 className="text-sm font-semibold text-[var(--heading)] mb-5">Integrações</h2>
+                <h2 className="text-sm font-semibold text-[var(--heading)] mb-5">{t('settings.sections.integrations')}</h2>
                 {googleError && (
                   <div className="mb-4 px-4 py-2.5 rounded-xl bg-rose-50 border border-rose-200 text-xs text-rose-600">
                     ⚠ {googleError}
                   </div>
                 )}
-                {syncSuccess !== null && (
-                  <div className="mb-4 px-4 py-2.5 rounded-xl bg-emerald-50 border border-emerald-200 text-xs text-emerald-700 flex items-center gap-2">
-                    <CheckCircle2 size={13} /> {syncSuccess} aula(s) sincronizada(s) com sucesso.
-                  </div>
-                )}
                 <div className="space-y-3">
-                  {/* Google Calendar — funcional */}
+                  {/* Google Calendar funcional */}
                   <div className="flex items-center gap-4 p-4 border border-[var(--border)] rounded-2xl hover:border-[var(--accent-500)] transition-colors">
                     <div className="w-10 h-10 rounded-xl flex items-center justify-center text-white font-bold text-sm" style={{ backgroundColor: '#0F9D58' }}>
                       G
@@ -468,20 +745,10 @@ export function SettingsPage() {
                     <div className="flex-1">
                       <p className="text-sm font-medium text-[var(--heading)]">Google Calendar</p>
                       <p className="text-xs text-[var(--muted)]">
-                        {googleConnected ? 'Conta conectada — sincronize suas aulas' : 'Sincronizar agenda com Google Calendar'}
+                        {googleConnected ? 'Conta conectada — aulas sincronizadas automaticamente ao iniciar' : 'Sincronizar agenda com Google Calendar'}
                       </p>
                     </div>
                     <div className="flex items-center gap-2">
-                      {googleConnected && (
-                        <button
-                          onClick={handleSyncGoogle}
-                          disabled={syncLoading}
-                          className="flex items-center gap-1.5 px-3 h-8 rounded-xl border border-[var(--border)] text-xs font-semibold text-[var(--text)] hover:bg-[var(--hover-bg)] disabled:opacity-50 transition-colors"
-                        >
-                          <RefreshCw size={12} className={syncLoading ? 'animate-spin' : ''} />
-                          {syncLoading ? 'Sincronizando…' : 'Sincronizar'}
-                        </button>
-                      )}
                       <Button
                         size="sm"
                         variant={googleConnected ? 'secondary' : 'primary'}
@@ -492,6 +759,27 @@ export function SettingsPage() {
                       </Button>
                     </div>
                   </div>
+
+                  {/* Auto-sync toggle — só aparece quando conectado */}
+                  {googleConnected && (
+                    <div className="flex items-center justify-between px-4 py-3 rounded-2xl border border-[var(--border)] bg-[var(--surface-soft)]">
+                      <div>
+                        <p className="text-sm font-medium text-[var(--heading)]">Sincronização automática</p>
+                        <p className="text-xs text-[var(--muted)]">Sincroniza com o Google Calendar ao abrir o sistema</p>
+                      </div>
+                      <button
+                        onClick={() => setAutoSync(!autoSync)}
+                        aria-label={autoSync ? 'Desativar sincronização automática' : 'Ativar sincronização automática'}
+                        className="relative w-11 h-6 rounded-full transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-[var(--accent-500)] focus:ring-offset-2"
+                        style={{ backgroundColor: autoSync ? 'var(--accent-600)' : 'var(--border)' }}
+                      >
+                        <span
+                          className="absolute top-0.5 left-0.5 w-5 h-5 bg-white rounded-full shadow transition-transform duration-200"
+                          style={{ transform: autoSync ? 'translateX(20px)' : 'translateX(0)' }}
+                        />
+                      </button>
+                    </div>
+                  )}
 
                   {/* Outros (estáticos) */}
                   {[
