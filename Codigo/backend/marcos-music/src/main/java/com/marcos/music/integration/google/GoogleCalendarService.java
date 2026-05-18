@@ -165,8 +165,8 @@ public class GoogleCalendarService {
                             ? lesson.getAluno().getUsuario().getEmail() : null;
 
         java.time.format.DateTimeFormatter formatter = java.time.format.DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ssXXX");
-        String startStr = lesson.getDataInicio().atZone(ZoneId.systemDefault()).format(formatter);
-        String endStr = lesson.getDataFim().atZone(ZoneId.systemDefault()).format(formatter);
+        String startStr = lesson.getDataInicio().atZone(ZoneId.of(TIME_ZONE)).format(formatter);
+        String endStr = lesson.getDataFim().atZone(ZoneId.of(TIME_ZONE)).format(formatter);
 
         Map<String, Object> payloadMap = new java.util.HashMap<>();
         payloadMap.put("summary", "Aula de Música: " + alunoNome);
