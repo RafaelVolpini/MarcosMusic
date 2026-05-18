@@ -109,6 +109,9 @@ export function LessonModal({
         currentUser.name.trim().toLowerCase());
   const canModify = currentUser.role === "teacher" || isOwner;
 
+  // Após confirmar presença o aluno perde a capacidade de cancelar/reagendar
+  const isLockedByAttendance = attendanceConfirmed && currentUser.role !== "teacher";
+
   // Aula passada ou em andamento → modo somente leitura (timezone-aware)
   const nowDt = getNowInTimezone(appSettings.timezone);
   const todayStr = `${nowDt.getFullYear()}-${String(nowDt.getMonth()+1).padStart(2,'0')}-${String(nowDt.getDate()).padStart(2,'0')}`;
@@ -440,7 +443,7 @@ export function LessonModal({
                             {t('modals.lesson.edit')}
                           </Button>
                         )}
-                        {lesson.status !== "cancelled" && canModify && (
+                        {lesson.status !== "cancelled" && canModify && !isLockedByAttendance && (
                           <Button variant="ghost" size="sm" onClick={() => setRescheduling(true)}>
                             <RefreshCw size={13} />
                             {t('modals.lesson.reschedule')}
@@ -459,12 +462,17 @@ export function LessonModal({
                             <CheckCircle size={12} /> {t('modals.lesson.presenceConfirmed')}
                           </span>
                         )}
+                        {isLockedByAttendance && (
+                          <span className="text-xs text-[var(--muted)] italic ml-auto">
+                            {t('modals.lesson.lockedByAttendance')}
+                          </span>
+                        )}
                         {!canModify && (
                           <span className="text-xs text-[var(--muted)] italic">
                             {t('modals.lesson.readOnly')}
                           </span>
                         )}
-                        {canModify &&
+                        {canModify && !isLockedByAttendance &&
                           (!confirmDelete ? (
                             <Button
                               variant="ghost"
