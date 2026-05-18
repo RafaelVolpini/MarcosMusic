@@ -9,6 +9,7 @@ import {
 } from '../../utils';
 import { CalendarCellOverlay } from './CalendarCellOverlay';
 import { ReposicaoBlock } from './ReposicaoBlock';
+import { getGoogleConnectedFlag } from '../../services/googleService';
 import { useAppSettings } from '../../context/AppSettingsContext';
 import { useLanguage } from '../../context/LanguageContext';
 
@@ -228,7 +229,11 @@ export function CalendarView({
                   G
                 </span>
                 <span className="text-xs font-medium text-[var(--text)]">
-                  {syncingCalendar ? t('calendar.syncing') : t('calendar.syncGoogle')}
+                  {syncingCalendar
+                    ? t('calendar.syncing')
+                    : getGoogleConnectedFlag()
+                      ? t('calendar.syncGoogle')
+                      : 'Conectar Google Calendar'}
                 </span>
               </div>
               {/* arrow */}
@@ -382,7 +387,7 @@ export function CalendarView({
                       <div
                         className="absolute inset-0 z-30"
                         onDragOver={(e) => handleDragOver(dateStr, hour, e)}
-                        onDrop={() => handleDrop(dateStr)}
+                        onDrop={(e) => { e.stopPropagation(); handleDrop(dateStr); }}
                       />
                     )}
 

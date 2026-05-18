@@ -11,7 +11,7 @@ import { listarReposicoes, type ReposicaoDTO } from '../../services/reposicaoSer
 import { toLesson } from '../../adapters/aulaAdapter';
 import { timeToMinutes, minutesToTime } from '../../utils';
 import { useToast } from '../ui/Toast';
-import { syncGoogleCalendar, getGoogleConnectedFlag } from '../../services/googleService';
+import { syncGoogleCalendar, getGoogleConnectedFlag, startGoogleOAuth } from '../../services/googleService';
 
 interface AgendaPageProps {
   lessons: Lesson[];
@@ -38,30 +38,7 @@ export function AgendaPage({
   const [apiLessons, setApiLessons] = useState<Lesson[] | null>(null);
   const [loadingLessons, setLoadingLessons] = useState(false);
   const [apiError, setApiError] = useState<string | null>(null);
-  const [googleBanner, setGoogleBanner] = useState(false);
   const [syncingGoogle, setSyncingGoogle] = useState(false);
-
-  // ── Auto-sync Google Calendar ao entrar na agenda (apenas professor) ──
-  useEffect(() => {
-    if (currentUser.role === 'teacher' && getGoogleConnectedFlag()) {
-      const now = new Date();
-      const fmt = (d: Date) =>
-        `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
-      const start = new Date(now.getFullYear(), now.getMonth(), 1);
-      const end   = new Date(now.getFullYear(), now.getMonth() + 1, 0, 23, 59, 59);
-      syncGoogleCalendar(`${fmt(start)}T00:00:00`, `${fmt(end)}T23:59:59`)
-        .then(r => { if (r.success > 0) toast(`${r.success} aula(s) sincronizadas com Google Calendar.`, 'info'); })
-        .catch(err => {
-          if (err instanceof Error && err.message === 'GOOGLE_RECONNECT') {
-            setGoogleBanner(true); // show reconnect banner
-          }
-          // outros erros silenciosos — não bloqueia o calendário
-        });
-    } else {
-      setGoogleBanner(true);
-    }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
 
   const fetchAulas = useCallback(async (dataInicio: string, dataFim: string) => {
     setLoadingLessons(true);
@@ -96,7 +73,16 @@ export function AgendaPage({
   }, [fetchAulas]);
 
   const handleSyncGoogle = useCallback(async () => {
-    if (!getGoogleConnectedFlag() || syncingGoogle) return;
+    if (syncingGoogle) return;
+    // Não conectado → redireciona para OAuth do Google
+    if (!getGoogleConnectedFlag()) {
+      try {
+        await startGoogleOAuth(currentUser.email ?? undefined);
+      } catch {
+        toast('Erro ao iniciar conexão com Google.', 'error');
+      }
+      return;
+    }
     setSyncingGoogle(true);
     try {
       const now = new Date();
@@ -108,15 +94,15 @@ export function AgendaPage({
       toast(`${r.success} aula(s) sincronizada(s) com Google Calendar.`, 'success');
     } catch (err) {
       if (err instanceof Error && err.message === 'GOOGLE_RECONNECT') {
-        setGoogleBanner(true);
-        toast('Reconecte o Google Calendar nas configurações.', 'info');
+        // Token expirou no servidor — inicia reconexão automaticamente
+        try { await startGoogleOAuth(currentUser.email ?? undefined); } catch { /* silencia */ }
       } else {
         toast('Erro ao sincronizar com Google Calendar.', 'error');
       }
     } finally {
       setSyncingGoogle(false);
     }
-  }, [syncingGoogle, toast]);
+  }, [syncingGoogle, toast, currentUser.email]);
 
   // Busca alunos 
   useEffect(() => {
@@ -197,22 +183,7 @@ export function AgendaPage({
           Carregando aulas…
         </div>
       )}
-      {googleBanner && (
-        <div className="flex items-center gap-3 px-5 py-2 text-xs bg-[var(--surface-soft)] border-b border-[var(--border)] shrink-0">
-          <span className="w-5 h-5 rounded-md flex items-center justify-center text-white font-bold text-[11px] shrink-0" style={{ backgroundColor: '#0F9D58' }}>G</span>
-          <span className="text-[var(--muted)] flex-1">Sincronize suas aulas com o Google Calendar para manter tudo atualizado.</span>
-          <button
-            onClick={() => {
-              sessionStorage.setItem('marcos-music:settings:section', 'integrations');
-              onNavigate?.('settings');
-            }}
-            className="text-[var(--accent-600)] font-semibold hover:underline shrink-0"
-          >
-            Conectar agora
-          </button>
-          <button onClick={() => setGoogleBanner(false)} className="text-[var(--muted)] hover:text-[var(--text)] ml-1 shrink-0">✕</button>
-        </div>
-      )}
+
       {apiError && !loadingLessons && (
         <div className="px-6 py-1.5 text-xs text-rose-600 bg-rose-50 dark:bg-rose-950 border-b border-rose-200 dark:border-rose-800 shrink-0">
           ⚠ {apiError}
@@ -230,7 +201,7 @@ export function AgendaPage({
         onLessonMove={handleMoveLesson}
         onWeekChange={handleWeekChange}
         onReposicaoClick={(r) => setSelectedReposicao(r)}
-        onSyncCalendar={getGoogleConnectedFlag() ? handleSyncGoogle : undefined}
+        onSyncCalendar={currentUser.role === 'teacher' ? handleSyncGoogle : undefined}
         syncingCalendar={syncingGoogle}
       />
 
