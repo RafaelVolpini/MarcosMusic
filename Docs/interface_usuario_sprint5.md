@@ -321,24 +321,69 @@ Canal de comunicação direta integrado à plataforma, acessível pelo ícone de
 
 ---
 
-### 3.10. Configurações de Alertas e Notificações
+### 3.10. Central de Notificações
 
-Permite a personalização da recepção de notificações pelo usuário.
+Sistema de notificações in-app acessível pelo ícone de sino (**Bell**) na barra superior. O badge exibe a contagem de itens não lidos e é atualizado automaticamente a cada 10 segundos (polling), ao mudar de página e ao retornar ao foco da aba.
 
-#### Controles Disponíveis:
+```
+┌──────────────────────────────────────────────────────────────┐
+│  Notificações                             [ 3 novas ]        │
+├──────────────────────────────────────────────────────────────┤
+│  ● Aula confirmada                                           │
+│    João confirmou presença para hoje às 14h.                 │
+│    20/05  14:05                                              │
+├──────────────────────────────────────────────────────────────┤
+│  ● Aula reagendada                                           │
+│    Maria remarcou a aula de quinta para sexta às 10h.        │
+│    20/05  12:30                                              │
+├──────────────────────────────────────────────────────────────┤
+│  ○ Lembrete de amanhã                                        │
+│    Aula com Lucas Pereira amanhã às 09h.                     │
+│    19/05  18:00                                              │
+└──────────────────────────────────────────────────────────────┘
+```
 
-1. **Tipos de Alerta Habilitados (Caixas de Seleção):**
-   - Lembrança de aula (24 horas antes)
-   - Alerta de aula próxima (1 hora antes)
-   - Notificações de cancelamento
-   - Notificações de remarcação e reposições
-2. **Canal Preferencial (Seleção Exclusiva):**
-   - App (Notificação interna visual na central)
-   - E-mail institucional
-   - Ambos
-3. **Redirecionamento Externo:**
-   - Ativação de disparo de WhatsApp.
-   - Campo para cadastro do telefone celular principal do professor.
+*( `●` = não lida  |  `○` = já lida )*
+
+#### Tipos de Notificação Gerados Automaticamente:
+
+| Tipo                  | Disparado quando…                                                 |
+| :-------------------- | :---------------------------------------------------------------- |
+| `LEMBRETE_HOJE`       | Existe aula marcada para o dia atual                              |
+| `LEMBRETE_AMANHA`     | Existe aula marcada para o dia seguinte                           |
+| `AULA_AGENDADA`       | Uma nova aula é criada no sistema                                 |
+| `AULA_REAGENDADA`     | Data/horário de uma aula é alterado                               |
+| `AULA_CANCELADA`      | Uma aula é cancelada                                              |
+| `CONFIRMOU_PRESENCA`  | Aluno confirma presença em uma aula                               |
+| `REPOSICAO_AGENDADA`  | Uma reposição é agendada                                          |
+| `REPOSICAO_REMOVIDA`  | Uma reposição é removida                                          |
+| `NOVA_MENSAGEM`       | Nova mensagem recebida no chat                                    |
+
+#### Comportamento do Painel:
+
+* Ao **abrir** o painel, todas as notificações visíveis são marcadas como lidas automaticamente (`PUT /notificacao/ler-todas`).
+* O painel exibe até **20 notificações** mais recentes, com scroll vertical.
+* Notificações não lidas aparecem com fundo destacado e indicador colorido (●); lidas ficam em fundo neutro (○).
+* O campo de data/hora é formatado conforme o idioma da interface (PT-BR ou EN-US).
+
+#### Configurações de Notificação (em Configurações → Notificações):
+
+```
+┌──────────────────────────────────────────────────────────────┐
+│  NOTIFICAÇÕES                                                │
+├──────────────────────────────────────────────────────────────┤
+│  Aulas agendadas                    [ Toggle ON  ]           │
+│  Receber alertas sobre aulas                                 │
+├──────────────────────────────────────────────────────────────┤
+│  Pagamentos                         [ Toggle OFF ]           │
+│  Cobranças vencendo e em atraso                              │
+├──────────────────────────────────────────────────────────────┤
+│  Mensagens                          [ Toggle ON  ]           │
+│  Mensagens de alunos e professores                           │
+└──────────────────────────────────────────────────────────────┘
+```
+
+Três toggles independentes permitem ao usuário habilitar ou desabilitar cada categoria de notificação sem afetar as demais.
 
 ---
 
