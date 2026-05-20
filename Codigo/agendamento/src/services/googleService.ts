@@ -65,7 +65,7 @@ export async function syncGoogleCalendar(dataInicio: string, dataFim: string): P
   });
 
   if (res.status === 401) {
-    // JWT expirou — limpa a flag para parar auto-sync futuro
+    // JWT expirou  limpa a flag para parar auto-sync futuro
     setGoogleConnectedFlag(false);
     throw new Error('SESSION_EXPIRED');
   }

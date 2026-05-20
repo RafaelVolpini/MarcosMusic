@@ -170,7 +170,7 @@ export function StudentsPage({ students, currentUser, onReload }: StudentsPagePr
                     }
                   </button>
                 )}
-                {/* Botão de chat — professor abre conversa direto com o aluno */}
+                {/* Botão de chat  professor abre conversa direto com o aluno */}
                 {isTeacher && (
                   <button
                     onClick={(e) => { e.stopPropagation(); chatBus.open(aluno.id); }}

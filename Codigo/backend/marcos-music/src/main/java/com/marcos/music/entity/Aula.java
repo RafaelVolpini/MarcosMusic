@@ -3,8 +3,6 @@ package com.marcos.music.entity;
 import jakarta.persistence.*;
 import java.time.LocalDateTime;
 
-import org.springframework.cglib.core.Local;
-
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -42,6 +40,15 @@ public class Aula {
 
     @Column(name = "flag_realizada")
     private Boolean flagRealizada = false;
+
+    @Column(name = "meet_link", length = 500)
+    private String meetLink;
+
+    @Column(name = "is_online")
+    private Boolean isOnline = false;
+
+    @Column(name = "google_event_id", length = 255)
+    private String googleEventId;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "id_aluno", nullable = false)

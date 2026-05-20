@@ -28,9 +28,15 @@ function isPhoneValid(phone: string): boolean {
 
 /** Formata input para +55 XX XXXXX-XXXX enquanto o usuário digita */
 function formatPhone(raw: string): string {
-  // Extrai só dígitos, remove DDI 55 se digitado
+  // Extrai só dígitos
   let d = raw.replace(/\D/g, '');
-  if (d.startsWith('55') && d.length > 11) d = d.slice(2);
+  // Se o valor exibido já tem prefixo +55 (foi formatado antes), remover o código do país
+  if (raw.trimStart().startsWith('+') && d.startsWith('55')) {
+    d = d.slice(2);
+  } else if (d.startsWith('55') && d.length > 11) {
+    // Número internacional colado (ex: 5511999999999)
+    d = d.slice(2);
+  }
   d = d.slice(0, 11);
   if (d.length === 0) return '';
   if (d.length <= 2)  return `+55 ${d}`;

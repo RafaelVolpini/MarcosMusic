@@ -133,7 +133,7 @@ const SCHOOL_PILLARS = [
 ];
 
 const SCHOOL_OFFERINGS = [
-  { icon: <Piano size={24} />,          title: 'Piano e Teclado',    desc: 'Do classico ao popular — fundamentos solidos para qualquer estilo.' },
+  { icon: <Piano size={24} />,          title: 'Piano e Teclado',    desc: 'Do classico ao popular  fundamentos solidos para qualquer estilo.' },
   { icon: <Guitar size={24} />,         title: 'Violao e Guitarra',  desc: 'Ritmo, harmonia e tecnica na palma da sua mao.' },
   { icon: <Headphones size={24} />,     title: 'Producao Musical',   desc: 'Criacao, mixagem e exportacao de faixas autorais.' },
   { icon: <MonitorSmartphone size={24} />, title: 'Aulas Online',    desc: 'Mesma qualidade, de onde voce estiver, com link de acesso direto.' },
@@ -242,7 +242,7 @@ function YoutubeEmbed({ videoId, title, subtitle }: { videoId: string; title: st
    MAIN COMPONENT
 ══════════════════════════════════════════════════════════════ */
 export function LandingPage({ onEnterLogin }: LandingPageProps) {
-  const handleContact = () => window.open('mailto:marcos@marcosmusic.com.br', '_blank');
+  const handleContact = () => window.open('mailto:marcoslima91@hotmail.com', '_blank');
   const handleWhatsApp = () => window.open('https://wa.me/5531999999999?text=Ola!%20Gostaria%20de%20mais%20informacoes%20sobre%20as%20aulas.', '_blank');
 
   return (
@@ -308,7 +308,7 @@ export function LandingPage({ onEnterLogin }: LandingPageProps) {
               <span className="animate-ping absolute inline-flex h-full w-full rounded-full opacity-75" style={{ backgroundColor: 'var(--accent-500)' }} />
               <span className="relative inline-flex h-2 w-2 rounded-full" style={{ backgroundColor: 'var(--accent-600)' }} />
             </span>
-            Marcos Music Agenda — Escola de Musica
+            Marcos Music Agenda  Escola de Musica
           </span>
         </motion.div>
 
@@ -330,7 +330,7 @@ export function LandingPage({ onEnterLogin }: LandingPageProps) {
           style={{ color: 'var(--muted)' }}
         >
           Metodologia estruturada, agenda online e acompanhamento real.
-          Do iniciante ao avancado — presencial ou online.
+          Do iniciante ao avancado  presencial ou online.
         </motion.p>
 
         <motion.div {...fadeUp(0.16)} className="mt-7 flex justify-center">
@@ -423,7 +423,7 @@ export function LandingPage({ onEnterLogin }: LandingPageProps) {
           <SectionLabel>O Professor</SectionLabel>
           <h2 className="mt-3 text-4xl font-black" style={{ color: 'var(--heading)' }}>Marcos Mello</h2>
           <p className="mt-2 text-sm" style={{ color: 'var(--muted)' }}>
-            Doutor em Musica pela UFMG — 15 anos de experiencia em ensino e composicao
+            Doutor em Musica pela UFMG  15 anos de experiencia em ensino e composicao
           </p>
         </motion.div>
 
@@ -541,7 +541,7 @@ export function LandingPage({ onEnterLogin }: LandingPageProps) {
           <YoutubeEmbed
             videoId="GCuXrIWRw6s"
             title="Apresentacao ao Vivo"
-            subtitle="Performance original — assista na integra."
+            subtitle="Performance original  assista na integra."
           />
           <YoutubeEmbed
             videoId="GCuXrIWRw6s"
@@ -738,8 +738,8 @@ export function LandingPage({ onEnterLogin }: LandingPageProps) {
             </div>
           </div>
           <div className="flex items-center gap-4 text-xs" style={{ color: 'var(--muted)' }}>
-            <a href="mailto:marcos@marcosmusic.com.br" className="flex items-center gap-1 hover:opacity-70 transition">
-              <Mail size={12} /> marcos@marcosmusic.com.br
+            <a href="mailto:marcoslima91@hotmail.com" className="flex items-center gap-1 hover:opacity-70 transition">
+              <Mail size={12} /> marcoslima91@hotmail.com
             </a>
             <a href="https://www.youtube.com/@marcoscomposer" target="_blank" rel="noopener noreferrer"
               className="flex items-center gap-1 hover:opacity-70 transition">

@@ -264,13 +264,13 @@ export function CalendarView({
       <div className="flex-1 overflow-auto bg-[var(--surface)] isolate">
         <div className="grid h-full" style={{ gridTemplateColumns: `56px repeat(${displayDays.length}, 1fr)` }}>
           {/* Day headers */}
-          <div className="border-b border-[var(--border)] sticky top-0 z-10 bg-[var(--surface)]" />
+          <div className="border-b border-[var(--border)] sticky top-0 z-[45] bg-[var(--surface)]" />
           {displayDays.map((day, i) => {
             const today = isToday(day);
             return (
               <div
                 key={i}
-                className="border-b border-l border-[var(--border)] sticky top-0 z-10 bg-[var(--surface)] px-2 py-2 text-center"
+                className="border-b border-l border-[var(--border)] sticky top-0 z-[45] bg-[var(--surface)] px-2 py-2 text-center"
               >
                 <p className={cn('text-xs font-semibold', today ? 'text-[var(--accent-600)]' : 'text-[var(--muted)]')}>
                   {DAY_LABELS[day.getDay()]}

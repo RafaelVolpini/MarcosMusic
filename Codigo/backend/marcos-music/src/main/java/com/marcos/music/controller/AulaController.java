@@ -32,7 +32,9 @@ public class AulaController {
                 aula.getFlagCancelada(),
                 aula.getPresencaConfirmada(),
                 aula.getRecorrente(),
-                aula.getFlagRealizada()
+                aula.getFlagRealizada(),
+                aula.getMeetLink(),
+                aula.getIsOnline()
         );
     }
 
@@ -82,6 +84,20 @@ public class AulaController {
                     .collect(java.util.stream.Collectors.toList());
             return ResponseEntity.ok(result);
         } catch (RuntimeException e) {
+            return ResponseEntity.badRequest().body(e.getMessage());
+        }
+    }
+
+    @PostMapping("/{id}/regenerate-meet")
+    public ResponseEntity<?> regenerateMeet(@PathVariable Long id) {
+        try {
+            var auth = SecurityContextHolder.getContext().getAuthentication();
+            if (auth == null || auth.getPrincipal() == null) {
+                return ResponseEntity.status(401).body("Token não fornecido");
+            }
+            String email = auth.getName();
+            return ResponseEntity.ok(toDTO(service.regenerateMeetLink(id, email)));
+        } catch (Exception e) {
             return ResponseEntity.badRequest().body(e.getMessage());
         }
     }

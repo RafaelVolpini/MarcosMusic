@@ -19,7 +19,6 @@ import type { AuthUser } from "../../lib/auth";
 import {
   formatTime,
   formatDuration,
-  generateMeetLink,
   timeToMinutes,
   minutesToTime,
   getNowInTimezone,
@@ -30,6 +29,7 @@ import { Avatar } from "../ui/Avatar";
 import { useAppSettings } from "../../context/AppSettingsContext";
 import { useToast } from "../ui/Toast";
 import { useLanguage } from "../../context/LanguageContext";
+import { regenerarMeetLink } from "../../services/aulaService";
 
 interface LessonModalProps {
   lesson: Lesson | null;
@@ -62,6 +62,7 @@ export function LessonModal({
   const [rescheduling, setRescheduling] = useState(false);
   const [rescheduleDate, setRescheduleDate] = useState("");
   const [rescheduleTime, setRescheduleTime] = useState("");
+  const [regenerating, setRegenerating] = useState(false);
 
   useEffect(() => {
     if (!lesson) return;
@@ -151,10 +152,20 @@ export function LessonModal({
     toast('Presença confirmada com sucesso.', 'success');
   };
 
-  const handleGenerateMeet = () => {
-    if (!canManageMeet) return;
-    const link = generateMeetLink();
-    setMeetLink(link);
+  const handleGenerateMeet = async () => {
+    if (!canManageMeet || !lesson) return;
+    setRegenerating(true);
+    try {
+      const updated = await regenerarMeetLink(String(lesson.id));
+      const newLink = updated.meetLink ?? '';
+      setMeetLink(newLink);
+      onUpdate({ ...lesson, meetLink: newLink });
+      toast('Link do Meet gerado com sucesso.', 'success');
+    } catch (err) {
+      toast(err instanceof Error ? err.message : 'Erro ao gerar link.', 'error');
+    } finally {
+      setRegenerating(false);
+    }
   };
 
   const handleSave = () => {
@@ -268,28 +279,28 @@ export function LessonModal({
                           {meetLink.replace("https://", "")}
                           <ExternalLink size={12} className="shrink-0" />
                         </a>
-
-                        {editing && canManageMeet && (
+                        {canManageMeet && (
                           <Button
                             size="sm"
                             variant="ghost"
-                            onClick={() => setMeetLink("")}
+                            onClick={handleGenerateMeet}
+                            disabled={regenerating}
                           >
-                            <X size={12} />
+                            <RefreshCw size={12} />
                           </Button>
                         )}
                       </div>
-                    ) : (
+                    ) : canManageMeet ? (
                       <Button
                         size="sm"
                         variant="secondary"
                         onClick={handleGenerateMeet}
-                        disabled={!canManageMeet}
+                        disabled={regenerating}
                       >
                         <Video size={12} />
-                        {t('modals.lesson.generateMeet')}
+                        {regenerating ? '...' : t('modals.lesson.generateMeet')}
                       </Button>
-                    )}
+                    ) : null}
                   </InfoRow>
                   <InfoRow icon={<CheckCircle size={14} />} label={t('modals.lesson.labelAttendance')}>
                     {editing ? (
@@ -305,7 +316,11 @@ export function LessonModal({
                         {t('modals.lesson.confirmed')}
                       </label>
                     ) : (
-                      <span className="text-sm text-[var(--heading)]">
+                      <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-semibold ${
+                        attendanceConfirmed
+                          ? 'bg-emerald-50 text-emerald-700'
+                          : 'bg-amber-50 text-amber-700'
+                      }`}>
                         {attendanceConfirmed ? t('modals.lesson.confirmed') : t('modals.lesson.pending')}
                       </span>
                     )}
@@ -451,7 +466,8 @@ export function LessonModal({
                         )}
                         {lesson.status === "scheduled" &&
                           !attendanceConfirmed &&
-                          canModify && (
+                          canModify &&
+                          currentUser.role !== "teacher" && (
                             <Button variant="ghost" size="sm" className="text-emerald-600 hover:bg-emerald-50" onClick={handleConfirmPresenceClick}>
                               <CheckCircle size={13} />
                               {t('modals.lesson.confirmPresence')}

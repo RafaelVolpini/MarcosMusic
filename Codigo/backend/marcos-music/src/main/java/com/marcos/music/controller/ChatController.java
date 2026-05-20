@@ -20,7 +20,7 @@ public class ChatController {
         this.service = service;
     }
 
-    /** Lista todos os chats — usado pelo professor */
+    /** Lista todos os chats  usado pelo professor */
     @GetMapping
     public List<ChatDTO> listar() {
         return service.listarTodos();

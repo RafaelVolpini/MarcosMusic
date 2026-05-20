@@ -14,6 +14,7 @@ import jakarta.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Map;
 
 @RestController
 @RequestMapping("/google")
@@ -27,6 +28,26 @@ public class GoogleCalendarController {
         this.googleService = googleService;
         this.usuarioRepository = usuarioRepository;
         this.aulaRepository = aulaRepository;
+    }
+
+    @GetMapping("/me/photo")
+    public ResponseEntity<?> getProfilePhoto() {
+        try {
+            var auth = SecurityContextHolder.getContext().getAuthentication();
+            if (auth == null || !auth.isAuthenticated() || "anonymousUser".equals(auth.getPrincipal())) {
+                return ResponseEntity.status(401).body("Sessão expirada.");
+            }
+            String email = auth.getName();
+            Usuario user = usuarioRepository.findByEmailIgnoreCase(email)
+                    .orElseThrow(() -> new RuntimeException("Usuário não encontrado"));
+            String photoUrl = googleService.getProfilePhoto(user.getId());
+            if (photoUrl == null) return ResponseEntity.noContent().build();
+            return ResponseEntity.ok(Map.of("photoUrl", photoUrl));
+        } catch (IllegalStateException e) {
+            return ResponseEntity.status(404).body("Google não conectado");
+        } catch (Exception e) {
+            return ResponseEntity.status(400).body(e.getMessage());
+        }
     }
 
     @PostMapping("/oauth/url")
@@ -86,7 +107,7 @@ public class GoogleCalendarController {
             int total = lessons.size();
             return ResponseEntity.ok(new GoogleSyncResponse(total, success, total - success));
         } catch (IllegalStateException e) {
-            // Google token not in memory (e.g. after server restart) — tell frontend to re-connect
+            // Google token not in memory (e.g. after server restart)  tell frontend to re-connect
             return ResponseEntity.ok(new GoogleSyncResponse(0, 0, 0, true));
         } catch (Exception e) {
             return ResponseEntity.status(400).body(e.getMessage());

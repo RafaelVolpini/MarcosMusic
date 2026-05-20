@@ -8,6 +8,7 @@ import com.marcos.music.repository.UsuarioRepository;
 import com.marcos.music.security.JwtService;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
 import java.util.UUID;
@@ -115,5 +116,29 @@ public class AuthService {
 
     public UUID getIdFromToken(String id){
         return jwtService.getUserIdFromToken(id);
+    }
+
+    @Transactional
+    public void updateUserProfile(String email, String nome, String telefone) {
+        Usuario usuario = repository.findByEmail(email)
+                .orElseThrow(() -> new RuntimeException("Usuário não encontrado"));
+        Aluno aluno = alunoRepository.findById(usuario.getId()).orElse(null);
+        if (aluno == null) {
+            // Conta criada antes do registro automático de Aluno — cria o registro agora
+            aluno = new Aluno();
+            aluno.setUsuario(usuario);
+            aluno.setNome(nome != null && !nome.isBlank() ? nome.trim()
+                    : (email.contains("@") ? email.substring(0, email.indexOf('@')) : email));
+            aluno.setTelefone(telefone != null && !telefone.isBlank() ? telefone.trim() : null);
+            aluno.setStatus(true);
+            aluno.setTermos(false);
+            aluno.setReposicoes(0);
+            alunoRepository.save(aluno);
+            return;
+        }
+        String finalNome = (nome != null && !nome.isBlank()) ? nome.trim() : aluno.getNome();
+        String finalTelefone = (telefone != null && !telefone.isBlank()) ? telefone.trim() : null;
+        // Use direct JPQL update to avoid triggering cascade/orphanRemoval on horarios (lazy collection)
+        alunoRepository.updateNomeAndTelefone(aluno.getId(), finalNome, finalTelefone);
     }
 }

@@ -3,10 +3,12 @@ package com.marcos.music.controller;
 import com.marcos.music.dto.Auth.AcceptTermsRequest;
 import com.marcos.music.dto.Auth.AuthDTO;
 import com.marcos.music.dto.Auth.LoginResponse;
+import com.marcos.music.dto.Auth.ProfileUpdateDTO;
 import com.marcos.music.service.AuthService;
 import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
@@ -23,7 +25,7 @@ public class AuthController {
     public ResponseEntity<?> register(@RequestBody AuthDTO request, HttpServletResponse response) {
         try {
             com.marcos.music.entity.Role role =
-                "marcoslima@gmail.com".equalsIgnoreCase(request.getEmail())
+                "marcoslima91@hotmail.com".equalsIgnoreCase(request.getEmail())
                     ? com.marcos.music.entity.Role.ADMIN
                     : com.marcos.music.entity.Role.USER;
             String nomeCompleto = null;
@@ -72,6 +74,21 @@ public class AuthController {
             return ResponseEntity.ok().build();
         } catch (RuntimeException e) {
             return ResponseEntity.status(404).build();
+        }
+    }
+
+    @PostMapping("/update-profile")
+    public ResponseEntity<?> updateProfile(@RequestBody ProfileUpdateDTO dto) {
+        try {
+            var auth = SecurityContextHolder.getContext().getAuthentication();
+            if (auth == null || !auth.isAuthenticated() || "anonymousUser".equals(auth.getName())) {
+                return ResponseEntity.status(401).body("Não autenticado");
+            }
+            service.updateUserProfile(auth.getName(), dto.getNome(), dto.getTelefone());
+            return ResponseEntity.ok().build();
+        } catch (Exception e) {
+            e.printStackTrace();
+            return ResponseEntity.status(500).body("Erro ao atualizar perfil: " + e.getMessage());
         }
     }
 

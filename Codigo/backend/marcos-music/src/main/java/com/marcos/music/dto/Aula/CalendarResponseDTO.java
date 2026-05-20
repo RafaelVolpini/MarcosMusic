@@ -22,4 +22,6 @@ public class CalendarResponseDTO {
     private Boolean presencaConfirmada;
     private Boolean recorrente;
     private Boolean flagRealizada;
+    private String meetLink;
+    private Boolean isOnline;
 }

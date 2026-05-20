@@ -234,7 +234,7 @@ function ContractContent({ data }: { data: typeof CONTRACT_DATA }) {
         </Clause>
         <Clause number="4" title="Reposicoes">
           <p><strong>4.1</strong> - Reposicoes podem ser solicitadas para faltas justificadas.</p>
-          <p><strong>4.2</strong> - O prazo para agendamento e de 3 meses apos a aula perdida.</p>
+          <p><strong>4.2</strong> - O prazo para agendamento é de 6 meses apos a aula perdida.</p>
           <p><strong>4.3</strong> - O agendamento depende da disponibilidade da agenda do professor.</p>
           <p><strong>4.4</strong> - Aulas nao reagendadas no prazo expiram sem reembolso.</p>
         </Clause>

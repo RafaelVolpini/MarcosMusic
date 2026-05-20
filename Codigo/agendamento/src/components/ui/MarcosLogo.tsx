@@ -1,8 +1,8 @@
 /**
- * MarcosLogoMark — compact icon badge that works from 24px to 48px.
+ * MarcosLogoMark  compact icon badge that works from 24px to 48px.
  * Uses CSS custom properties so it adapts to light/dark themes automatically.
  *
- * MarcosLogotype — horizontal full lockup: icon + "Marcos Music / Agenda" text.
+ * MarcosLogotype  horizontal full lockup: icon + "Marcos Music / Agenda" text.
  */
 
 interface LogoProps {
@@ -31,12 +31,12 @@ export function MarcosLogoMark({ size = 36, className = '' }: LogoProps) {
       {/* Background pill */}
       <rect width="36" height="36" rx="10" fill={`url(#${id})`} />
 
-      {/* Staff lines — three thin horizontal lines, bottom area */}
+      {/* Staff lines  three thin horizontal lines, bottom area */}
       <line x1="3"  y1="25" x2="33" y2="25" stroke="white" strokeWidth="0.75" opacity="0.35" />
       <line x1="3"  y1="29" x2="33" y2="29" stroke="white" strokeWidth="0.75" opacity="0.35" />
       <line x1="3"  y1="33" x2="33" y2="33" stroke="white" strokeWidth="0.75" opacity="0.35" />
 
-      {/* Bold italic "M" — main focal point */}
+      {/* Bold italic "M"  main focal point */}
       <text
         x="3"
         y="28"
@@ -49,7 +49,7 @@ export function MarcosLogoMark({ size = 36, className = '' }: LogoProps) {
         M
       </text>
 
-      {/* Quarter note — top-right accent */}
+      {/* Quarter note  top-right accent */}
       <text
         x="25"
         y="14"

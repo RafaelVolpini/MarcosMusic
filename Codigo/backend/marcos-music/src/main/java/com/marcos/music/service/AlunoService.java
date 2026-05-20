@@ -58,20 +58,20 @@ public class AlunoService {
                             .filter(Objects::nonNull)
                             .toList();
 
-            if (!idsDTO.isEmpty()) {
-                List<AulaAluno> deletados = aulaService.findDeletedsHorarios(dto.getId(), idsDTO);
-                for (AulaAluno aa : deletados) {
-                    aulaService.deletePorHorario(aa);
-                }
-            }
-
-            if (aluno.getHorarios() == null) {
-                aluno.setHorarios(new ArrayList<>());
-            } else {
-                aluno.getHorarios().clear();
-            }
-
             if (dto.getHorarios() != null) {
+                if (!idsDTO.isEmpty()) {
+                    List<AulaAluno> deletados = aulaService.findDeletedsHorarios(dto.getId(), idsDTO);
+                    for (AulaAluno aa : deletados) {
+                        aulaService.deletePorHorario(aa);
+                    }
+                }
+
+                if (aluno.getHorarios() == null) {
+                    aluno.setHorarios(new ArrayList<>());
+                } else {
+                    aluno.getHorarios().clear();
+                }
+
                 for (AulaAluno h : dto.getHorarios()) {
                     h.setAluno(aluno); // 🔥 ESSENCIAL
                     aluno.getHorarios().add(h);

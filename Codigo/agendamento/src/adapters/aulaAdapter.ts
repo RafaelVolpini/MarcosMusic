@@ -67,6 +67,8 @@ export function toLesson(dto: CalendarResponseDTO): Lesson {
     status: dto.flagRealizada ? 'completed' : dto.flagCancelada ? 'cancelled' : 'scheduled',
     attendanceConfirmed: dto.presencaConfirmada ?? false,
     recorrente: dto.recorrente ?? false,
+    meetLink: dto.meetLink ?? undefined,
+    isOnline: dto.isOnline ?? false,
   };
 }
 

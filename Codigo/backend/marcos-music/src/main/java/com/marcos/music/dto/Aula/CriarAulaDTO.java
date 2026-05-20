@@ -12,4 +12,5 @@ public class CriarAulaDTO {
     private LocalDateTime dataInicio;
     private LocalDateTime dataFim;
     private Boolean recorrente = false;
+    private Boolean isOnline = false;
 }

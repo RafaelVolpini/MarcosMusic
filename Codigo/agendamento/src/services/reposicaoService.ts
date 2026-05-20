@@ -22,7 +22,7 @@ export interface CriarReposicaoPayload {
   dataAula: string; // "YYYY-MM-DD"
   alunoIds: string[];
   observacao?: string;
-  aulaId: number; 
+  aulaId?: number;
 }
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────

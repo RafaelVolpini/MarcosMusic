@@ -9,14 +9,7 @@ const SESSION_KEY = 'marcos-music:auth:session';
 
 // ─── Validação e máscara de telefone ──────────────────────────────────────────
 
-function formatPhone(raw: string): string {
-  const d = raw.replace(/\D/g, '').slice(0, 11);
-  if (d.length === 0) return '';
-  if (d.length <= 2)  return `(${d}`;
-  if (d.length <= 6)  return `(${d.slice(0, 2)}) ${d.slice(2)}`;
-  if (d.length <= 10) return `(${d.slice(0, 2)}) ${d.slice(2, 6)}-${d.slice(6)}`;
-  return `(${d.slice(0, 2)}) ${d.slice(2, 7)}-${d.slice(7)}`;
-}
+
 
 function isPhoneValid(phone: string): boolean {
   const d = phone.replace(/\D/g, '');
@@ -196,7 +189,7 @@ export function ProfileSetupPage({ user, onComplete, inApp = false }: ProfileSet
                   : 'var(--border)',
             }}
             value={telefone}
-            onChange={(e) => { setTelefone(formatPhone(e.target.value)); if (error) setError(''); }}
+            onChange={(e) => { setTelefone(e.target.value); if (error) setError(''); }}
             placeholder={t('profileSetup.phonePH')}
             type="tel"
             inputMode="numeric"

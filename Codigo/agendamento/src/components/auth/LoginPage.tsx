@@ -137,6 +137,7 @@ export function LoginPage({ onLoginSuccess }: LoginPageProps) {
     setLoading(true);
     try {
       const user = await login(emailTrimmed, password.trim(), rememberMe);
+      if (!user) throw new Error(t('auth.errInvalid'));
       onLoginSuccess(user);
     } catch (err) {
       const msg = err instanceof Error ? err.message : '';

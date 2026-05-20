@@ -98,8 +98,11 @@ function formatPhone(raw: string): string {
 
 function isPhoneValid(phone: string): boolean {
   const d = phone.replace(/\D/g, '');
-  // Aceita com ou sem o 55 do Brasil
-  if (d.startsWith('55')) return d.length === 12 || d.length === 13;
+  // Aceita dígitos locais (10-11) ou formatados com código do país 55 (12-13)
+  if (d.startsWith('55') && d.length > 11) {
+    const local = d.slice(2);
+    return local.length === 10 || local.length === 11;
+  }
   return d.length === 10 || d.length === 11;
 }
 
@@ -149,7 +152,14 @@ export function SettingsPage({ user, onProfileUpdate, initialSection }: Settings
 
   // ── Perfil ──
   const [profileNome, setProfileNome] = useState(user?.name ?? '');
-  const [profileTelefone, setProfileTelefone] = useState(user?.phone ?? '');
+  // Armazena apenas os dígitos locais (sem +55), para evitar bug do contador 55 na máscara
+  const [profileTelefone, setProfileTelefone] = useState(() => {
+    const raw = user?.phone ?? '';
+    let d = raw.replace(/\D/g, '');
+    if (d.startsWith('55') && d.length > 11) d = d.slice(2);
+    return d.slice(0, 11);
+  });
+  const [profilePhoto, setProfilePhoto] = useState<string | null>(user?.photoUrl ?? null);
   const [profileLoading, setProfileLoading] = useState(false);
   const [profileError, setProfileError] = useState('');
   const [profileSaved, setProfileSaved] = useState(false);
@@ -157,7 +167,7 @@ export function SettingsPage({ user, onProfileUpdate, initialSection }: Settings
   const profileInitials = profileNome.trim()
     ? profileNome.trim().split(' ').map(p => p[0]).slice(0, 2).join('').toUpperCase()
     : (user?.email ?? '??').slice(0, 2).toUpperCase();
-  const profileFilled = [profileNome.trim(), profileTelefone.trim()].filter(Boolean).length;
+  const profileFilled = [profileNome.trim(), profileTelefone].filter(Boolean).length;
   const profilePct = Math.round((profileFilled / 2) * 100);
 
   const handleProfileSave = async (e: React.FormEvent) => {
@@ -170,23 +180,16 @@ export function SettingsPage({ user, onProfileUpdate, initialSection }: Settings
     setProfileLoading(true);
     setProfileError('');
     try {
-      // Apenas alunos são salvos via API — professores têm dados geridos pelo OAuth
-      if (user?.role !== 'teacher') {
-        const res = await fetch('/aluno/salvar', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          credentials: 'include',
-          body: JSON.stringify({
-            id: user?.id ?? null,
-            email: user?.email,
-            nome: user?.name ?? profileNome.trim(),
-            telefone: profileTelefone.trim(),
-            status: true,
-            termos: user?.termos ?? false,
-          }),
-        });
-        if (!res.ok) throw new Error('Erro ao salvar perfil');
-      }
+      const res = await fetch('/auth/update-profile', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify({
+          nome: user?.role === 'teacher' ? (profileNome.trim() || undefined) : undefined,
+          telefone: formatPhone(profileTelefone).trim() || null,
+        }),
+      });
+      if (!res.ok) throw new Error('Erro ao salvar perfil');
       const savedNome = user?.role === 'teacher' ? profileNome.trim() : (user?.name ?? profileNome.trim());
       const parts = savedNome.split(' ');
       const updatedUser: AuthUser = {
@@ -194,7 +197,7 @@ export function SettingsPage({ user, onProfileUpdate, initialSection }: Settings
         firstName: parts[0] ?? '',
         lastName: parts.slice(1).join(' '),
         name: savedNome,
-        phone: profileTelefone.trim(),
+        phone: formatPhone(profileTelefone).trim(),
       };
       // Persiste na mesma storage que o login usou (remember-me → localStorage)
       const payload = JSON.stringify(updatedUser);
@@ -250,6 +253,28 @@ export function SettingsPage({ user, onProfileUpdate, initialSection }: Settings
       setActiveSection('integrations');
     }
   }, []);
+
+  // Busca foto do perfil Google quando conectado
+  useEffect(() => {
+    if (!googleConnected || profilePhoto) return;
+    fetch('/google/me/photo', { credentials: 'include' })
+      .then(r => r.ok ? r.json() : null)
+      .then((data: { photoUrl?: string } | null) => {
+        if (!data?.photoUrl) return;
+        setProfilePhoto(data.photoUrl);
+        // Persiste no mesmo storage usado pelo login
+        const raw = localStorage.getItem(SESSION_KEY) ?? sessionStorage.getItem(SESSION_KEY);
+        if (raw) {
+          try {
+            const current = JSON.parse(raw);
+            const updated = JSON.stringify({ ...current, photoUrl: data.photoUrl });
+            if (localStorage.getItem(SESSION_KEY)) localStorage.setItem(SESSION_KEY, updated);
+            else sessionStorage.setItem(SESSION_KEY, updated);
+          } catch { /* ignore */ }
+        }
+      })
+      .catch(() => {});
+  }, [googleConnected]);
 
   const handleConnectGoogle = async () => {
     setGoogleConnecting(true);
@@ -310,10 +335,12 @@ export function SettingsPage({ user, onProfileUpdate, initialSection }: Settings
                   {/* Avatar + progresso */}
                   <div className="flex items-center gap-4 p-4 rounded-2xl" style={{ backgroundColor: 'var(--surface-soft)', border: '1px solid var(--border)' }}>
                     <div
-                      className="w-14 h-14 rounded-2xl flex items-center justify-center text-lg font-black text-white shrink-0 shadow"
-                      style={{ background: 'linear-gradient(135deg, var(--accent-gradient-from), var(--accent-gradient-to))' }}
+                      className="w-14 h-14 rounded-2xl flex items-center justify-center text-lg font-black text-white shrink-0 shadow overflow-hidden"
+                      style={{ background: profilePhoto ? 'transparent' : 'linear-gradient(135deg, var(--accent-gradient-from), var(--accent-gradient-to))' }}
                     >
-                      {profileInitials}
+                      {profilePhoto
+                        ? <img src={profilePhoto} alt={profileInitials} referrerPolicy="no-referrer" className="w-full h-full object-cover" />
+                        : profileInitials}
                     </div>
                     <div className="flex-1 min-w-0">
                       <p className="text-sm font-bold truncate text-[var(--heading)]">
@@ -392,8 +419,15 @@ export function SettingsPage({ user, onProfileUpdate, initialSection }: Settings
                             : profileTelefone && isPhoneValid(profileTelefone) ? '#34d399'
                             : 'var(--border)',
                         }}
-                        value={profileTelefone}
-                        onChange={e => { setProfileTelefone(formatPhone(e.target.value)); if (profileError) setProfileError(''); }}
+                        value={formatPhone(profileTelefone)}
+                        onChange={e => {
+                          const raw = e.target.value;
+                          let d = raw.replace(/\D/g, '');
+                          // Remove o prefixo '55' do país que a máscara insere
+                          if (raw.startsWith('+55') && d.startsWith('55')) d = d.slice(2);
+                          setProfileTelefone(d.slice(0, 11));
+                          if (profileError) setProfileError('');
+                        }}
                         placeholder="+55 (11) 99999-9999"
                         type="tel"
                         inputMode="tel"
@@ -450,7 +484,7 @@ export function SettingsPage({ user, onProfileUpdate, initialSection }: Settings
                 </div>
                 <div>
                   <label className={labelCls}>E-mail de contato</label>
-                  <input defaultValue="contato@marcosmusic.com.br" className={inputCls} />
+                  <input defaultValue="marcoslima91@hotmail.com" className={inputCls} />
                 </div>
                 <div>
                   <label className={labelCls}>Telefone</label>
@@ -745,7 +779,7 @@ export function SettingsPage({ user, onProfileUpdate, initialSection }: Settings
                     <div className="flex-1">
                       <p className="text-sm font-medium text-[var(--heading)]">Google Calendar</p>
                       <p className="text-xs text-[var(--muted)]">
-                        {googleConnected ? 'Conta conectada — aulas sincronizadas automaticamente ao iniciar' : 'Sincronizar agenda com Google Calendar'}
+                        {googleConnected ? 'Conta conectada  aulas sincronizadas automaticamente ao iniciar' : 'Sincronizar agenda com Google Calendar'}
                       </p>
                     </div>
                     <div className="flex items-center gap-2">
@@ -760,7 +794,7 @@ export function SettingsPage({ user, onProfileUpdate, initialSection }: Settings
                     </div>
                   </div>
 
-                  {/* Auto-sync toggle — só aparece quando conectado */}
+                  {/* Auto-sync toggle  só aparece quando conectado */}
                   {googleConnected && (
                     <div className="flex items-center justify-between px-4 py-3 rounded-2xl border border-[var(--border)] bg-[var(--surface-soft)]">
                       <div>

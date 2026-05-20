@@ -42,6 +42,7 @@ public class SecurityConfig {
             .sessionManagement(sm -> sm.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
             .addFilterBefore(jwtCookieAuthFilter, UsernamePasswordAuthenticationFilter.class)
             .authorizeHttpRequests(auth -> auth
+                .requestMatchers("/error", "/error/**").permitAll()
                 .requestMatchers("/auth/**", "/auth").permitAll()
                 .requestMatchers("/aluno/**", "/aluno").permitAll()
                 .requestMatchers("/aula/**", "/aula").permitAll()

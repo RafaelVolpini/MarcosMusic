@@ -29,6 +29,7 @@ export interface Lesson {
   instrument: string;
   notes?: string;
   meetLink?: string;
+  isOnline?: boolean;
   attendanceConfirmed?: boolean;
   attendanceConfirmedAt?: string;
   reminderMinutesBefore?: number;

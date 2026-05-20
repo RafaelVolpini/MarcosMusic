@@ -49,8 +49,8 @@ export function ReschedulingPage({ sessionUser }: ReschedulingPageProps) {
   const [agendarSlot, setAgendarSlot] = useState<DisponibilidadeResponseDTO | null>(null);
   const [viewModal, setViewModal] = useState<ReposicaoDTO | null>(null);
   const [deletingId, setDeletingId] = useState<number | null>(null);
-  const [removingKey, setRemovingKey] = useState<string | null>(null);
-  const [enrollingId, setEnrollingId] = useState<number | null>(null);
+  const [, setRemovingKey] = useState<string | null>(null);
+  const [, setEnrollingId] = useState<number | null>(null);
 
   const currentAluno = !isTeacher
     ? alunos.find(a => a.email.trim().toLowerCase() === sessionUser.email.trim().toLowerCase())
@@ -78,6 +78,8 @@ export function ReschedulingPage({ sessionUser }: ReschedulingPageProps) {
             if (!d.reposicao) return false;
             const date = thisWeekDate(d.diaSemana);
             if (!date) return false;
+            // Não mostra slots que já têm reposição criada para essa semana
+            if (repos.some(r => r.disponibilidadeId === d.id && r.dataAula === date)) return false;
             // Se é hoje, só mostra horários que ainda não passaram
             if (date === todayISO) {
               const [h, m] = d.horario.split(':').map(Number);
@@ -107,8 +109,10 @@ export function ReschedulingPage({ sessionUser }: ReschedulingPageProps) {
 
   const handleCreated = (r: ReposicaoDTO) => {
     setReposicoes(prev => [...prev, r].sort((a, b) => a.dataAula.localeCompare(b.dataAula)));
+    // Remove o slot da lista de disponíveis, já que a reposição foi criada para ele
+    setSlots(prev => prev.filter(s => !(s.id === r.disponibilidadeId && thisWeekDate(s.diaSemana) === r.dataAula)));
     setAgendarSlot(null);
-      toast(t('rescheduling.created'), 'success');
+    toast(t('rescheduling.created'), 'success');
   };
 
   const handleDelete = async (id: number) => {
@@ -414,6 +418,7 @@ interface SlotsPickerModalProps {
 }
 
 function SlotsPickerModal({ slots, onClose, onSelect }: SlotsPickerModalProps) {
+  const { t } = useLanguage();
   return (
     <>
       <motion.div

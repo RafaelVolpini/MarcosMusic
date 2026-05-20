@@ -1,9 +1,9 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { X, Plus, Video, Repeat } from 'lucide-react';
+import { X, Plus, Video, Repeat, ChevronDown } from 'lucide-react';
 import type { Lesson, LessonType, Aluno } from '../../types';
 import type { AuthUser } from '../../lib/auth';
-import { generateMeetLink, minutesToTime, timeToMinutes } from '../../utils';
+import { minutesToTime, timeToMinutes } from '../../utils';
 import { Button } from '../ui/Button';
 import { useLanguage } from '../../context/LanguageContext';
 
@@ -27,7 +27,7 @@ interface NewLessonModalProps {
     type: LessonType;
     instrument: string;
     notes: string;
-    meetLink: string;
+    isOnline: boolean;
     recorrente: boolean;
   }) => void;
 }
@@ -36,7 +36,7 @@ export function NewLessonModal({
   open,
   defaultDate,
   defaultTime,
-  lessons,
+  lessons: _lessons,
   students,
   currentUser,
   onClose,
@@ -47,9 +47,22 @@ export function NewLessonModal({
   const [startTime, setStartTime] = useState(defaultTime);
   const [instrument, setInstrument] = useState('Piano');
   const [notes, setNotes] = useState('');
-  const [hasMeetLink, setHasMeetLink] = useState(false);
+  const [isOnline, setIsOnline] = useState(false);
   const [recorrente, setRecorrente] = useState(false);
   const [errors, setErrors] = useState<string[]>([]);
+  const [studentDropdownOpen, setStudentDropdownOpen] = useState(false);
+  const studentDropdownRef = useRef<HTMLDivElement>(null);
+
+  // Close dropdown when clicking outside
+  useEffect(() => {
+    function handleClickOutside(e: MouseEvent) {
+      if (studentDropdownRef.current && !studentDropdownRef.current.contains(e.target as Node)) {
+        setStudentDropdownOpen(false);
+      }
+    }
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
 
   const INSTRUMENTS = ['Piano', 'Violão', 'Guitarra', 'Teclado', 'Bateria', 'Canto', 'Percussão'];
 
@@ -98,7 +111,7 @@ export function NewLessonModal({
     if (!open) return;
     setDate(defaultDate);
     setStartTime(defaultTime || ALL_HOURS[2]);
-    setHasMeetLink(false);
+    setIsOnline(false);
     setRecorrente(false);
     setNotes('');
     setErrors([]);
@@ -121,10 +134,10 @@ export function NewLessonModal({
       date,
       startTime,
       endTime,
-      type: hasMeetLink ? 'online' : 'individual',
+      type: isOnline ? 'online' : 'individual',
       instrument,
       notes,
-      meetLink: hasMeetLink ? generateMeetLink() : '',
+      isOnline,
       recorrente,
     });
     onClose();
@@ -176,11 +189,44 @@ export function NewLessonModal({
 
                 <div>
                   <label className={labelClass}>{t('modals.newLesson.student')}</label>
-                  <select value={studentId} onChange={e => setStudentId(e.target.value)} className={inputClass} disabled={!isTeacher}>
-                    {selectableStudents.map((student) => (
-                      <option key={student.id} value={student.id}>{student.nome}</option>
-                    ))}
-                  </select>
+                  {isTeacher ? (
+                    <div className="relative" ref={studentDropdownRef}>
+                      <button
+                        type="button"
+                        onClick={() => setStudentDropdownOpen(o => !o)}
+                        className={`${inputClass} flex items-center justify-between text-left`}
+                      >
+                        <span className={selectedStudent ? 'text-[var(--text)]' : 'text-[var(--muted)]'}>
+                          {selectedStudent?.nome ?? t('modals.newLesson.student')}
+                        </span>
+                        <ChevronDown size={14} className={`text-[var(--muted)] transition-transform ${studentDropdownOpen ? 'rotate-180' : ''}`} />
+                      </button>
+                      {studentDropdownOpen && (
+                        <div className="absolute z-[200] mt-1 w-full rounded-xl border border-[var(--border)] bg-[var(--surface)] shadow-lg overflow-hidden">
+                          <div className="max-h-48 overflow-y-auto">
+                            {selectableStudents.map((student) => (
+                              <button
+                                key={student.id}
+                                type="button"
+                                onClick={() => { setStudentId(student.id); setStudentDropdownOpen(false); }}
+                                className={`w-full text-left px-3 py-2 text-sm hover:bg-[var(--hover-bg)] transition-colors ${
+                                  studentId === student.id ? 'text-[var(--accent-600)] font-medium bg-[var(--accent-50)]' : 'text-[var(--text)]'
+                                }`}
+                              >
+                                {student.nome}
+                              </button>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  ) : (
+                    <input
+                      value={selectedStudent?.nome ?? ''}
+                      disabled
+                      className={`${inputClass} bg-[var(--surface-soft)] text-[var(--muted)]`}
+                    />
+                  )}
                 </div>
 
                 <div>
@@ -232,8 +278,8 @@ export function NewLessonModal({
                   </span>
                   <input
                     type="checkbox"
-                    checked={hasMeetLink}
-                    onChange={(e) => setHasMeetLink(e.target.checked)}
+                    checked={isOnline}
+                    onChange={(e) => setIsOnline(e.target.checked)}
                     className="rounded border-[var(--input-border)]"
                   />
                 </label>

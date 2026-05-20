@@ -14,7 +14,7 @@ export function formatTime(time: string, lang = 'pt'): string {
     const displayHour = hour % 12 || 12;
     return `${displayHour}:${m} ${ampm}`;
   }
-  return time; // HH:MM — formato 24h brasileiro
+  return time; // HH:MM  formato 24h brasileiro
 }
 
 export function formatDuration(startTime: string, endTime: string): string {

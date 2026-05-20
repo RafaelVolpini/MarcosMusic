@@ -24,7 +24,6 @@ import {
 import { listarAlunos } from './services/alunoService';
 import { buscarDisponibilidade, buscarAulas } from './services/aulaService';
 import { toLesson } from './adapters/aulaAdapter';
-import { getGoogleConnectedFlag, getAutoSyncFlag, syncGoogleCalendar } from './services/googleService';
 
 const LESSON_DURATION_MINUTES = 50;
 
@@ -94,18 +93,6 @@ function App() {
     }
   };
 
-  /** Sincroniza com Google Calendar uma vez ao iniciar, se a flag estiver ativa */
-  const syncOnStartupIfEnabled = (user: AuthUser) => {
-    if (user.role !== 'teacher') return;
-    if (!getGoogleConnectedFlag() || !getAutoSyncFlag()) return;
-    const now = new Date();
-    const start = new Date(now.getFullYear(), now.getMonth(), 1);
-    const end   = new Date(now.getFullYear(), now.getMonth() + 1, 0, 23, 59, 59);
-    const fmt = (d: Date) =>
-      `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
-    void syncGoogleCalendar(`${fmt(start)}T00:00:00`, `${fmt(end)}T23:59:59`).catch(() => {});
-  };
-
   // Tenta restaurar a sessão ao carregar a página
   useEffect(() => {
     const savedUser = getUser();
@@ -114,7 +101,6 @@ function App() {
       setAppState('app');
       loadAvailability();
       loadLessons();
-      syncOnStartupIfEnabled(savedUser);
       // Se for professor, já aceitou contrato. Se for aluno, verifica o campo termos.
       if (savedUser.role === 'teacher' || savedUser.termos === true) {
         setContractAccepted(true);
@@ -163,7 +149,6 @@ function App() {
     setAppState('app');
     loadAvailability();
     loadLessons();
-    syncOnStartupIfEnabled(user);
     // Teachers (ADMIN) never need to accept student contract
     if (user.role === 'teacher') {
       setContractAccepted(true);

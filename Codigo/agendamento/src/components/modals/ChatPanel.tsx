@@ -120,7 +120,7 @@ export function ChatPanel({ isOpen, onClose, currentUser, onUnreadChange, defaul
 
   const handleBack = () => {
     if (view === 'picker') { setView('chats'); setPickerQuery(''); return; }
-    if (!isProfessor) { onClose(); return; } // aluno não tem lista — volta fecha o painel
+    if (!isProfessor) { onClose(); return; } // aluno não tem lista  volta fecha o painel
     setChatAtivo(null);
     carregarChats(true);
     onUnreadChange?.();

@@ -7,6 +7,7 @@ export interface AuthUser {
   email: string;
   phone: string;
   termos?: boolean | null;
+  photoUrl?: string;
 }
 
 export interface ContractAcceptance {
@@ -52,7 +53,7 @@ function getProfile(email: string): StoredProfile | null {
 // ─── Session helpers ─────────────────────────────────────────────────────────
 //
 // User metadata (name, role, etc.) is stored in sessionStorage (tab-scoped) or
-// localStorage (when "remember me"). The access token is an HttpOnly cookie —
+// localStorage (when "remember me"). The access token is an HttpOnly cookie 
 // the browser sends it automatically and JS cannot read it.
 
 function saveSession(user: AuthUser, persistent: boolean): void {
@@ -77,7 +78,7 @@ export function getUser(): AuthUser | null {
 }
 
 /**
- * No-op kept for API compatibility. The access token is an HttpOnly cookie —
+ * No-op kept for API compatibility. The access token is an HttpOnly cookie 
  * JS cannot read it, and it is sent automatically by the browser on every request.
  */
 export function getToken(): string | null {
