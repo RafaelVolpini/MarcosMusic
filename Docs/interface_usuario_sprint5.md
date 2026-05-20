@@ -1,6 +1,6 @@
-# Interface do Usuário Final — Sprint 5
+# Interface do Usuário Final  Sprint 5
 
-## Sistema de Gestão de Aulas de Música — Marcos Music
+## Sistema de Gestão de Aulas de Música  Marcos Music
 
 Documento de Interface Atualizado e Unificado (Sprint 5)
 
