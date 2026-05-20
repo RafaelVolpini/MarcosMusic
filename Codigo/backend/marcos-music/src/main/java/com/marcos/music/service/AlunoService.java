@@ -163,6 +163,7 @@ public class AlunoService {
 
     public List<AlunoDTO> listarTodos() {
         return repository.findAll().stream()
+                .filter(aluno -> aluno.getUsuario() == null || aluno.getUsuario().getRole() != Role.ADMIN)
                 .map(aluno -> {
                     AlunoDTO dto = new AlunoDTO();
                     dto.setId(aluno.getId());
