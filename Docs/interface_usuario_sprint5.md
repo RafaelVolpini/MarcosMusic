@@ -1,319 +1,199 @@
-# Interface do Usuário Final — Sprint 5
+# Interface do Usu�rio � Marcos Music
 
-## Sistema de Gestão de Aulas de Música — Marcos Music
-
-Documento de Interface Atualizado e Unificado (Sprint 5)
+## Sistema de Gest�o de Aulas de M�sica
 
 ---
 
-## 1. Visão Geral
+## 1. Vis�o Geral
 
-Este documento apresenta a especificação completa e atualizada da interface do usuário para a plataforma **Marcos Music** (Sistema de Gestão de Aulas de Música). Ele unifica e atualiza as diretrizes visuais e comportamentais da Sprint 4 (Alertas e Integração WhatsApp) com o template consolidado das demais telas de gestão do sistema (Agenda, Disponibilidade, Reagendamentos, Videoaulas e Gestão de Alunos).
+A interface da plataforma **Marcos Music** � constru�da com **React 18 + TypeScript + Vite + Tailwind CSS v4**, com suporte a tema claro/escuro e internacionaliza��o PT/EN. A autentica��o � feita via JWT em cookie HttpOnly.
 
-A interface foi projetada utilizando práticas modernas de desenvolvimento front-end com **React, TypeScript, Tailwind CSS e Framer Motion**, garantindo interações fluidas, layouts responsivos e uma experiência extremamente premium (estética de alta fidelidade baseada em glassmorfismo e micro-animações).
-
----
-
-## 2. Design System & Identidade Visual
-
-Para proporcionar uma experiência premium e contemporânea, o sistema afasta-se de cores sólidas genéricas e implementa uma paleta baseada em variáveis HSL dinâmicas e tokens utilitários modernos, compatíveis com os modos Claro e Escuro.
-
-### 2.1. Paleta de Cores e Semântica
-
-| Estado / Tipo                  | Cor Base                    | Uso Prático na Interface                                    | Significado Semântico                       |
-| :----------------------------- | :-------------------------- | :----------------------------------------------------------- | :------------------------------------------- |
-| **Destaque/Acento**      | HSL Indigo/Purple           | Botões de ação primária, seleção ativa, bordas de foco | Identidade da marca, sofisticação          |
-| **Não Lido / Alerta**   | HSL Slate Escuro            | Fundo em destaque para chamar a atenção na Central         | Item pendente de ação imediata             |
-| **Urgente / Cancelado**  | HSL Rose (Vermelho suave)   | Badges de erro, botões de cancelamento, alertas críticos   | Erro, cancelamento ou prazo estourado        |
-| **Pendente**             | HSL Amber (Amarelo/Laranja) | Aulas remarcadas pendentes, status de renegociação         | Processo em andamento, aguardando outro ator |
-| **Sucesso / Confirmado** | HSL Emerald (Verde suave)   | Aulas confirmadas, mensalidade paga, sucesso de ação       | Sucesso, conformidade e fluxo concluído     |
-| **Informativo**          | HSL Blue (Azul suave)       | Lembretes de aulas normais, informativos gerais              | Apenas informação de rotina                |
-
-### 2.2. Tipografia e Micro-animações
-
-* **Tipografia:** Uso da fonte *Inter* para elementos de controle e tabelas (alta legibilidade) e *Outfit* ou *Roboto* para cabeçalhos e números de destaque (estilo limpo e moderno).
-* **Animações:** Transições suaves baseadas em `framer-motion` em todos os botões (hover com leve escala de `1.02`), modais surgindo com efeito *spring* e listas que aparecem de forma escalonada (*staggered entrance*).
+**Perfis:** Professor (ADMIN) e Aluno (USER). Cada perfil v� menus e a��es distintos.
 
 ---
 
-## 3. Especificação das Telas e Componentes
+## 2. Design System
 
-### 3.1. Dashboard Dinâmico
+### Paleta Sem�ntica
 
-O painel de controle principal do professor oferece uma visão panorâmica instantânea sobre o status do seu dia de trabalho e de sua base de alunos.
+| Cor          | Uso                                               |
+|:-------------|:--------------------------------------------------|
+| Indigo/Roxo  | A��es prim�rias, sele��o ativa, identidade da marca |
+| Emerald      | Confirmado, pago, sucesso                         |
+| Rose         | Cancelado, erro, urgente                          |
+| Amber        | Pendente, reagendado                              |
+| Blue         | Informativo, lembrete                             |
 
-#### Componentes e Elementos Visuais:
-
-1. **Banner de Próxima Aula:** Um cartão premium localizado no topo com gradiente em roxo escuro, exibindo um contador regressivo dinâmico de tempo ("em 45min", "Acontecendo agora"), foto/avatar do aluno, instrumento de estudo e um botão com feedback tátil para copiar o link da sala virtual (`meetLink`) caso a aula seja online.
-2. **Painel de Estatísticas Físicas (4 StatCards):**
-   - *Alunos Ativos:* Total de alunos cadastrados e ativos no mês (com indicador de crescimento, ex: "+2 este mês").
-   - *Aulas do Mês:* Quantidade total acumulada no período de faturamento.
-   - *Aulas de Hoje:* Total de compromissos agendados para a data atual.
-   - *Aulas Concluídas:* Contador de aulas de hoje que já mudaram o status para `completed` em relação às canceladas.
-3. **Lista de Próximas Aulas (Próximos 5 Compromissos):** Grid contendo o dia, horário, nome e instrumento, com um indicador lateral colorido representando a cor de marcação personalizada da aula.
-4. **Feed de Alertas Críticos Rápidos:** Mini-inbox contendo as últimas notificações urgentes de cancelamento ou reagendamento feitas pelos alunos no próprio dia.
+Vari�veis CSS como `--accent-500`, `--surface`, `--muted`, `--border` controlam todas as cores. A troca de tema aplica um novo conjunto de valores sem recarregar a p�gina.
 
 ---
 
-### 3.2. Agenda do Professor
+## 3. Telas e Componentes
 
-O centro de gerenciamento de horários do professor, projetado em formato de calendário altamente visual.
+### 3.1. Landing Page (p�blica)
+
+P�gina de apresenta��o do professor, vis�vel sem login.
+
+- Foto e bio do professor
+- Depoimentos de alunos
+- Se��o de contato e redes sociais
+- Bot�es de login/cadastro
+
+---
+
+### 3.2. Autentica��o
+
+**Cadastro:** nome, sobrenome, e-mail, telefone, senha.
+**Login:** e-mail + senha ? token JWT em cookie HttpOnly (3h de validade).
+**Logout:** remove o cookie e limpa a sess�o local.
+
+Ap�s o primeiro login, o sistema exige aceite dos termos de uso antes de liberar o acesso completo.
+
+---
+
+### 3.3. Dashboard
+
+Painel inicial do professor com vis�o r�pida do dia.
+
+| Componente           | Descri��o                                                              |
+|:---------------------|:-----------------------------------------------------------------------|
+| Banner pr�xima aula  | Contador regressivo, nome e instrumento do aluno, bot�o de c�pia do link Meet |
+| Cards de estat�sticas | Alunos ativos, aulas do m�s, aulas de hoje, aulas conclu�das          |
+| Pr�ximas aulas       | Lista dos pr�ximos 5 compromissos                                      |
+| Alertas r�pidos      | �ltimas notifica��es n�o lidas                                         |
+
+---
+
+### 3.4. Agenda
+
+Calend�rio semanal/di�rio do professor.
 
 ```
-┌─────────────────────────────────────────────────────────────────────────────┐
-│  AGENDA DO PROFESSOR                       [Filtros ▼]  [+ Nova Aula]       │
-├─────────────────────────────────────────────────────────────────────────────┤
-│  [ Visualizar: Semana / Dia ]                   < 20 a 26 de Maio, 2026 >    │
-├─────────┬──────────────┬──────────────┬──────────────┬──────────────┬───────┤
-│ Hora    │ Seg (20/05)  │ Ter (21/05)  │ Qua (22/05)  │ Qui (23/05)  │ ...   │
-├─────────┼──────────────┼──────────────┼──────────────┼──────────────┼───────┤
-│ 08:00   │              │              │ [Aula Pedro] │              │       │
-├─────────┼──────────────┼──────────────┼──────────────┼──────────────┼───────┤
-│ 09:00   │              │              │              │              │       │
-├─────────┼──────────────┼──────────────┼──────────────┼──────────────┼───────┤
-│ 10:00   │ [Aula Lucas] │              │              │              │       │
-└─────────┴──────────────┴──────────────┴──────────────┴──────────────┴───────┘
++-------------------------------------------------------+
+� Hora     � Seg (20/05)  � Ter (21/05)  � Qua (22/05)  �
++----------+--------------+--------------+--------------�
+� 08:00    �              �              � [Aula Pedro] �
+� 10:00    � [Aula Lucas] �              �              �
++-------------------------------------------------------+
 ```
 
-#### Campos da Aula (Modal de Criação / Edição):
+**A��es dispon�veis:**
 
-* **Aluno (Obrigatório):** Seleção direta a partir do cadastro de alunos.
-* **Professor (Obrigatório):** Nome do instrutor responsável pela aula.
-* **Instrumento (Opcional):** Violão, Piano, Teclado, Canto, etc.
-* **Data (Obrigatório):** Data da aula no formato `DD/MM/AAAA`.
-* **Horário Inicial (Obrigatório):** Horário de início da aula.
-* **Horário Final (Obrigatório):** Horário de término da aula. *Regra de consistência:* Deve respeitar a duração padrão do contrato (mínimo de 50 minutos).
-* **Tipo de Aula (Obrigatório):** Modalidade (Presencial, Online, Experimental).
-* **Link da Aula (Obrigatório apenas se for modalidade Online):** URL para a reunião virtual.
-* **Observações (Opcional):** Campo livre para anotações didáticas ou avisos.
-* **Recorrência (Opcional):** Caixa de seleção indicando se o horário se repetirá semanalmente de forma automática.
+| A��o               | Quem pode | Descri��o                                        |
+|:-------------------|:----------|:-------------------------------------------------|
+| Criar aula         | Professor | Modal com aluno, instrumento, data, hor�rio, tipo |
+| Editar aula        | Professor | Altera qualquer campo da aula                    |
+| Cancelar aula      | Ambos     | Marca como cancelada; gera cr�dito de reposi��o  |
+| Confirmar presen�a | Ambos     | Registra presen�a na aula                        |
+| Ver link Meet      | Ambos     | Exibe link Google Meet (aulas online)            |
+| Arrastar bloco     | Professor | Move aula para outro hor�rio (drag-and-drop)     |
+| Sincronizar Google | Professor | Exporta aulas vis�veis para o Google Calendar    |
 
-#### Comandos Disponíveis:
-
-1. `criar aula`: Abre o modal com formulário em branco.
-2. `editar aula`: Abre os dados da aula selecionada para edição imediata.
-3. `cancelar aula`: Altera o status para `cancelled` e, dependendo da antecedência, executa a **UC-07 (Gerenciar reposições)** gerando um crédito.
-4. `mover aula (Drag and Drop)`: Permite arrastar um bloco de aula na grade para alterar o dia/horário de forma visual, aplicando a **UC-15 (Verificar disponibilidade de horários)** automaticamente.
+**Modal de aula:** aluno, instrumento, data, hor�rio, status (realizada / cancelada / pendente), presen�a confirmada e link Meet quando online.
 
 ---
 
-### 3.3. Gestão de Disponibilidade do Professor
+### 3.5. Disponibilidade
 
-Esta tela permite que o professor cadastre seus blocos fixos de horários livres em que estará disponível para receber novos agendamentos e solicitações de reposição/reagendamento.
+O professor define blocos de hor�rio semanal fixo em que est� dispon�vel para novas aulas e reposi��es.
 
-#### Campos de Cadastro:
-
-1. **Dia da Semana (Obrigatório):** Enumeração de Segunda a Domingo.
-2. **Horário de Início (Obrigatório):** Hora inicial do bloco.
-3. **Horário de Fim (Obrigatório):** Hora final do bloco. *Restrição:* O horário final deve ser estritamente maior que o horário inicial.
-4. **Modalidade Suportada (Opcional):** Presencial, Online ou Ambas.
-5. **Local / Sala (Opcional):** Identificador físico da sala de aula para controle de lotação.
-
-#### Ações Principais:
-
-* `adicionar horário`: Insere um novo bloco de disponibilidade na lista semanal.
-* `remover horário`: Remove permanentemente um bloco disponível.
-* `editar horário`: Abre o bloco existente para edição direta.
-* `salvar disponibilidade`: Persiste as alterações no banco de dados.
+**Campos:** dia da semana, hor�rio in�cio, hor�rio fim.
+**Regra:** hor�rio fim > hor�rio in�cio; blocos s�o salvos por dia.
 
 ---
 
-### 3.4. Central de Reagendamentos (Reposições)
+### 3.6. Reagendamentos / Reposi��es
 
-Modulo inteligente focado no tratamento de faltas e reagendamentos, integrando regras contratuais (**UC-14**).
+M�dulo para gerenciar cr�ditos de reposi��o gerados por cancelamentos.
 
-#### Fluxo e Comportamento da Tela:
-
-1. **Seleção de Aula Original:** Exibe as aulas marcadas como canceladas pelo aluno ou professor que geraram "direito a crédito".
-2. **Match Inteligente de Horários:** O sistema lê a disponibilidade do professor (cadastrada na tela 3.3) e oferece uma listagem otimizada de horários disponíveis.
-3. **Aplicação Automática de Regras (UC-14):**
-   * *Prazo limite:* O sistema verifica se o cancelamento original foi feito com o prazo contratual correto (ex: 24h de antecedência) para permitir a reposição.
-   * *Saldo de Reposições:* O sistema exibe o total de créditos que o aluno possui antes de aprovar o novo agendamento.
-4. **Confirmação:** Ao escolher um horário, o sistema altera o status para `rescheduled` e envia uma notificação instantânea para ambas as partes.
+1. Lista aulas canceladas com cr�dito pendente.
+2. Exibe hor�rios dispon�veis do professor para reposi��o.
+3. Aluno ou professor confirma o novo hor�rio.
+4. Sistema verifica conflito (UC-15) e aplica regra de contrato (UC-14).
+5. Notifica��o enviada �s duas partes.
 
 ---
 
-### 3.5. Biblioteca de Videoaulas
+### 3.7. Videoaulas
 
-Área multimídia onde os alunos cadastrados podem assistir a materiais de apoio, videoaulas gravadas e lições semanais disponibilizadas pelo professor.
+Biblioteca de conte�do multim�dia para alunos.
 
-#### Campos e Especificações do Vídeo:
+**Campos por v�deo:** t�tulo, descri��o, instrumento, dura��o, link, thumbnail, categoria (Iniciante / Intermedi�rio / Avan�ado), status (Publicada / Oculta).
 
-* **Título (Obrigatório):** Título descritivo da videoaula (ex: "Piano Básico - Aula 1").
-* **Descrição (Opcional):** Resumo ou orientações adicionais sobre o conteúdo a ser praticado.
-* **Instrumento (Opcional):** Filtro por disciplina para facilitar a localização pelo aluno.
-* **Duração (Obrigatório):** Tempo total do vídeo formatado em `MM:SS`.
-* **Link do Vídeo (Obrigatório):** URL do vídeo hospedado (YouTube, Vimeo, Drive, etc.).
-* **Capa / Thumbnail (Opcional):** Imagem de visualização do conteúdo.
-* **Categoria (Opcional):** Nível técnico (Iniciante, Intermediário, Avançado).
-* **Status (Obrigatório):** Publicada, Oculta ou Rascunho.
-
-#### Comandos Disponíveis:
-
-* `pesquisar videoaula`: Barra de busca textual por título ou descrição.
-* `assistir videoaula`: Abre o player embutido de alta performance.
-* `cadastrar/editar videoaula`: Modais administrativos para o professor incluir novos materiais didáticos.
+**A��es:** buscar por t�tulo, assistir no player embutido, cadastrar/editar (Professor).
 
 ---
 
-### 3.6. Gestão de Alunos
+### 3.8. Gest�o de Alunos *(Professor)*
 
-Painel administrativo para controle e cadastro de alunos, mantendo seus dados de contato e de contrato.
+CRUD completo de alunos da escola.
 
-#### Campos de Cadastro do Aluno:
+**Campos do aluno:** nome, apelido, e-mail, telefone, status (ativo/inativo), cr�ditos de reposi��o, hor�rios fixos de aula.
 
-* **Nome Completo (Obrigatório):** Identificação oficial do aluno.
-* **Apelido (Opcional):** Nome de tratamento preferido (utilizado para personalizar as variáveis das mensagens automáticas de WhatsApp, ex: "João" em vez de "João da Silva").
-* **E-mail (Obrigatório):** Endereço eletrônico para login e envio de notificações formais.
-* **Telefone (Obrigatório):** Número celular para contato direto e integração com o WhatsApp. *Formatado em nível internacional para a API.*
-* **Status do Aluno (Obrigatório):** Ativo ou Inativo.
-* **Créditos de Reposição:** Contador em tempo real do saldo de aulas que o aluno tem direito a repor.
+| A��o      | Descri��o                                                  |
+|:----------|:-----------------------------------------------------------|
+| Cadastrar | Cria conta de usu�rio + perfil de aluno com senha padr�o   |
+| Editar    | Atualiza dados, status e hor�rios                          |
+| Excluir   | Remove aluno e sua conta (cascade nas aulas)               |
 
----
-
-### 3.7. Central de Alertas & Notificações
-
-Uma caixa de entrada centralizada que avisa o professor (e os alunos) sobre mudanças cruciais no status das aulas.
-
-```
-┌─────────────────────────────────────────────────────────────────────────────┐
-│  MARCOS MUSIC - CENTRAL DE ALERTAS                                    [x]   │
-├─────────────────────────────────────────────────────────────────────────────┤
-│  [Filtros: Todos ▼]              [Marcar tudo como lido]      [Limpar Lidos]│
-├─────────────────────────────────────────────────────────────────────────────┤
-│  ALERTAS NÃO LIDOS (3)                                                      │
-├─────────────────────────────────────────────────────────────────────────────┤
-│  ● [LEMBRETE]  Hoje 14:00 - João Silva                                      │
-│    Aula não confirmada pelo aluno há 2 horas.                               │
-│    [Aula de Violão]                                                         │
-│                                                                             │
-│  ● [URGENTE]   Hoje 16:30 - Maria Costa                                     │
-│    Reposição pendente de confirmação de horário.                            │
-│    [Aula de Piano]                                                          │
-│                                                                             │
-│  ● [ALTERAÇÃO] Amanhã 10:00 - Prof. Carlos Mendes                          │
-│    Aula remarcada para novo horário: 11:00.                                 │
-│                                                                             │
-│  ALERTAS LIDOS (1)                                                          │
-├─────────────────────────────────────────────────────────────────────────────┤
-│    [CONFIRMADO] Ontem - Ana Silva (Aula de Canto confirmada)                │
-└─────────────────────────────────────────────────────────────────────────────┘
-```
-
-#### Tipos de Alerta e Regras de Cores Dinâmicas:
-
-1. **LEMBRETE (Azul):** Notificação de rotina de aula que se aproxima.
-2. **URGENTE (Vermelho/Laranja):** Aulas canceladas na mesma data ou conflitos graves.
-3. **ALTERAÇÃO (Amarelo):** Remarcações pendentes ou concluídas.
-4. **CONFIRMADO (Verde):** Presença validada pelo aluno ou professor.
-
-#### Ações no Alerta:
-
-* **Clique Simples:** Abre o modal de Detalhe do Alerta (descrito em 3.7.1).
-* **Marcar como Lido:** Altera visualmente o fundo do card para um tom mais claro e reduz a contagem de pendências no ícone principal.
-* **Deletar Alerta:** Descarta o alerta do histórico.
-
-#### 3.7.1. Detalhe do Alerta (Modal Contextualizado)
-
-Ao clicar em qualquer alerta da lista, abre-se uma visualização detalhada que exibe todos os dados da aula atrelada, o motivo de geração do alerta, o histórico cronológico da notificação ("Criado às 09:15", "Visualizado às 12:00") e um conjunto de **Ações Contextuais Inteligentes**:
-
-* *Botão 1:* **[ Confirmar Presença ]** (Altera o status de confirmação diretamente no banco de dados).
-* *Botão 2:* **[ Cancelar Aula ]** ou **[ Reagendar Aula ]** (Redireciona para o fluxo correspondente).
-* *Botão 3:* **[ Falar no WhatsApp ]** (Abre o fluxo de integração externo detalhado em 3.8).
+> O professor n�o aparece na listagem de alunos (filtro por papel ADMIN no backend).
 
 ---
 
-### 3.8. Integração e Envio via WhatsApp
+### 3.9. Alertas e Notifica��es
 
-Funcionalidade extremamente prática que permite ao professor disparar mensagens de contato direto pré-formatadas para o WhatsApp Web ou WhatsApp App do aluno, poupando a digitação manual de mensagens repetitivas.
+Central de notifica��es do usu�rio autenticado.
 
-#### Mecanismo de Funcionamento:
+| Tipo       | Cor      | Gatilho                                     |
+|:-----------|:---------|:--------------------------------------------|
+| LEMBRETE   | Azul     | Aula se aproximando                         |
+| URGENTE    | Vermelho | Cancelamento no mesmo dia / conflito        |
+| ALTERA��O  | Amarelo  | Reagendamento pendente                      |
+| CONFIRMADO | Verde    | Presen�a validada                           |
 
-Ao acionar o botão "Falar no WhatsApp" em qualquer tela (Alertas, Agenda ou Alunos), o sistema renderiza um modal de preparação de mensagem:
-
-```
-┌─────────────────────────────────────────────────────────────────────────────┐
-│  Preparar Mensagem para WhatsApp                                      [x]   │
-├─────────────────────────────────────────────────────────────────────────────┤
-│  Destinatário: João Silva                                                   │
-│  Telefone: +55 (31) 98765-4321                                              │
-│                                                                             │
-│  TEXTO DA MENSAGEM (PRÉVIA):                                                │
-│  ┌───────────────────────────────────────────────────────────────────────┐  │
-│  │ Olá João! Passando para lembrar da sua aula de Violão de hoje (20/05) │  │
-│  │ às 14:00. Se houver qualquer imprevisto, me avise por aqui!           │  │
-│  └───────────────────────────────────────────────────────────────────────┘  │
-│                                                                             │
-│  [Categoria do Template: Lembrete ▼]                                        │
-│  [Editar Mensagem Manualmente ▼]                                            │
-│                                                                             │
-│  [ Cancelar ]                                    [ Enviar no WhatsApp → ]   │
-└─────────────────────────────────────────────────────────────────────────────┘
-```
-
-#### Variáveis Suportadas nos Templates Dinâmicos:
-
-* `{nome}`: Injeta automaticamente o apelido do aluno (ou o primeiro nome).
-* `{instrumento}`: Injeta o nome do instrumento musical da aula (ex: "Bateria").
-* `{data}`: Injeta o dia da semana e a data da aula (ex: "quarta-feira, 22/05").
-* `{hora}`: Injeta o horário de início formatado (ex: "14:30").
-
-#### Templates Disponíveis por Categoria:
-
-1. **Lembrete de Aula:**
-   - *Opção Padrão:* `"Olá, {nome}! Passando para lembrar da sua aula de {instrumento} em {data}, às {hora}. Até já!"`
-   - *Opção Informal:* `"Oi {nome}! Só lembrando da sua aula de {instrumento} em {data} às {hora}. Te espero!"`
-2. **Confirmação de Presença:**
-   - *Opção Direta:* `"Oi {nome}! Você vai conseguir comparecer à aula de {instrumento} no dia {data} às {hora}? Me confirma aqui!"`
-3. **Cobrança Amigável:**
-   - *Opção Padrão:* `"Olá, {nome}! Tudo bem? Passando para avisar que sua mensalidade de {instrumento} está em aberto. Pode me chamar para acertar!"`
-4. **Vencimento de Mensalidade:**
-   - *Opção Antecipada:* `"Olá, {nome}! Só um aviso: o vencimento da sua mensalidade de {instrumento} se aproxima em 5 dias. Estou à disposição!"`
-
-#### Comportamento do Botão "Enviar no WhatsApp":
-
-O sistema gera dinamicamente uma URL utilizando a API oficial do WhatsApp (`https://api.whatsapp.com/send?phone=...&text=...`), convertendo caracteres especiais em codificação URI amigável e abrindo uma nova aba no navegador do usuário, direcionando para o envio da mensagem. *O sistema não envia a mensagem de forma automática invisível (por segurança e respeito às políticas do WhatsApp), mas sim redireciona com o texto 100% preenchido pronto para envio.*
+**A��es:** marcar como lido, deletar alerta, abrir detalhe com a��es contextuais (confirmar presen�a, reagendar).
 
 ---
 
-### 3.9. Configurações de Alertas e Notificações
+### 3.10. Configura��es
 
-Permite a personalização da recepção de notificações pelo usuário.
+Tela de prefer�ncias do usu�rio autenticado.
 
-#### Controles Disponíveis:
+| Se��o           | O que faz                                                        |
+|:----------------|:-----------------------------------------------------------------|
+| Perfil          | Editar nome e telefone; e-mail somente leitura                   |
+| Tema            | Alternar claro / escuro (persiste em localStorage)               |
+| Idioma          | Portugu�s / Ingl�s (persiste em localStorage)                    |
+| Fuso hor�rio    | Selecionar timezone (padr�o: America/Sao_Paulo)                  |
+| Google Calendar | Conectar conta Google via OAuth2, sincronizar aulas, desconectar |
 
-1. **Tipos de Alerta Habilitados (Caixas de Seleção):**
-   - Lembrança de aula (24 horas antes)
-   - Alerta de aula próxima (1 hora antes)
-   - Notificações de cancelamento
-   - Notificações de remarcação e reposições
-2. **Canal Preferencial (Seleção Exclusiva):**
-   - App (Notificação interna visual na central)
-   - E-mail institucional
-   - Ambos
-3. **Redirecionamento Externo:**
-   - Ativação de disparo de WhatsApp.
-   - Campo para cadastro do telefone celular principal do professor.
-
----
-
-## 4. Requisitos Não Funcionais de Interface
-
-1. **Responsividade Multiplataforma:** A interface deve ser 100% fluida, adaptando-se perfeitamente de telas de smartphones (360px de largura) a monitores desktop de alta resolução (Full HD e superiores).
-2. **Desempenho de Renderização:** O carregamento e renderização da lista de alertas na central deve acontecer em um tempo menor que **1.5 segundos**.
-3. **Navegabilidade Acessível (Foco em Cliques):** O usuário deve levar no máximo **2 cliques** de navegação a partir do Dashboard para realizar qualquer ação crítica (confirmar presença, abrir WhatsApp, etc.).
-4. **Resiliência e Feedback Visual:** Qualquer falha de carregamento de APIs do backend deve disparar um estado de erro amigável (*Skeleton screen* ou Toast informativo de falha), mantendo a tela interativa.
+**Fluxo de integra��o Google Calendar:**
+1. Clique em "Conectar Google" ? OAuth2 consent screen.
+2. Ap�s autoriza��o, token armazenado no backend.
+3. Bot�o "Sincronizar" envia as aulas do per�odo vis�vel para o Google Calendar.
+4. Aulas online recebem link Google Meet gerado automaticamente.
+5. Foto de perfil do Google exibida no TopBar se conectado.
 
 ---
 
-## 5. Casos de Erro de Interação e Tratamento Visual
+## 4. Requisitos N�o Funcionais
 
-| Cenário de Erro                                       | Comportamento Esperado da Interface                                                                      | Feedback para o Usuário                                                                                                 |
-| :----------------------------------------------------- | :------------------------------------------------------------------------------------------------------- | :----------------------------------------------------------------------------------------------------------------------- |
-| **WhatsApp indisponível**                       | Exibe um modal de instrução ou Toast informativo de suporte.                                           | *"Abra ou configure o WhatsApp no seu aparelho para prosseguir."*                                                      |
-| **Telefone do aluno não cadastrado**            | O botão "Falar no WhatsApp" fica desabilitado com aviso explicativo (*Tooltip*).                      | *"Configure o número de telefone nas configurações do aluno."*                                                      |
-| **Falha de montagem de placeholders**            | O sistema intercepta o erro de mapeamento e carrega o texto limpo com placeholders genéricos.           | Envia a mensagem padrão sem campos em branco.                                                                           |
-| **Horário de aula em conflito (UC-03 / UC-05)** | O modal de agendamento vibra sutilmente e realça em vermelho os campos de data/hora indevidos.          | *"O horário escolhido conflita com outra aula cadastrada."*                                                           |
-| **Estouro de prazo contratual (UC-14)**          | Ao tentar cancelar uma aula fora do prazo de 24h, o sistema exibe um aviso de alerta antes de confirmar. | *"Atenção: Cancelamentos a menos de 24h da aula não geram créditos de reposição automática. Deseja continuar?"* |
+| Requisito      | Meta                                                             |
+|:---------------|:-----------------------------------------------------------------|
+| Responsividade | Layout fluido de 360 px (mobile) a Full HD                       |
+| Performance    | Carregamento da agenda < 1,5 s                                   |
+| Navegabilidade | M�ximo 2 cliques do Dashboard para qualquer a��o cr�tica         |
+| Feedback       | Toast de sucesso/erro em toda a��o ass�ncrona; skeleton em carga |
+| Acessibilidade | Navega��o por teclado nos modais; contraste WCAG AA              |
 
 ---
+
+## 5. Tratamento de Erros
+
+| Cen�rio                             | Comportamento                                                         |
+|:------------------------------------|:----------------------------------------------------------------------|
+| Hor�rio em conflito                 | Campo de data/hora destacado em vermelho; mensagem explicativa        |
+| Cancelamento fora do prazo          | Aviso de confirma��o antes de prosseguir                              |
+| Google n�o conectado ao sincronizar | Retorna flag `disconnected`; frontend exibe bot�o de reconex�o        |
+| Token expirado                      | Redirect autom�tico para login                                        |
+| Falha de API                        | Toast de erro; tela permanece interativa                              |
