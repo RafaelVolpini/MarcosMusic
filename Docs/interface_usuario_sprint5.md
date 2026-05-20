@@ -94,40 +94,6 @@ O centro de gerenciamento de horários do professor, projetado em formato de cal
 2. `editar aula`: Abre os dados da aula selecionada para edição imediata.
 3. `cancelar aula`: Altera o status para `cancelled` e, dependendo da antecedência, executa a **UC-07 (Gerenciar reposições)** gerando um crédito.
 4. `mover aula (Drag and Drop)`: Permite arrastar um bloco de aula na grade para alterar o dia/horário de forma visual, aplicando a **UC-15 (Verificar disponibilidade de horários)** automaticamente.
-5. `sincronizar Google Calendar`: Exporta as aulas do período visível para o Google Calendar do professor (disponível apenas se a conta Google estiver conectada).
-
-#### 3.2.1. Sincronização com Google Calendar
-
-O professor pode conectar sua conta Google diretamente nas **Configurações** e, em seguida, acionar o botão **[ ↑ Sincronizar ]** na barra superior da agenda.
-
-```
-┌─────────────────────────────────────────────────────────────────────────────┐
-│  AGENDA DO PROFESSOR               [↑ Sincronizar]  [Filtros ▼] [+ Nova]   │
-├─────────────────────────────────────────────────────────────────────────────┤
-│  ✔ Google Calendar conectado  │  Última sync: hoje às 14:32                │
-└─────────────────────────────────────────────────────────────────────────────┘
-```
-
-**Fluxo de sincronização:**
-
-1. Sistema envia as aulas do período visível (semana/dia atual) para o Google Calendar via API.
-2. Para aulas marcadas como **Online**, o sistema gera automaticamente uma conferência **Google Meet** e salva o link (`meetLink`) na aula.
-3. O botão exibe um spinner durante a operação e, ao concluir, abre um modal de resumo:
-
-```
-┌────────────────────────────────────────────┐
-│  ✔ Sincronização concluída                 │
-├────────────────────────────────────────────┤
-│  Total de aulas:       8                   │
-│  Sincronizadas:        8                   │
-│  Falhas:               0                   │
-│                                            │
-│               [ Fechar ]                   │
-└────────────────────────────────────────────┘
-```
-
-4. Se o token Google expirou ou foi revogado, o sistema exibe aviso de reconexão em vez de iniciar a sincronização.
-5. O link Meet gerado fica visível no modal de detalhes da aula com botão de cópia rápida.
 
 ---
 
@@ -312,46 +278,45 @@ O sistema gera dinamicamente uma URL utilizando a API oficial do WhatsApp (`http
 
 ### 3.9. Chat entre Aluno e Professor
 
-Canal de comunicação direta e em tempo real entre o professor e cada aluno, acessível pelo ícone de mensagens na barra superior (*TopBar*). O badge exibe o total de mensagens não lidas.
+Canal de comunicação direta integrado à plataforma, acessível pelo ícone de mensagens na barra superior (*TopBar*). O badge exibe o total de mensagens não lidas e é atualizado automaticamente.
 
 ```
-┌─────────────────────────────────────────────────────────────────────────────┐
-│  MENSAGENS                                                           [x]    │
-├──────────────────────────┬──────────────────────────────────────────────────┤
-│  CONVERSAS               │  João Silva                                      │
-│  ─────────────────────   │  ──────────────────────────────────────────────  │
-│  ● João Silva       2    │         Hoje, 14:05                              │
-│    Última msg: ótimo!    │  ┌─────────────────────────────────┐             │
-│                          │  │ João: Oi professor, posso faltar │             │
-│  ○ Maria Costa           │  │       na quinta?                │             │
-│    Última msg: ok        │  └─────────────────────────────────┘             │
-│                          │                                                  │
-│  ○ Lucas Pereira         │  ┌──────────────────────────────────────────┐   │
-│    Última msg: obrigado  │  │ Prof: Pode sim, mas lembra de reagendar! │   │
-│                          │  └──────────────────────────────────────────┘   │
-│                          │                                                  │
-│                          │  ┌──────────────────────────┐  [ Enviar → ]     │
-│                          │  │ Digite uma mensagem...   │                   │
-│                          │  └──────────────────────────┘                   │
-└──────────────────────────┴──────────────────────────────────────────────────┘
+┌──────────────────────────────────────────────────────────────────────────────┐
+│  MENSAGENS                                                              [x]  │
+├───────────────────────────┬──────────────────────────────────────────────────┤
+│  CONVERSAS                │  João Silva                                      │
+│  ───────────────────────  │  ──────────────────────────────────────────────  │
+│  ● João Silva        [2]  │                    Hoje, 14:05                   │
+│    Última: ótimo!         │  ┌─────────────────────────────────────────────┐ │
+│                           │  │ João: Oi professor, posso faltar na quinta? │ │
+│  ○ Maria Costa            │  └─────────────────────────────────────────────┘ │
+│    Última: ok             │                                                  │
+│                           │   ┌──────────────────────────────────────────┐   │
+│  ○ Lucas Pereira          │   │ Prof: Pode sim, mas lembra de reagendar! │   │
+│    Última: obrigado       │   └──────────────────────────────────────────┘   │
+│                           │                                                  │
+│                           │  ┌──────────────────────────────┐  [ Enviar → ] │
+│                           │  │ Digite uma mensagem...        │               │
+│                           │  └──────────────────────────────┘               │
+└───────────────────────────┴──────────────────────────────────────────────────┘
 ```
 
 #### Comportamento por Perfil:
 
-* **Professor:** visualiza a lista de todos os chats ativos com seus alunos. Pode iniciar conversa com qualquer aluno cadastrado clicando na lista de alunos.
-* **Aluno:** acessa diretamente o chat com o professor, sem lista lateral — abre sempre a conversa única.
+* **Professor (ADMIN):** visualiza a lista lateral com todos os alunos que possuem conversa iniciada. Balões do professor aparecem alinhados à **direita** (cor de acento da marca). Pode iniciar conversa com qualquer aluno cadastrado.
+* **Aluno:** acessa diretamente o chat com o professor, sem lista lateral — abre sempre a conversa única. Seus balões aparecem alinhados à **esquerda** (cinza neutro).
 
 #### Elementos Visuais:
 
-* **Badge de não lidas:** número em círculo vermelho sobre o ícone de mensagens no *TopBar*, atualizado em tempo real.
-* **Indicador de leitura:** mensagens não lidas destacadas com fundo diferenciado; ao abrir o chat, todas são marcadas como lidas automaticamente.
-* **Balões de mensagem:** remetente `PROFESSOR` alinhado à direita (acento da marca); remetente `ALUNO` alinhado à esquerda (cinza neutro).
-* **Timestamp:** hora de envio exibida discretamente abaixo de cada mensagem.
+* **Badge de não lidas:** número em círculo vermelho sobre o ícone de mensagens no *TopBar*, atualizado automaticamente.
+* **Indicador de conversa não lida:** nome do aluno em destaque (bold) e indicador `●` colorido na lista lateral do professor.
+* **Marcação como lido:** ao abrir uma conversa, todas as mensagens pendentes são marcadas como lidas automaticamente (via `PUT /{chatId}/ler`).
+* **Timestamp:** hora de envio exibida discretamente abaixo de cada balão.
 
 #### Comandos Disponíveis:
 
 * `selecionar conversa` *(Professor)*: Abre o chat com o aluno selecionado na lista lateral.
-* `enviar mensagem`: Campo de texto com envio por botão ou tecla *Enter*.
+* `enviar mensagem`: Campo de texto com envio por botão **[ Enviar → ]** ou tecla *Enter*.
 * `marcar como lido`: Executado automaticamente ao abrir a conversa.
 
 ---
