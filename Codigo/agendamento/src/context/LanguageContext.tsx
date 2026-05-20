@@ -1,4 +1,4 @@
-import { createContext, useContext, useState, type ReactNode } from 'react';
+import { createContext, useContext, useState, useEffect, type ReactNode } from 'react';
 import { translations, type Lang } from '../lib/i18n';
 
 const STORAGE_KEY = 'marcos-music:lang';
@@ -17,25 +17,49 @@ const LanguageContext = createContext<LanguageContextType>({
 });
 
 export function LanguageProvider({ children }: { children: ReactNode }) {
-  const [lang, setLangState] = useState<Lang>(() => {
-    const stored = localStorage.getItem(STORAGE_KEY);
-    return stored === 'en' ? 'en' : 'pt';
-  });
+  // Prevent direct access to localStorage during server-side rendering
+  const [lang, setLangState] = useState<Lang>(() => 'pt');
+
+  useEffect(() => {
+    try {
+      const stored = localStorage.getItem(STORAGE_KEY);
+      if (stored === 'en' || stored === 'pt') setLangState(stored as Lang);
+    } catch {
+      // ignore (localStorage unavailable)
+    }
+  }, []);
 
   const setLang = (l: Lang) => {
     setLangState(l);
-    localStorage.setItem(STORAGE_KEY, l);
+    try {
+      localStorage.setItem(STORAGE_KEY, l);
+    } catch {
+      // ignore write failures (e.g. storage disabled)
+    }
   };
 
   const t = (key: string): string => {
     const parts = key.split('.');
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    let node: any = translations[lang];
+    // navigate safely through the translations tree
+    let node: unknown = translations[lang];
     for (const part of parts) {
-      node = node?.[part];
-      if (node === undefined) return key; // fallback: retorna a própria chave
+      if (node && typeof node === 'object' && part in (node as Record<string, unknown>)) {
+        node = (node as Record<string, unknown>)[part];
+      } else {
+        return key; // fallback: retorna a própria chave
+      }
     }
-    return typeof node === 'string' ? node : key;
+
+    // if final node is a string return it; if it's a function, call it; otherwise fallback
+    if (typeof node === 'string') return node;
+    if (typeof node === 'function') {
+      try {
+        return String((node as Function)());
+      } catch {
+        return key;
+      }
+    }
+    return key;
   };
 
   return (
