@@ -108,12 +108,12 @@ export function StudentsPage({ students, currentUser, onReload }: StudentsPagePr
       {/* Header */}
       <div className="flex items-center gap-3 mb-6">
         <div className="flex-1 relative">
-          <Search size={15} className="absolute left-3 top-1/2 -translate-y-1/2 text-[var(--muted)]" />
+          <Search size={15} className="absolute left-3 top-1/2 -translate-y-1/2 text-(--muted)" />
           <input
             value={query}
             onChange={e => { setQuery(e.target.value); setPage(0); }}
             placeholder={t('students.searchPlaceholder')}
-            className="w-full h-10 pl-9 pr-4 bg-[var(--input-bg)] border border-[var(--input-border)] rounded-xl text-sm text-[var(--text)] focus:outline-none focus:ring-2 focus:ring-[var(--accent-500)]/30 placeholder:text-[var(--muted)]"
+            className="w-full h-10 pl-9 pr-4 bg-(--input-bg) border border-(--input-border) rounded-xl text-sm text-(--text) focus:outline-none focus:ring-2 focus:ring-(--accent-500)/30 placeholder:text-(--muted)"
           />
         </div>
         {isTeacher && (
@@ -157,7 +157,7 @@ export function StudentsPage({ students, currentUser, onReload }: StudentsPagePr
                     className="
                       absolute top-3 right-3 w-7 h-7 rounded-lg
                       flex items-center justify-center
-                      text-[var(--muted)] hover:text-red-500
+                      text-(--muted) hover:text-red-500
                       hover:bg-red-50 dark:hover:bg-red-950/30
                       opacity-0 group-hover:opacity-100
                       transition-all duration-150
@@ -178,8 +178,8 @@ export function StudentsPage({ students, currentUser, onReload }: StudentsPagePr
                     className="
                       absolute top-3 right-12 w-7 h-7 rounded-lg
                       flex items-center justify-center
-                      text-[var(--muted)] hover:text-(--accent-600)
-                      hover:bg-[var(--hover-bg)]
+                      text-(--muted) hover:text-(--accent-600)
+                      hover:bg-(--hover-bg)
                       opacity-0 group-hover:opacity-100
                       transition-all duration-150
                     "
@@ -191,9 +191,9 @@ export function StudentsPage({ students, currentUser, onReload }: StudentsPagePr
                 <div className="flex items-start gap-3 mb-3">
                   <Avatar name={aluno.nome} size="lg" />
                   <div className="flex-1 min-w-0">
-                    <h3 className="text-sm font-bold text-[var(--heading)] truncate">{aluno.nome}</h3>
+                    <h3 className="text-sm font-bold text-(--heading) truncate">{aluno.nome}</h3>
                     {aluno.apelido && (
-                      <p className="text-xs text-[var(--muted)] truncate flex items-center gap-1 mt-0.5">
+                      <p className="text-xs text-(--muted) truncate flex items-center gap-1 mt-0.5">
                         <Tag size={10} className="shrink-0" />
                         {aluno.apelido}
                       </p>
@@ -205,13 +205,13 @@ export function StudentsPage({ students, currentUser, onReload }: StudentsPagePr
                 </div>
 
                 <div className="space-y-1.5">
-                  <div className="flex items-center gap-2 text-xs text-[var(--muted)]">
-                    <Mail size={12} className="text-[var(--accent-500)] shrink-0" />
+                  <div className="flex items-center gap-2 text-xs text-(--muted)">
+                    <Mail size={12} className="text-(--accent-500) shrink-0" />
                     <span className="truncate">{aluno.email}</span>
                   </div>
                   {aluno.telefone && (
-                    <div className="flex items-center gap-2 text-xs text-[var(--muted)]">
-                      <Phone size={12} className="text-[var(--accent-500)] shrink-0" />
+                    <div className="flex items-center gap-2 text-xs text-(--muted)">
+                      <Phone size={12} className="text-(--accent-500) shrink-0" />
                       <a
                         href={`https://api.whatsapp.com/send/?phone=${phoneToWhatsApp(aluno.telefone)}&type=phone_number&app_absent=0`}
                         target="_blank"
@@ -232,7 +232,7 @@ export function StudentsPage({ students, currentUser, onReload }: StudentsPagePr
       </AnimatePresence>
 
       {filtered.length === 0 && (
-        <div className="text-center py-16 text-[var(--muted)]">
+        <div className="text-center py-16 text-(--muted)">
           <p className="text-sm">{t('students.none')}</p>
         </div>
       )}
@@ -240,14 +240,14 @@ export function StudentsPage({ students, currentUser, onReload }: StudentsPagePr
       {/* Paginação */}
       {totalPages > 1 && (
         <div className="flex items-center justify-between mt-6">
-          <span className="text-xs text-[var(--muted)]">
+          <span className="text-xs text-(--muted)">
             {safePage * PAGE_SIZE + 1}–{Math.min((safePage + 1) * PAGE_SIZE, filtered.length)} {t('common.of')} {filtered.length} {t('nav.students').toLowerCase()}
           </span>
           <div className="flex items-center gap-1">
             <button
               onClick={() => changePage(safePage - 1)}
               disabled={safePage === 0}
-              className="w-8 h-8 rounded-lg flex items-center justify-center text-[var(--muted)] hover:bg-[var(--hover-bg)] disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
+              className="w-8 h-8 rounded-lg flex items-center justify-center text-(--muted) hover:bg-(--hover-bg) disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
             >
               <ChevronLeft size={16} />
             </button>
@@ -257,8 +257,8 @@ export function StudentsPage({ students, currentUser, onReload }: StudentsPagePr
                 onClick={() => changePage(i)}
                 className={`w-8 h-8 rounded-lg text-xs font-semibold transition-colors ${
                   i === safePage
-                    ? 'bg-[var(--accent-500)] text-white'
-                    : 'text-[var(--muted)] hover:bg-[var(--hover-bg)]'
+                    ? 'bg-(--accent-500) text-white'
+                    : 'text-(--muted) hover:bg-(--hover-bg)'
                 }`}
               >
                 {i + 1}
@@ -267,7 +267,7 @@ export function StudentsPage({ students, currentUser, onReload }: StudentsPagePr
             <button
               onClick={() => changePage(safePage + 1)}
               disabled={safePage === totalPages - 1}
-              className="w-8 h-8 rounded-lg flex items-center justify-center text-[var(--muted)] hover:bg-[var(--hover-bg)] disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
+              className="w-8 h-8 rounded-lg flex items-center justify-center text-(--muted) hover:bg-(--hover-bg) disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
             >
               <ChevronRight size={16} />
             </button>

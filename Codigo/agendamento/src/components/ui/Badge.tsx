@@ -4,7 +4,7 @@ import { cn } from '../../utils';
 type BadgeVariant = 'default' | 'success' | 'warning' | 'danger' | 'info' | 'purple';
 
 const variantClasses: Record<BadgeVariant, string> = {
-  default: 'bg-[var(--surface-soft)] text-[var(--text)]',
+  default: 'bg-(--surface-soft) text-(--text)',
   success: 'bg-gradient-to-r from-emerald-100 to-teal-100 text-emerald-700 border border-emerald-200/50 dark:from-emerald-950 dark:to-teal-950 dark:text-emerald-400 dark:border-emerald-900/50',
   warning: 'bg-gradient-to-r from-amber-100 to-orange-100 text-amber-700 border border-amber-200/50 dark:from-amber-950 dark:to-orange-950 dark:text-amber-400 dark:border-amber-900/50',
   danger: 'bg-gradient-to-r from-rose-100 to-pink-100 text-rose-700 border border-rose-200/50 dark:from-rose-950 dark:to-pink-950 dark:text-rose-400 dark:border-rose-900/50',

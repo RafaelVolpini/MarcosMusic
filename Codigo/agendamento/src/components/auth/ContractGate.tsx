@@ -114,7 +114,7 @@ export function ContractGate({ user, onAccepted }: ContractGateProps) {
 
         <div className="app-surface relative overflow-hidden rounded-3xl border shadow-xl" style={{ borderColor: 'var(--border)' }}>
           <div ref={scrollRef} onScroll={handleScroll} className="max-h-[56vh] overflow-y-auto px-6 py-7 sm:max-h-[62vh] sm:px-10 sm:py-10 lg:max-h-[68vh]">
-            <div ref={contractRef} className="space-y-6 text-[15px] leading-relaxed text-[var(--text)]">
+            <div ref={contractRef} className="space-y-6 text-[15px] leading-relaxed text-(--text)">
               <ContractContent data={CONTRACT_DATA} />
             </div>
           </div>
@@ -123,7 +123,7 @@ export function ContractGate({ user, onAccepted }: ContractGateProps) {
             <button
               type="button"
               onClick={scrollToBottom}
-              className="absolute bottom-0 left-0 right-0 flex h-20 items-end justify-center border-none bg-linear-to-t from-[var(--surface)] via-[var(--surface)]/80 to-transparent pb-3"
+              className="absolute bottom-0 left-0 right-0 flex h-20 items-end justify-center border-none bg-linear-to-t from-(--surface) via-(--surface)/80 to-transparent pb-3"
             >
                 <span className="flex items-center gap-1 text-sm animate-bounce" style={{ color: 'var(--muted)' }}>
                 <ChevronDown size={14} />
@@ -149,7 +149,7 @@ export function ContractGate({ user, onAccepted }: ContractGateProps) {
               checked={accepted}
               onChange={(event) => setAccepted(event.target.checked)}
               disabled={!hasScrolledToBottom}
-              className="mt-0.5 h-4 w-4 rounded border-[var(--border)] accent-(--accent-600)"
+              className="mt-0.5 h-4 w-4 rounded border-(--border) accent-(--accent-600)"
             />
             <span className="text-sm" style={{ color: 'var(--text)' }}>Li e concordo com todos os termos deste contrato.</span>
           </label>

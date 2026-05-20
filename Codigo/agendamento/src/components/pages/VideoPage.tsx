@@ -48,8 +48,8 @@ export function VideoPage({ videos }: VideoPageProps) {
         <div className="flex items-start gap-4 flex-wrap">
           {/* Upload panel */}
           <div className="flex-1 min-w-64">
-            <h3 className="text-sm font-semibold text-[var(--heading)] mb-1">{t('video.uploadTitle')}</h3>
-            <p className="text-xs text-[var(--muted)] mb-3">{t('video.uploadDesc')}</p>
+            <h3 className="text-sm font-semibold text-(--heading) mb-1">{t('video.uploadTitle')}</h3>
+            <p className="text-xs text-(--muted) mb-3">{t('video.uploadDesc')}</p>
             <input
               ref={fileRef}
               type="file"
@@ -73,15 +73,15 @@ export function VideoPage({ videos }: VideoPageProps) {
               exit={{ opacity: 0, height: 0 }}
               className="mt-4 overflow-hidden"
             >
-              <div className="bg-[var(--accent-50)] rounded-xl p-4">
+              <div className="bg-(--accent-50) rounded-xl p-4">
                 <div className="flex items-center justify-between mb-2">
                   <div className="flex items-center gap-2">
-                    <Film size={14} className="text-[var(--accent-600)]" />
-                    <span className="text-xs font-medium text-[var(--heading)] truncate max-w-48">{uploadedName}</span>
+                    <Film size={14} className="text-(--accent-600)" />
+                    <span className="text-xs font-medium text-(--heading) truncate max-w-48">{uploadedName}</span>
                   </div>
-                  <span className="text-xs font-bold text-[var(--accent-600)]">{Math.round(uploadProgress)}%</span>
+                  <span className="text-xs font-bold text-(--accent-600)">{Math.round(uploadProgress)}%</span>
                 </div>
-                <div className="h-1.5 bg-[var(--accent-100)] rounded-full overflow-hidden">
+                <div className="h-1.5 bg-(--accent-100) rounded-full overflow-hidden">
                   <motion.div
                     className="h-full rounded-full"
                     style={{ background: 'linear-gradient(135deg, var(--accent-gradient-from), var(--accent-gradient-to))' }}
@@ -100,7 +100,7 @@ export function VideoPage({ videos }: VideoPageProps) {
 
       {/* Video library */}
       <div>
-        <h2 className="text-sm font-semibold text-[var(--heading)] mb-4">{t('video.libraryTitle')} ({videos.length})</h2>
+        <h2 className="text-sm font-semibold text-(--heading) mb-4">{t('video.libraryTitle')} ({videos.length})</h2>
         <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
           {videos.map((video, i) => (
             <motion.div
@@ -121,8 +121,8 @@ export function VideoPage({ videos }: VideoPageProps) {
                 </div>
 
                 <div className="p-4">
-                  <h3 className="text-sm font-medium text-[var(--heading)] line-clamp-2 mb-2">{video.title}</h3>
-                  <div className="flex items-center gap-3 text-xs text-[var(--muted)]">
+                  <h3 className="text-sm font-medium text-(--heading) line-clamp-2 mb-2">{video.title}</h3>
+                  <div className="flex items-center gap-3 text-xs text-(--muted)">
                     <span className="flex items-center gap-1">
                       <Clock size={11} />
                       {formatSeconds(video.duration)}
@@ -132,7 +132,7 @@ export function VideoPage({ videos }: VideoPageProps) {
                       {formatBytes(video.size)}
                     </span>
                   </div>
-                  <p className="text-xs text-[var(--muted)] mt-1.5">
+                  <p className="text-xs text-(--muted) mt-1.5">
                     {new Date(video.uploadedAt).toLocaleDateString('pt-BR', { day: 'numeric', month: 'short', year: 'numeric' })}
                   </p>
                 </div>

@@ -79,7 +79,7 @@ function ToastContainer({
   onDismiss: (id: string) => void;
 }) {
   return (
-    <div className="fixed bottom-5 right-5 z-[200] flex flex-col gap-2 pointer-events-none">
+    <div className="fixed bottom-5 right-5 z-200 flex flex-col gap-2 pointer-events-none">
       <AnimatePresence mode="popLayout">
         {toasts.map(t => (
           <motion.div
@@ -89,14 +89,14 @@ function ToastContainer({
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={{ opacity: 0, y: 8, scale: 0.95 }}
             transition={{ type: 'spring', stiffness: 420, damping: 28 }}
-            className={`pointer-events-auto flex items-start gap-3 px-4 py-3 rounded-xl border bg-[var(--surface)] shadow-lg w-80 ${BORDER[t.type]}`}
+            className={`pointer-events-auto flex items-start gap-3 px-4 py-3 rounded-xl border bg-(--surface) shadow-lg w-80 ${BORDER[t.type]}`}
           >
             <span className="mt-0.5">{ICON[t.type]}</span>
-            <p className="text-sm text-[var(--text)] flex-1 leading-snug">{t.message}</p>
+            <p className="text-sm text-(--text) flex-1 leading-snug">{t.message}</p>
             <button
               type="button"
               onClick={() => onDismiss(t.id)}
-              className="shrink-0 text-[var(--muted)] hover:text-[var(--text)] transition-colors mt-0.5"
+              className="shrink-0 text-(--muted) hover:text-(--text) transition-colors mt-0.5"
             >
               <X size={13} />
             </button>

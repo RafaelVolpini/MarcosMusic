@@ -16,11 +16,11 @@ export function CalendarCellOverlay({ visible }: CalendarCellOverlayProps) {
   return (
     <>
       {/* Fundo colorido aparece no hover via classe `group-hover` do pai */}
-      <div className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-100 cursor-pointer bg-[var(--accent-icon-bg)] pointer-events-none" />
+      <div className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-100 cursor-pointer bg-(--accent-icon-bg) pointer-events-none" />
       {/* Ícone "+" centralizado */}
       <Plus
         size={16}
-        className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 opacity-0 group-hover:opacity-50 transition-opacity pointer-events-none text-[var(--accent-600)]"
+        className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 opacity-0 group-hover:opacity-50 transition-opacity pointer-events-none text-(--accent-600)"
       />
     </>
   );

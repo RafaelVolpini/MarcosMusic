@@ -23,7 +23,7 @@ function inputCls(hasError: boolean, hasSuccess: boolean) {
   const base = 'w-full rounded-xl border px-3 py-2.5 pl-9 pr-9 text-sm outline-none transition';
   if (hasError)   return `${base} border-rose-400 focus:border-rose-400 focus:ring-2 focus:ring-rose-300/25`;
   if (hasSuccess) return `${base} border-emerald-400 focus:border-emerald-400 focus:ring-2 focus:ring-emerald-300/25`;
-  return `${base} focus:border-transparent focus:ring-2 focus:ring-[var(--accent-500)]/20`;
+  return `${base} focus:border-transparent focus:ring-2 focus:ring-(--accent-500)/20`;
 }
 
 // ─── Componente de campo com indicadores visuais ──────────────────────────────
@@ -289,8 +289,8 @@ export function LoginPage({ onLoginSuccess }: LoginPageProps) {
                     <div
                       className={`w-4 h-4 rounded border-2 flex items-center justify-center transition-all ${
                         rememberMe
-                          ? 'border-[var(--accent-500)] bg-[var(--accent-500)]'
-                          : 'border-[var(--border)] bg-[var(--surface)]'
+                          ? 'border-(--accent-500) bg-(--accent-500)'
+                          : 'border-(--border) bg-(--surface)'
                       }`}
                     >
                       {rememberMe && (

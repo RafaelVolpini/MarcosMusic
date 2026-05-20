@@ -178,33 +178,33 @@ export function CalendarView({
   return (
     <div className="flex flex-col h-full">
       {/* Toolbar */}
-      <div className="flex items-center gap-3 px-6 py-4 border-b border-[var(--border)] bg-[var(--surface)] shrink-0 sticky top-0 z-[50]">
+      <div className="flex items-center gap-3 px-6 py-4 border-b border-(--border) bg-(--surface) shrink-0 sticky top-0 z-50">
         <div className="flex items-center gap-1">
           <button
             onClick={() => navigate(-1)}
-            className="w-8 h-8 flex items-center justify-center rounded-lg text-[var(--muted)] hover:bg-[var(--hover-bg)] transition-colors"
+            className="w-8 h-8 flex items-center justify-center rounded-lg text-(--muted) hover:bg-(--hover-bg) transition-colors"
           >
             <ChevronLeft size={16} />
           </button>
           <button
             onClick={goToday}
-            className="px-3 h-8 text-xs font-semibold text-[var(--accent-600)] hover:bg-[var(--accent-icon-bg)] rounded-lg transition-colors"
+            className="px-3 h-8 text-xs font-semibold text-(--accent-600) hover:bg-(--accent-icon-bg) rounded-lg transition-colors"
           >
             {t('calendar.today')}
           </button>
           <button
             onClick={() => navigate(1)}
-            className="w-8 h-8 flex items-center justify-center rounded-lg text-[var(--muted)] hover:bg-[var(--hover-bg)] transition-colors"
+            className="w-8 h-8 flex items-center justify-center rounded-lg text-(--muted) hover:bg-(--hover-bg) transition-colors"
           >
             <ChevronRight size={16} />
           </button>
         </div>
 
-        <h2 className="text-sm font-bold text-[var(--heading)] capitalize flex-1">{headerLabel}</h2>
+        <h2 className="text-sm font-bold text-(--heading) capitalize flex-1">{headerLabel}</h2>
 
         {/* View toggle */}
-        <div className="hidden lg:flex items-center gap-3 ml-1 text-[11px] text-[var(--muted)]">
-            <span className="inline-flex items-center gap-1 text-[var(--muted)] italic">
+        <div className="hidden lg:flex items-center gap-3 ml-1 text-[11px] text-(--muted)">
+            <span className="inline-flex items-center gap-1 text-(--muted) italic">
               <MousePointerClick size={11} />
               {t('calendar.clickHint')}
             </span>
@@ -215,20 +215,20 @@ export function CalendarView({
             <button
               onClick={onSyncCalendar}
               disabled={syncingCalendar}
-              className="w-7 h-7 flex items-center justify-center rounded-lg text-[var(--muted)] hover:text-[var(--accent-600)] hover:bg-[var(--accent-icon-bg)] transition-colors disabled:opacity-40"
+              className="w-7 h-7 flex items-center justify-center rounded-lg text-(--muted) hover:text-(--accent-600) hover:bg-(--accent-icon-bg) transition-colors disabled:opacity-40"
             >
               <RefreshCw size={13} className={syncingCalendar ? 'animate-spin' : ''} />
             </button>
             {/* Google sync tooltip popup */}
             <div className="pointer-events-none absolute right-0 top-9 z-50 opacity-0 group-hover:opacity-100 transition-opacity duration-150">
-              <div className="flex items-center gap-2 px-3 py-2 rounded-xl shadow-lg border border-[var(--border)] bg-[var(--dropdown-bg)] whitespace-nowrap">
+              <div className="flex items-center gap-2 px-3 py-2 rounded-xl shadow-lg border border-(--border) bg-(--dropdown-bg) whitespace-nowrap">
                 <span
                   className="w-5 h-5 rounded-md flex items-center justify-center text-white font-bold text-[11px] shrink-0"
                   style={{ backgroundColor: '#4285F4' }}
                 >
                   G
                 </span>
-                <span className="text-xs font-medium text-[var(--text)]">
+                <span className="text-xs font-medium text-(--text)">
                   {syncingCalendar
                     ? t('calendar.syncing')
                     : getGoogleConnectedFlag()
@@ -237,12 +237,12 @@ export function CalendarView({
                 </span>
               </div>
               {/* arrow */}
-              <div className="absolute -top-1.5 right-2.5 w-3 h-3 rotate-45 bg-[var(--dropdown-bg)] border-l border-t border-[var(--border)]" />
+              <div className="absolute -top-1.5 right-2.5 w-3 h-3 rotate-45 bg-(--dropdown-bg) border-l border-t border-(--border)" />
             </div>
           </div>
         )}
 
-        <div className="flex items-center bg-[var(--surface-soft)] border border-[var(--border)] rounded-xl p-0.5">
+        <div className="flex items-center bg-(--surface-soft) border border-(--border) rounded-xl p-0.5">
           {(['week', 'day'] as CalendarView[]).map(v => (
             <button
               key={v}
@@ -250,8 +250,8 @@ export function CalendarView({
               className={cn(
                 'px-3 h-7 text-xs font-semibold rounded-lg transition-all',
                 view === v
-                  ? 'bg-[var(--surface)] text-[var(--heading)] shadow-sm'
-                  : 'text-[var(--muted)] hover:text-[var(--text)]',
+                  ? 'bg-(--surface) text-(--heading) shadow-sm'
+                  : 'text-(--muted) hover:text-(--text)',
               )}
             >
               {v === 'week' ? t('calendar.week') : t('calendar.day')}
@@ -261,24 +261,24 @@ export function CalendarView({
       </div>
 
       {/* Calendar grid */}
-      <div className="flex-1 overflow-auto bg-[var(--surface)] isolate">
+      <div className="flex-1 overflow-auto bg-(--surface) isolate">
         <div className="grid h-full" style={{ gridTemplateColumns: `56px repeat(${displayDays.length}, 1fr)` }}>
           {/* Day headers */}
-          <div className="border-b border-[var(--border)] sticky top-0 z-[45] bg-[var(--surface)]" />
+          <div className="border-b border-(--border) sticky top-0 z-45 bg-(--surface)" />
           {displayDays.map((day, i) => {
             const today = isToday(day);
             return (
               <div
                 key={i}
-                className="border-b border-l border-[var(--border)] sticky top-0 z-[45] bg-[var(--surface)] px-2 py-2 text-center"
+                className="border-b border-l border-(--border) sticky top-0 z-45 bg-(--surface) px-2 py-2 text-center"
               >
-                <p className={cn('text-xs font-semibold', today ? 'text-[var(--accent-600)]' : 'text-[var(--muted)]')}>
+                <p className={cn('text-xs font-semibold', today ? 'text-(--accent-600)' : 'text-(--muted)')}>
                   {DAY_LABELS[day.getDay()]}
                 </p>
                 <div
                   className={cn(
                     'w-8 h-8 rounded-full flex items-center justify-center mx-auto mt-0.5 text-sm font-bold',
-                    today ? 'text-white' : 'text-[var(--heading)]',
+                    today ? 'text-white' : 'text-(--heading)',
                   )}
                   style={today ? { background: 'linear-gradient(135deg, var(--accent-gradient-from), var(--accent-gradient-to))' } : {}}
                 >
@@ -292,8 +292,8 @@ export function CalendarView({
           {HOURS.map(hour => (
             <div key={hour} className="contents">
               {/* Hour label */}
-              <div className="pr-2 pt-1 text-right border-r border-[var(--border)] select-none" style={{ height: CELL_HEIGHT }}>
-                <span className="text-xs text-[var(--muted)] font-medium">{formatHourLabel(hour, lang)}</span>
+              <div className="pr-2 pt-1 text-right border-r border-(--border) select-none" style={{ height: CELL_HEIGHT }}>
+                <span className="text-xs text-(--muted) font-medium">{formatHourLabel(hour, lang)}</span>
               </div>
 
               {/* Day columns */}
@@ -331,7 +331,7 @@ export function CalendarView({
                   <div
                     key={`cell-${hour}-${di}`}
                     className={cn(
-                      'relative border-b border-l border-[var(--border)] group',
+                      'relative border-b border-l border-(--border) group',
                       isPast || unavailable ? 'cursor-not-allowed' : hasAnyLesson ? 'cursor-default' : 'cursor-pointer',
                     )}
                     style={{ height: CELL_HEIGHT }}
@@ -345,7 +345,7 @@ export function CalendarView({
                     {/* Passado: listras sutis usando --text (funciona em claro e escuro) */}
                     {isPast && (
                       <div
-                        className="absolute inset-0 pointer-events-none z-[1]"
+                        className="absolute inset-0 pointer-events-none z-1"
                         style={{
                           background: 'repeating-linear-gradient(135deg, color-mix(in srgb, var(--text) 3%, transparent) 0px, color-mix(in srgb, var(--text) 3%, transparent) 5px, color-mix(in srgb, var(--text) 6%, transparent) 5px, color-mix(in srgb, var(--text) 6%, transparent) 6px)',
                         }}
@@ -558,22 +558,22 @@ function LessonBlock({ lesson, hourStart, isUnavailable, isPast, isInProgress, b
     >
       <div className="absolute left-0 inset-y-0 w-1" style={{ backgroundColor: 'var(--accent-500)' }} />
 
-      <p className="text-[11px] font-semibold text-[var(--heading)] truncate leading-tight pl-1">
+      <p className="text-[11px] font-semibold text-(--heading) truncate leading-tight pl-1">
         {lesson.studentName}
       </p>
       {height > 32 && (
-        <p className="text-[10px] text-[var(--muted)] truncate mt-0.5 pl-1">
+        <p className="text-[10px] text-(--muted) truncate mt-0.5 pl-1">
           {timeRange}
         </p>
       )}
       {height > 44 && (
-        <p className="text-[10px] text-[var(--muted)] truncate mt-0.5 pl-1">
+        <p className="text-[10px] text-(--muted) truncate mt-0.5 pl-1">
           {lesson.instrument}
         </p>
       )}
       {isOnline && !isInProgress && (
         <span className="absolute top-1 right-1">
-          <span className="text-[9px] bg-[var(--accent-icon-bg)] text-[var(--accent-600)] font-semibold px-1 rounded">ONLINE</span>
+          <span className="text-[9px] bg-(--accent-icon-bg) text-(--accent-600) font-semibold px-1 rounded">ONLINE</span>
         </span>
       )}
       {isInProgress && (
@@ -650,7 +650,7 @@ function ReservedBlock({ lesson, hourStart }: ReservedBlockProps) {
       <div className="relative flex items-center gap-1 px-1.5 h-full">
         <span className="w-2 h-2 rounded-full shrink-0 bg-rose-400" />
         {height > 28 && (
-          <span className="text-[10px] font-semibold text-[var(--muted)] truncate">{t('calendar.reserved')}</span>
+          <span className="text-[10px] font-semibold text-(--muted) truncate">{t('calendar.reserved')}</span>
         )}
       </div>
     </div>

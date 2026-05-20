@@ -291,8 +291,8 @@ export function SettingsPage({ user, onProfileUpdate, initialSection }: Settings
     }
   };
 
-  const inputCls = 'w-full border border-[var(--input-border)] bg-[var(--input-bg)] rounded-xl px-3 py-2 text-sm text-[var(--input-text)] focus:outline-none focus:ring-2 focus:ring-[var(--accent-100)]';
-  const labelCls = 'text-xs font-medium text-[var(--muted)] mb-1.5 block';
+  const inputCls = 'w-full border border-(--input-border) bg-(--input-bg) rounded-xl px-3 py-2 text-sm text-(--input-text) focus:outline-none focus:ring-2 focus:ring-(--accent-100)';
+  const labelCls = 'text-xs font-medium text-(--muted) mb-1.5 block';
 
   const profileInputStyle = { borderColor: 'var(--border)', color: 'var(--text)', backgroundColor: 'var(--input-bg, var(--surface))' };
 
@@ -309,11 +309,11 @@ export function SettingsPage({ user, onProfileUpdate, initialSection }: Settings
                 className={cn(
                   'flex items-center gap-3 w-full px-3 h-9 rounded-xl text-sm transition-all mb-0.5',
                   activeSection === s.id
-                    ? 'font-medium text-[var(--accent-700)] bg-[var(--accent-50)]'
-                    : 'text-[var(--muted)] hover:bg-[var(--hover-bg)]',
+                    ? 'font-medium text-(--accent-700) bg-(--accent-50)'
+                    : 'text-(--muted) hover:bg-(--hover-bg)',
                 )}
               >
-                <span className={activeSection === s.id ? 'text-[var(--accent-600)]' : 'text-[var(--muted)]'}>{s.icon}</span>
+                <span className={activeSection === s.id ? 'text-(--accent-600)' : 'text-(--muted)'}>{s.icon}</span>
                 {t(s.labelKey)}
               </button>
             ))}
@@ -330,7 +330,7 @@ export function SettingsPage({ user, onProfileUpdate, initialSection }: Settings
           >
             {activeSection === 'profile' && user && (
               <Card className="p-6 app-surface">
-                <h2 className="text-sm font-semibold text-[var(--heading)] mb-5">{t('settings.sections.profile')}</h2>
+                <h2 className="text-sm font-semibold text-(--heading) mb-5">{t('settings.sections.profile')}</h2>
                 <form onSubmit={handleProfileSave} className="space-y-5">
                   {/* Avatar + progresso */}
                   <div className="flex items-center gap-4 p-4 rounded-2xl" style={{ backgroundColor: 'var(--surface-soft)', border: '1px solid var(--border)' }}>
@@ -343,16 +343,16 @@ export function SettingsPage({ user, onProfileUpdate, initialSection }: Settings
                         : profileInitials}
                     </div>
                     <div className="flex-1 min-w-0">
-                      <p className="text-sm font-bold truncate text-[var(--heading)]">
+                      <p className="text-sm font-bold truncate text-(--heading)">
                         {profileNome.trim() || 'Seu nome'}
                       </p>
-                      <p className="text-xs text-[var(--muted)] truncate mt-0.5">{user.email}</p>                    <span
+                      <p className="text-xs text-(--muted) truncate mt-0.5">{user.email}</p>                    <span
                       className="mt-1 inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-semibold"
                       style={{ background: 'var(--accent-50)', color: 'var(--accent-700)', border: '1px solid var(--accent-100)' }}
                     >
                       {user.role === 'teacher' ? t('settings.profile.roleTeacher') : t('settings.profile.roleStudent')}
                     </span>                      <div className="mt-2 flex items-center gap-2">
-                        <div className="flex-1 h-1.5 rounded-full overflow-hidden bg-[var(--border)]">
+                        <div className="flex-1 h-1.5 rounded-full overflow-hidden bg-(--border)">
                           <motion.div
                             className="h-full rounded-full"
                             style={{ background: 'linear-gradient(90deg, var(--accent-gradient-from), var(--accent-gradient-to))' }}
@@ -361,7 +361,7 @@ export function SettingsPage({ user, onProfileUpdate, initialSection }: Settings
                             transition={{ duration: 0.4 }}
                           />
                         </div>
-                        <span className="text-[11px] font-semibold text-[var(--accent-600)] shrink-0">{profilePct}%</span>
+                        <span className="text-[11px] font-semibold text-(--accent-600) shrink-0">{profilePct}%</span>
                       </div>
                     </div>
                   </div>
@@ -370,7 +370,7 @@ export function SettingsPage({ user, onProfileUpdate, initialSection }: Settings
                   <div>
                     <label className={labelCls}>{t('profileSetup.emailLabel')}</label>
                     <div className="relative">
-                      <Mail size={14} className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-[var(--muted)]" />
+                      <Mail size={14} className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-(--muted)" />
                       <input
                         className="w-full border rounded-xl pl-9 pr-3 py-2 text-sm opacity-60 cursor-not-allowed"
                         style={profileInputStyle}
@@ -379,16 +379,16 @@ export function SettingsPage({ user, onProfileUpdate, initialSection }: Settings
                         tabIndex={-1}
                       />
                     </div>
-                    <p className="mt-1 text-[11px] text-[var(--muted)]">{t('profileSetup.emailReadonly')}</p>
+                    <p className="mt-1 text-[11px] text-(--muted)">{t('profileSetup.emailReadonly')}</p>
                   </div>
 
                   {/* Nome */}
                   <div>
                     <label className={labelCls}>{t('profileSetup.nameLabel')} {user.role === 'teacher' ? '*' : ''}</label>
                     <div className="relative">
-                      <User size={14} className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-[var(--muted)]" />
+                      <User size={14} className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-(--muted)" />
                       <input
-                        className="w-full border rounded-xl pl-9 pr-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[var(--accent-100)]"
+                        className="w-full border rounded-xl pl-9 pr-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-(--accent-100)"
                         style={{
                           ...profileInputStyle,
                           ...(user.role !== 'teacher' ? { opacity: 0.6, cursor: 'not-allowed' } : {}),
@@ -400,7 +400,7 @@ export function SettingsPage({ user, onProfileUpdate, initialSection }: Settings
                       />
                     </div>
                     {user.role !== 'teacher' && (
-                      <p className="mt-1 text-[11px] text-[var(--muted)]">{t('settings.profile.nameReadonlyHint')}</p>
+                      <p className="mt-1 text-[11px] text-(--muted)">{t('settings.profile.nameReadonlyHint')}</p>
                     )}
                   </div>
 
@@ -412,7 +412,7 @@ export function SettingsPage({ user, onProfileUpdate, initialSection }: Settings
                         style={{ color: profileTelefone && isPhoneValid(profileTelefone) ? 'var(--accent-500)' : 'var(--muted)' }}
                       />
                       <input
-                        className="w-full border rounded-xl pl-9 pr-9 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[var(--accent-100)]"
+                        className="w-full border rounded-xl pl-9 pr-9 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-(--accent-100)"
                         style={{
                           ...profileInputStyle,
                           borderColor: profileTelefone && !isPhoneValid(profileTelefone) ? '#f87171'
@@ -477,7 +477,7 @@ export function SettingsPage({ user, onProfileUpdate, initialSection }: Settings
 
             {activeSection === 'general' && (
               <Card className="p-6 space-y-5 app-surface">
-                <h2 className="text-sm font-semibold text-[var(--heading)]">{t('settings.sections.general')}</h2>
+                <h2 className="text-sm font-semibold text-(--heading)">{t('settings.sections.general')}</h2>
                 <div>
                   <label className={labelCls}>Nome da escola</label>
                   <input value={schoolName} onChange={e => setSchoolName(e.target.value)} className={inputCls} />
@@ -510,17 +510,17 @@ export function SettingsPage({ user, onProfileUpdate, initialSection }: Settings
 
             {activeSection === 'notifications' && (
               <Card className="p-6 app-surface">
-                <h2 className="text-sm font-semibold text-[var(--heading)] mb-5">{t('settings.sections.notifications')}</h2>
+                <h2 className="text-sm font-semibold text-(--heading) mb-5">{t('settings.sections.notifications')}</h2>
                 <div className="space-y-4">
                   {[
                     { label: 'Aulas agendadas', desc: 'Receber alertas sobre aulas', value: notifLessons, set: setNotifLessons },
                     { label: 'Pagamentos', desc: 'Cobranças vencendo e em atraso', value: notifPayments, set: setNotifPayments },
                     { label: 'Mensagens', desc: 'Mensagens de alunos e professores', value: notifMessages, set: setNotifMessages },
                   ].map(item => (
-                    <div key={item.label} className="flex items-center justify-between py-3 border-b border-[var(--border)] last:border-0">
+                    <div key={item.label} className="flex items-center justify-between py-3 border-b border-(--border) last:border-0">
                       <div>
-                        <p className="text-sm font-medium text-[var(--heading)]">{item.label}</p>
-                        <p className="text-xs text-[var(--muted)]">{item.desc}</p>
+                        <p className="text-sm font-medium text-(--heading)">{item.label}</p>
+                        <p className="text-xs text-(--muted)">{item.desc}</p>
                       </div>
                       <Toggle value={item.value} onChange={item.set} />
                     </div>
@@ -535,13 +535,13 @@ export function SettingsPage({ user, onProfileUpdate, initialSection }: Settings
                 <Card className="p-6 app-surface">
                   <div className="flex items-center justify-between mb-4">
                     <div>
-                      <h2 className="text-sm font-semibold text-[var(--heading)]">Temas</h2>
-                      <p className="text-xs text-[var(--muted)] mt-0.5">Escolha um tema pronto combina cor de destaque e fundo automaticamente</p>
+                      <h2 className="text-sm font-semibold text-(--heading)">Temas</h2>
+                      <p className="text-xs text-(--muted) mt-0.5">Escolha um tema pronto combina cor de destaque e fundo automaticamente</p>
                     </div>
                     <button
                       onClick={resetSettings}
                       title="Restaurar padrão"
-                      className="flex items-center gap-1.5 text-xs text-[var(--muted)] hover:text-[var(--text)] px-2.5 h-7 rounded-lg hover:bg-[var(--hover-bg)] transition-all"
+                      className="flex items-center gap-1.5 text-xs text-(--muted) hover:text-(--text) px-2.5 h-7 rounded-lg hover:bg-(--hover-bg) transition-all"
                     >
                       <RotateCcw size={12} />
                       Restaurar
@@ -576,8 +576,8 @@ export function SettingsPage({ user, onProfileUpdate, initialSection }: Settings
                           className={cn(
                             'py-2 text-xs font-medium rounded-xl border transition-all',
                             settings.mode === t.id
-                              ? 'text-white border-transparent bg-[var(--accent-600)]'
-                              : 'bg-[var(--surface)] text-[var(--text)] border-[var(--border)] hover:border-[var(--accent-500)]',
+                              ? 'text-white border-transparent bg-(--accent-600)'
+                              : 'bg-(--surface) text-(--text) border-(--border) hover:border-(--accent-500)',
                           )}
                         >
                           {t.label}
@@ -591,17 +591,17 @@ export function SettingsPage({ user, onProfileUpdate, initialSection }: Settings
                 <Card className="app-surface overflow-hidden">
                   <button
                     onClick={() => setShowAdvanced(v => !v)}
-                    className="flex items-center justify-between w-full px-6 py-4 text-left hover:bg-[var(--hover-bg)] transition-colors"
+                    className="flex items-center justify-between w-full px-6 py-4 text-left hover:bg-(--hover-bg) transition-colors"
                   >
                     <div className="flex items-center gap-2">
-                      <Sliders size={14} className="text-[var(--accent-600)]" />
-                      <span className="text-sm font-semibold text-[var(--heading)]">Personalizar</span>
-                      <span className="text-xs text-[var(--muted)]">Controles individuais</span>
+                      <Sliders size={14} className="text-(--accent-600)" />
+                      <span className="text-sm font-semibold text-(--heading)">Personalizar</span>
+                      <span className="text-xs text-(--muted)">Controles individuais</span>
                     </div>
                     <motion.span
                       animate={{ rotate: showAdvanced ? 180 : 0 }}
                       transition={{ duration: 0.2 }}
-                      className="text-[var(--muted)] text-xs"
+                      className="text-(--muted) text-xs"
                     >
                       ▾
                     </motion.span>
@@ -613,7 +613,7 @@ export function SettingsPage({ user, onProfileUpdate, initialSection }: Settings
                     transition={{ duration: 0.25 }}
                     style={{ overflow: 'hidden' }}
                   >
-                    <div className="px-6 pb-6 space-y-5 border-t border-[var(--border)]">
+                    <div className="px-6 pb-6 space-y-5 border-t border-(--border)">
                       {/* Accent colors */}
                       <div className="pt-5">
                         <label className={labelCls}>Cor de destaque</label>
@@ -625,7 +625,7 @@ export function SettingsPage({ user, onProfileUpdate, initialSection }: Settings
                               title={c.name}
                               className={cn(
                                 'w-9 h-9 rounded-full flex items-center justify-center transition-all hover:scale-110',
-                                settings.preset === c.value && 'ring-2 ring-offset-2 ring-[var(--accent-600)] scale-110',
+                                settings.preset === c.value && 'ring-2 ring-offset-2 ring-(--accent-600) scale-110',
                               )}
                               style={{ background: c.swatch }}
                             >
@@ -647,15 +647,15 @@ export function SettingsPage({ user, onProfileUpdate, initialSection }: Settings
                               className={cn(
                                 'flex flex-col items-center gap-1.5 p-1.5 rounded-xl border-2 transition-all',
                                 settings.bgColor === bg.value
-                                  ? 'border-[var(--accent-600)] scale-105'
-                                  : 'border-[var(--border)] hover:border-[var(--accent-500)]',
+                                  ? 'border-(--accent-600) scale-105'
+                                  : 'border-(--border) hover:border-(--accent-500)',
                               )}
                             >
-                              <div className="w-8 h-8 rounded-lg overflow-hidden shadow-inner border border-[var(--border)]">
+                              <div className="w-8 h-8 rounded-lg overflow-hidden shadow-inner border border-(--border)">
                                 <div className="w-full h-1/2" style={{ backgroundColor: bg.light }} />
                                 <div className="w-full h-1/2" style={{ backgroundColor: bg.dark }} />
                               </div>
-                              <span className="text-[10px] font-medium text-[var(--muted)]">{bg.name}</span>
+                              <span className="text-[10px] font-medium text-(--muted)">{bg.name}</span>
                             </button>
                           ))}
                         </div>
@@ -675,8 +675,8 @@ export function SettingsPage({ user, onProfileUpdate, initialSection }: Settings
                               className={cn(
                                 'py-2 text-xs font-medium rounded-xl border transition-all',
                                 settings.density === d.id
-                                  ? 'text-white border-transparent bg-[var(--accent-600)]'
-                                  : 'bg-[var(--surface)] text-[var(--text)] border-[var(--border)] hover:border-[var(--accent-500)]',
+                                  ? 'text-white border-transparent bg-(--accent-600)'
+                                  : 'bg-(--surface) text-(--text) border-(--border) hover:border-(--accent-500)',
                               )}
                             >
                               {d.label}
@@ -700,8 +700,8 @@ export function SettingsPage({ user, onProfileUpdate, initialSection }: Settings
                               className={cn(
                                 'py-2 text-xs font-medium rounded-xl border transition-all',
                                 settings.surface === s.id
-                                  ? 'text-white border-transparent bg-[var(--accent-600)]'
-                                  : 'bg-[var(--surface)] text-[var(--text)] border-[var(--border)] hover:border-[var(--accent-500)]',
+                                  ? 'text-white border-transparent bg-(--accent-600)'
+                                  : 'bg-(--surface) text-(--text) border-(--border) hover:border-(--accent-500)',
                               )}
                             >
                               {s.label}
@@ -726,8 +726,8 @@ export function SettingsPage({ user, onProfileUpdate, initialSection }: Settings
                                 'py-2 text-xs font-medium border transition-all',
                                 r.preview,
                                 settings.radius === r.id
-                                  ? 'text-white border-transparent bg-[var(--accent-600)]'
-                                  : 'bg-[var(--surface)] text-[var(--text)] border-[var(--border)] hover:border-[var(--accent-500)]',
+                                  ? 'text-white border-transparent bg-(--accent-600)'
+                                  : 'bg-(--surface) text-(--text) border-(--border) hover:border-(--accent-500)',
                               )}
                             >
                               {r.label}
@@ -737,8 +737,8 @@ export function SettingsPage({ user, onProfileUpdate, initialSection }: Settings
                       </div>
 
                       {/* Quick preview */}
-                      <div className="p-4 rounded-xl border border-[var(--border)] bg-[var(--surface-soft)]">
-                        <p className="text-xs font-semibold text-[var(--heading)] mb-3">Preview</p>
+                      <div className="p-4 rounded-xl border border-(--border) bg-(--surface-soft)">
+                        <p className="text-xs font-semibold text-(--heading) mb-3">Preview</p>
                         <div className="flex items-center gap-2 flex-wrap">
                           <button
                             className="px-3 h-8 text-xs font-semibold rounded-lg text-white"
@@ -746,14 +746,14 @@ export function SettingsPage({ user, onProfileUpdate, initialSection }: Settings
                           >
                             Primário
                           </button>
-                          <button className="px-3 h-8 text-xs font-semibold rounded-lg border border-[var(--border)] bg-[var(--surface)] text-[var(--text)]">
+                          <button className="px-3 h-8 text-xs font-semibold rounded-lg border border-(--border) bg-(--surface) text-(--text)">
                             Secundário
                           </button>
                           <span className="text-xs px-2.5 h-6 rounded-full flex items-center font-medium"
                             style={{ backgroundColor: 'var(--accent-100)', color: 'var(--accent-700)' }}>
                             Badge
                           </span>
-                          <span className="text-xs text-[var(--muted)]">Texto muted</span>
+                          <span className="text-xs text-(--muted)">Texto muted</span>
                         </div>
                       </div>
                     </div>
@@ -764,7 +764,7 @@ export function SettingsPage({ user, onProfileUpdate, initialSection }: Settings
 
             {activeSection === 'integrations' && (
               <Card className="p-6 app-surface">
-                <h2 className="text-sm font-semibold text-[var(--heading)] mb-5">{t('settings.sections.integrations')}</h2>
+                <h2 className="text-sm font-semibold text-(--heading) mb-5">{t('settings.sections.integrations')}</h2>
                 {googleError && (
                   <div className="mb-4 px-4 py-2.5 rounded-xl bg-rose-50 border border-rose-200 text-xs text-rose-600">
                     ⚠ {googleError}
@@ -772,13 +772,13 @@ export function SettingsPage({ user, onProfileUpdate, initialSection }: Settings
                 )}
                 <div className="space-y-3">
                   {/* Google Calendar funcional */}
-                  <div className="flex items-center gap-4 p-4 border border-[var(--border)] rounded-2xl hover:border-[var(--accent-500)] transition-colors">
+                  <div className="flex items-center gap-4 p-4 border border-(--border) rounded-2xl hover:border-(--accent-500) transition-colors">
                     <div className="w-10 h-10 rounded-xl flex items-center justify-center text-white font-bold text-sm" style={{ backgroundColor: '#0F9D58' }}>
                       G
                     </div>
                     <div className="flex-1">
-                      <p className="text-sm font-medium text-[var(--heading)]">Google Calendar</p>
-                      <p className="text-xs text-[var(--muted)]">
+                      <p className="text-sm font-medium text-(--heading)">Google Calendar</p>
+                      <p className="text-xs text-(--muted)">
                         {googleConnected ? 'Conta conectada  aulas sincronizadas automaticamente ao iniciar' : 'Sincronizar agenda com Google Calendar'}
                       </p>
                     </div>
@@ -796,15 +796,15 @@ export function SettingsPage({ user, onProfileUpdate, initialSection }: Settings
 
                   {/* Auto-sync toggle  só aparece quando conectado */}
                   {googleConnected && (
-                    <div className="flex items-center justify-between px-4 py-3 rounded-2xl border border-[var(--border)] bg-[var(--surface-soft)]">
+                    <div className="flex items-center justify-between px-4 py-3 rounded-2xl border border-(--border) bg-(--surface-soft)">
                       <div>
-                        <p className="text-sm font-medium text-[var(--heading)]">Sincronização automática</p>
-                        <p className="text-xs text-[var(--muted)]">Sincroniza com o Google Calendar ao abrir o sistema</p>
+                        <p className="text-sm font-medium text-(--heading)">Sincronização automática</p>
+                        <p className="text-xs text-(--muted)">Sincroniza com o Google Calendar ao abrir o sistema</p>
                       </div>
                       <button
                         onClick={() => setAutoSync(!autoSync)}
                         aria-label={autoSync ? 'Desativar sincronização automática' : 'Ativar sincronização automática'}
-                        className="relative w-11 h-6 rounded-full transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-[var(--accent-500)] focus:ring-offset-2"
+                        className="relative w-11 h-6 rounded-full transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-(--accent-500) focus:ring-offset-2"
                         style={{ backgroundColor: autoSync ? 'var(--accent-600)' : 'var(--border)' }}
                       >
                         <span
@@ -821,7 +821,7 @@ export function SettingsPage({ user, onProfileUpdate, initialSection }: Settings
                   ].map(integration => (
                     <div
                       key={integration.name}
-                      className="flex items-center gap-4 p-4 border border-[var(--border)] rounded-2xl hover:border-[var(--accent-500)] transition-colors"
+                      className="flex items-center gap-4 p-4 border border-(--border) rounded-2xl hover:border-(--accent-500) transition-colors"
                     >
                       <div
                         className="w-10 h-10 rounded-xl flex items-center justify-center text-white font-bold text-sm"
@@ -830,8 +830,8 @@ export function SettingsPage({ user, onProfileUpdate, initialSection }: Settings
                         {integration.name[0]}
                       </div>
                       <div className="flex-1">
-                        <p className="text-sm font-medium text-[var(--heading)]">{integration.name}</p>
-                        <p className="text-xs text-[var(--muted)]">{integration.desc}</p>
+                        <p className="text-sm font-medium text-(--heading)">{integration.name}</p>
+                        <p className="text-xs text-(--muted)">{integration.desc}</p>
                       </div>
                       <Button size="sm" variant={integration.connected ? 'secondary' : 'primary'}>
                         {integration.connected ? 'Desconectar' : 'Conectar'}
@@ -864,8 +864,8 @@ function BundleCard({ bundle, active, activeMode, onClick }: BundleCardProps) {
       className={cn(
         'relative rounded-2xl overflow-hidden border-2 transition-all text-left w-full group',
         active
-          ? 'border-[var(--accent-600)] shadow-lg'
-          : 'border-[var(--border)] hover:border-[var(--accent-500)] hover:shadow-md',
+          ? 'border-(--accent-600) shadow-lg'
+          : 'border-(--border) hover:border-(--accent-500) hover:shadow-md',
       )}
     >
       {/* Mini UI preview */}
@@ -916,9 +916,9 @@ function BundleCard({ bundle, active, activeMode, onClick }: BundleCardProps) {
       </div>
 
       {/* Label area */}
-      <div className="px-2.5 py-2 bg-[var(--surface)] border-t border-[var(--border)]">
-        <p className="text-[11px] font-semibold text-[var(--heading)] leading-tight">{bundle.label}</p>
-        <p className="text-[9px] text-[var(--muted)] leading-tight mt-0.5 truncate">{bundle.description}</p>
+      <div className="px-2.5 py-2 bg-(--surface) border-t border-(--border)">
+        <p className="text-[11px] font-semibold text-(--heading) leading-tight">{bundle.label}</p>
+        <p className="text-[9px] text-(--muted) leading-tight mt-0.5 truncate">{bundle.description}</p>
       </div>
 
       {/* Active checkmark */}
@@ -942,7 +942,7 @@ function Toggle({ value, onChange }: { value: boolean; onChange: (v: boolean) =>
       onClick={() => onChange(!value)}
       className={cn(
         'relative w-10 h-6 rounded-full transition-colors',
-        value ? 'bg-[var(--accent-600)]' : 'bg-[var(--surface-soft)]',
+        value ? 'bg-(--accent-600)' : 'bg-(--surface-soft)',
       )}
     >
       <motion.div

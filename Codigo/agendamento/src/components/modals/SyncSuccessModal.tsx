@@ -12,7 +12,7 @@ export function SyncSuccessModal({ isOpen, onClose, count }: SyncSuccessModalPro
   return (
     <AnimatePresence>
       {isOpen && (
-        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
+        <div className="fixed inset-0 z-100 flex items-center justify-center p-4">
           {/* Backdrop */}
           <motion.div
             initial={{ opacity: 0 }}
@@ -27,7 +27,7 @@ export function SyncSuccessModal({ isOpen, onClose, count }: SyncSuccessModalPro
             initial={{ opacity: 0, scale: 0.9, y: 20 }}
             animate={{ opacity: 1, scale: 1, y: 0 }}
             exit={{ opacity: 0, scale: 0.9, y: 20 }}
-            className="relative w-full max-w-sm overflow-hidden bg-[var(--surface)] rounded-[2rem] shadow-2xl border border-[var(--border)]"
+            className="relative w-full max-w-sm overflow-hidden bg-(--surface) rounded-[2rem] shadow-2xl border border-(--border)"
           >
             {/* Top Decoration */}
             <div className="absolute top-0 left-0 w-full h-32 bg-gradient-to-br from-emerald-500/10 via-teal-500/5 to-transparent pointer-events-none" />
@@ -58,7 +58,7 @@ export function SyncSuccessModal({ isOpen, onClose, count }: SyncSuccessModalPro
                 initial={{ opacity: 0, y: 10 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: 0.2 }}
-                className="text-2xl font-bold text-[var(--heading)] mb-2"
+                className="text-2xl font-bold text-(--heading) mb-2"
               >
                 Tudo Pronto!
               </motion.h2>
@@ -67,7 +67,7 @@ export function SyncSuccessModal({ isOpen, onClose, count }: SyncSuccessModalPro
                 initial={{ opacity: 0, y: 10 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: 0.3 }}
-                className="text-[var(--muted)] text-sm leading-relaxed mb-8 px-4"
+                className="text-(--muted) text-sm leading-relaxed mb-8 px-4"
               >
                 {count > 0 
                   ? `${count} aulas foram sincronizadas com sucesso no seu Google Calendar.`

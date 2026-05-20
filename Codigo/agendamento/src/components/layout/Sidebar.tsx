@@ -58,7 +58,7 @@ export function Sidebar({ collapsed, onToggle, activePage, onNavigate, user }: S
       initial={false}
       animate={{ width: collapsed ? 80 : 260 }}
       transition={{ type: 'spring', stiffness: 300, damping: 30 }}
-      className="relative flex flex-col h-full overflow-hidden z-10 shrink-0 bg-[var(--surface)] border-r border-[var(--border)]"
+      className="relative flex flex-col h-full overflow-hidden z-10 shrink-0 bg-(--surface) border-r border-(--border)"
     >
       {/* Gradient accent line */}
       <div
@@ -80,7 +80,7 @@ export function Sidebar({ collapsed, onToggle, activePage, onNavigate, user }: S
               transition={{ duration: 0.18 }}
               className="overflow-hidden leading-none"
             >
-              <p className="font-black text-[var(--heading)] tracking-tight text-sm whitespace-nowrap">Marcos Music</p>
+              <p className="font-black text-(--heading) tracking-tight text-sm whitespace-nowrap">Marcos Music</p>
               <p className="text-[10px] font-bold uppercase tracking-widest whitespace-nowrap" style={{ color: 'var(--accent-600)' }}>Agenda</p>
             </motion.div>
           )}
@@ -103,7 +103,7 @@ export function Sidebar({ collapsed, onToggle, activePage, onNavigate, user }: S
       </nav>
 
       {/* User card & toggle */}
-      <div className="p-3 border-t border-[var(--border)]">
+      <div className="p-3 border-t border-(--border)">
         {/* Mini profile */}
         <AnimatePresence initial={false}>
           {!collapsed && (
@@ -111,7 +111,7 @@ export function Sidebar({ collapsed, onToggle, activePage, onNavigate, user }: S
               initial={{ opacity: 0, height: 0 }}
               animate={{ opacity: 1, height: 'auto' }}
               exit={{ opacity: 0, height: 0 }}
-              className="mb-3 p-3 rounded-xl bg-[var(--surface-soft)] border border-[var(--border)]"
+              className="mb-3 p-3 rounded-xl bg-(--surface-soft) border border-(--border)"
             >
               <div className="flex items-center gap-3">
                 <div
@@ -128,10 +128,10 @@ export function Sidebar({ collapsed, onToggle, activePage, onNavigate, user }: S
                 </div>
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-1.5">
-                    <p className="text-sm font-medium text-[var(--heading)] truncate">{user.name || 'Usuario'}</p>
+                    <p className="text-sm font-medium text-(--heading) truncate">{user.name || 'Usuario'}</p>
                     <Music size={11} style={{ color: 'var(--accent-600)' }} className="shrink-0" />
                   </div>
-                  <p className="text-xs text-[var(--muted)] truncate">{user.role === 'teacher' ? 'Professor' : 'Aluno'}</p>
+                  <p className="text-xs text-(--muted) truncate">{user.role === 'teacher' ? 'Professor' : 'Aluno'}</p>
                 </div>
               </div>
             </motion.div>
@@ -142,7 +142,7 @@ export function Sidebar({ collapsed, onToggle, activePage, onNavigate, user }: S
         <button
           onClick={onToggle}
           className={cn(
-            'flex items-center justify-center gap-2 w-full rounded-xl h-10 text-[var(--muted)] hover:text-[var(--text)] hover:bg-[var(--hover-bg)] transition-all duration-200',
+            'flex items-center justify-center gap-2 w-full rounded-xl h-10 text-(--muted) hover:text-(--text) hover:bg-(--hover-bg) transition-all duration-200',
             collapsed && 'w-10 mx-auto',
           )}
           title={collapsed ? 'Expandir' : 'Recolher'}
@@ -190,8 +190,8 @@ function NavButton({ item, active, collapsed, onClick }: NavButtonProps) {
         'relative flex items-center gap-3 rounded-xl transition-all duration-200 w-full text-left overflow-hidden group',
         'px-3 h-12',
         active
-          ? 'text-[var(--heading)]'
-          : 'text-[var(--muted)] hover:text-[var(--text)] hover:bg-[var(--hover-bg)]',
+          ? 'text-(--heading)'
+          : 'text-(--muted) hover:text-(--text) hover:bg-(--hover-bg)',
       )}
       style={active ? { backgroundColor: 'var(--accent-icon-bg)' } : {}}
       title={collapsed ? item.label : undefined}

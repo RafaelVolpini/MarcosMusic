@@ -18,7 +18,7 @@ export function DeleteConfirmModal({ aluno, onConfirm, onCancel, loading }: Dele
         <>
           {/* Backdrop */}
           <motion.div
-            className="fixed inset-0 bg-black/40 backdrop-blur-[2px] z-[80]"
+            className="fixed inset-0 bg-black/40 backdrop-blur-[2px] z-80"
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
@@ -27,14 +27,14 @@ export function DeleteConfirmModal({ aluno, onConfirm, onCancel, loading }: Dele
 
           {/* Modal */}
           <motion.div
-            className="fixed inset-0 z-[90] flex items-center justify-center p-4"
+            className="fixed inset-0 z-90 flex items-center justify-center p-4"
             initial={{ opacity: 0, scale: 0.92, y: 16 }}
             animate={{ opacity: 1, scale: 1, y: 0 }}
             exit={{ opacity: 0, scale: 0.92, y: 16 }}
             transition={{ type: 'spring', stiffness: 420, damping: 32 }}
           >
             <div
-              className="w-full max-w-sm bg-[var(--surface)] rounded-2xl shadow-2xl border border-[var(--border)] overflow-hidden"
+              className="w-full max-w-sm bg-(--surface) rounded-2xl shadow-2xl border border-(--border) overflow-hidden"
               onClick={e => e.stopPropagation()}
             >
               {/* Ícone animado */}
@@ -53,11 +53,11 @@ export function DeleteConfirmModal({ aluno, onConfirm, onCancel, loading }: Dele
                   </motion.div>
                 </motion.div>
 
-                <h2 className="text-base font-bold text-[var(--heading)] text-center">
+                <h2 className="text-base font-bold text-(--heading) text-center">
                   {t('modals.deleteStudent.title')}
                 </h2>
-                <p className="text-sm text-[var(--muted)] text-center mt-1.5 leading-relaxed">
-                  <span className="font-semibold text-[var(--text)]">{aluno.nome}</span>
+                <p className="text-sm text-(--muted) text-center mt-1.5 leading-relaxed">
+                  <span className="font-semibold text-(--text)">{aluno.nome}</span>
                   {' '}{t('modals.deleteStudent.permanent')}
                 </p>
 
@@ -70,11 +70,11 @@ export function DeleteConfirmModal({ aluno, onConfirm, onCancel, loading }: Dele
               </div>
 
               {/* Ações */}
-              <div className="flex gap-2 px-6 py-4 border-t border-[var(--border)]">
+              <div className="flex gap-2 px-6 py-4 border-t border-(--border)">
                 <button
                   onClick={onCancel}
                   disabled={loading}
-                  className="flex-1 h-10 rounded-xl text-sm font-medium text-[var(--muted)] hover:text-[var(--text)] hover:bg-[var(--hover-bg)] transition-colors disabled:opacity-50"
+                  className="flex-1 h-10 rounded-xl text-sm font-medium text-(--muted) hover:text-(--text) hover:bg-(--hover-bg) transition-colors disabled:opacity-50"
                 >
                   {t('modals.deleteStudent.cancel')}
                 </button>

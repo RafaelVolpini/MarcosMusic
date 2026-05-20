@@ -54,22 +54,22 @@ export function AgendarReposicaoModal({ slot, defaultDate, alunos, onClose, onCr
   const activeAlunos = alunos.filter(a => a.ativo);
 
   return (
-    <div className="fixed inset-0 z-[90] flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm">
+    <div className="fixed inset-0 z-90 flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm">
       <motion.div
         initial={{ opacity: 0, scale: 0.95, y: 10 }}
         animate={{ opacity: 1, scale: 1, y: 0 }}
         exit={{ opacity: 0, scale: 0.95, y: 10 }}
         transition={{ type: 'spring', stiffness: 400, damping: 30 }}
-        className="w-full max-w-md bg-[var(--surface)] rounded-2xl shadow-2xl border border-[var(--border)] overflow-hidden"
+        className="w-full max-w-md bg-(--surface) rounded-2xl shadow-2xl border border-(--border) overflow-hidden"
       >
-        <div className="flex items-center justify-between px-5 py-4 border-b border-[var(--border)]">
+        <div className="flex items-center justify-between px-5 py-4 border-b border-(--border)">
           <div className="flex items-center gap-2">
-            <CalendarPlus size={18} className="text-[var(--accent-600)]" />
-            <span className="font-semibold text-[var(--heading)] text-sm">
+            <CalendarPlus size={18} className="text-(--accent-600)" />
+            <span className="font-semibold text-(--heading) text-sm">
               {DAY_LABELS[slot.diaSemana] ?? slot.diaSemana} • {slot.horario}
             </span>
           </div>
-          <button onClick={onClose} className="text-[var(--muted)] hover:text-[var(--text)] transition-colors">
+          <button onClick={onClose} className="text-(--muted) hover:text-(--text) transition-colors">
             <X size={16} />
           </button>
         </div>
@@ -77,22 +77,22 @@ export function AgendarReposicaoModal({ slot, defaultDate, alunos, onClose, onCr
         <div className="p-5 space-y-4">
           {/* Data */}
           <div>
-            <label className="block text-xs font-medium text-[var(--muted)] mb-1">{t('modals.reposicao.dateLabel')}</label>
+            <label className="block text-xs font-medium text-(--muted) mb-1">{t('modals.reposicao.dateLabel')}</label>
             <input
               type="date"
               value={dataAula}
               onChange={e => setDataAula(e.target.value)}
-              className="w-full text-sm border border-[var(--input-border)] rounded-xl px-3 py-2 bg-[var(--input-bg)] text-[var(--text)] focus:outline-none focus:ring-2 focus:ring-[color-mix(in_srgb,var(--accent-500)_30%,transparent)]"
+              className="w-full text-sm border border-(--input-border) rounded-xl px-3 py-2 bg-(--input-bg) text-(--text) focus:outline-none focus:ring-2 focus:ring-[color-mix(in_srgb,var(--accent-500)_30%,transparent)]"
             />
           </div>
 
           {/* Alunos */}
           <div>
-            <label className="block text-xs font-medium text-[var(--muted)] mb-2">
+            <label className="block text-xs font-medium text-(--muted) mb-2">
               {t('modals.reposicao.studentsLabel')}{' '}
               <span className="font-normal">({t('modals.reposicao.selectedCount').replace('{n}', String(selected.size))})</span>
             </label>
-            <div className="max-h-52 overflow-y-auto space-y-1 rounded-xl border border-[var(--border)] p-2">
+            <div className="max-h-52 overflow-y-auto space-y-1 rounded-xl border border-(--border) p-2">
               {activeAlunos.map(aluno => {
                 const checked = selected.has(aluno.id);
                 return (
@@ -103,30 +103,30 @@ export function AgendarReposicaoModal({ slot, defaultDate, alunos, onClose, onCr
                     className={`w-full flex items-center gap-3 px-3 py-2 rounded-lg text-left transition-colors ${
                       checked
                         ? 'bg-[color-mix(in_srgb,var(--accent-500)_12%,var(--surface))] border border-[color-mix(in_srgb,var(--accent-500)_30%,transparent)]'
-                        : 'hover:bg-[var(--hover-bg)]'
+                        : 'hover:bg-(--hover-bg)'
                     }`}
                   >
                     <Avatar name={aluno.nome} size="sm" />
-                    <span className="flex-1 text-sm text-[var(--text)]">{aluno.nome}</span>
-                    {checked && <CheckCircle2 size={15} className="text-[var(--accent-600)] shrink-0" />}
+                    <span className="flex-1 text-sm text-(--text)">{aluno.nome}</span>
+                    {checked && <CheckCircle2 size={15} className="text-(--accent-600) shrink-0" />}
                   </button>
                 );
               })}
               {activeAlunos.length === 0 && (
-                <p className="text-xs text-[var(--muted)] text-center py-4">{t('modals.reposicao.loadingStudents')}</p>
+                <p className="text-xs text-(--muted) text-center py-4">{t('modals.reposicao.loadingStudents')}</p>
               )}
             </div>
           </div>
 
           {/* Observação */}
           <div>
-            <label className="block text-xs font-medium text-[var(--muted)] mb-1">{t('modals.reposicao.obsLabel')}</label>
+            <label className="block text-xs font-medium text-(--muted) mb-1">{t('modals.reposicao.obsLabel')}</label>
             <input
               type="text"
               value={observacao}
               onChange={e => setObservacao(e.target.value)}
               placeholder={t('modals.reposicao.obsPH')}
-              className="w-full text-sm border border-[var(--input-border)] rounded-xl px-3 py-2 bg-[var(--input-bg)] text-[var(--text)] placeholder:text-[var(--muted)] focus:outline-none focus:ring-2 focus:ring-[color-mix(in_srgb,var(--accent-500)_30%,transparent)]"
+              className="w-full text-sm border border-(--input-border) rounded-xl px-3 py-2 bg-(--input-bg) text-(--text) placeholder:text-(--muted) focus:outline-none focus:ring-2 focus:ring-[color-mix(in_srgb,var(--accent-500)_30%,transparent)]"
             />
           </div>
 

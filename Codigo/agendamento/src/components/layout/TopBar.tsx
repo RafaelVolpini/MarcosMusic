@@ -123,19 +123,19 @@ export function TopBar({ activePage, user, onLogout, onNavigate }: TopBarProps) 
   const studentAvatarBg = 'linear-gradient(135deg, var(--accent-gradient-from), var(--accent-gradient-to))';
 
   return (
-    <header className="app-surface h-16 flex items-center gap-4 px-6 border-b border-[var(--border)] shrink-0 relative z-[60]">
+    <header className="app-surface h-16 flex items-center gap-4 px-6 border-b border-(--border) shrink-0 relative z-60">
       {/* Page title */}
       <div className="flex-1">
         <div className="flex items-center gap-2">
-          <h1 className="text-xl font-bold text-[var(--heading)]">{PAGE_LABELS[activePage]}</h1>
-          <span className="hidden sm:flex items-center justify-center w-6 h-6 rounded-full bg-[var(--accent-icon-bg)] text-[var(--accent-icon-fg)]">
+          <h1 className="text-xl font-bold text-(--heading)">{PAGE_LABELS[activePage]}</h1>
+          <span className="hidden sm:flex items-center justify-center w-6 h-6 rounded-full bg-(--accent-icon-bg) text-(--accent-icon-fg)">
             <Music size={13} />
           </span>
         </div>
       </div>
 
       {/* Language toggle */}
-      <div className="flex items-center bg-[var(--surface-soft)] border border-[var(--border)] rounded-xl p-0.5">
+      <div className="flex items-center bg-(--surface-soft) border border-(--border) rounded-xl p-0.5">
         {(['pt', 'en'] as const).map((l) => (
           <button
             key={l}
@@ -143,14 +143,14 @@ export function TopBar({ activePage, user, onLogout, onNavigate }: TopBarProps) 
             title={l === 'pt' ? 'Português' : 'English'}
             className={cn(
               'relative px-2 h-7 text-xs font-semibold rounded-lg transition-colors flex items-center gap-1.5',
-              lang === l ? 'text-[var(--heading)]' : 'text-[var(--muted)] hover:text-[var(--text)]',
+              lang === l ? 'text-(--heading)' : 'text-(--muted) hover:text-(--text)',
             )}
           >
             {/* Sliding active pill */}
             {lang === l && (
               <motion.span
                 layoutId="lang-pill"
-                className="absolute inset-0 rounded-lg bg-[var(--surface)] shadow-sm"
+                className="absolute inset-0 rounded-lg bg-(--surface) shadow-sm"
                 transition={{ type: 'spring', stiffness: 420, damping: 32 }}
               />
             )}
@@ -187,12 +187,12 @@ export function TopBar({ activePage, user, onLogout, onNavigate }: TopBarProps) 
       <div className="relative">
         <button
           onClick={() => { setChatOpen(v => !v); setNotifOpen(false); setProfileOpen(false); }}
-          className="relative w-10 h-10 flex items-center justify-center rounded-xl text-[var(--muted)] hover:bg-[var(--hover-bg)] hover:text-(--accent-600) transition-colors cursor-pointer"
+          className="relative w-10 h-10 flex items-center justify-center rounded-xl text-(--muted) hover:bg-(--hover-bg) hover:text-(--accent-600) transition-colors cursor-pointer"
         >
           <MessageSquare size={18} />
           {chatNaoLidas > 0 && (
             <span
-              className="absolute top-1.5 right-1.5 min-w-[14px] h-[14px] flex items-center justify-center rounded-full text-[9px] font-bold text-white px-0.5 ring-2 ring-[var(--surface)]"
+              className="absolute top-1.5 right-1.5 min-w-[14px] h-[14px] flex items-center justify-center rounded-full text-[9px] font-bold text-white px-0.5 ring-2 ring-(--surface)"
               style={{ background: 'linear-gradient(135deg, var(--accent-gradient-from), var(--accent-gradient-to))' }}
             >
               {chatNaoLidas > 99 ? '99+' : chatNaoLidas}
@@ -205,12 +205,12 @@ export function TopBar({ activePage, user, onLogout, onNavigate }: TopBarProps) 
       <div className="relative">
         <button
           onClick={handleOpenNotif}
-          className="relative w-10 h-10 flex items-center justify-center rounded-xl text-[var(--muted)] hover:bg-[var(--hover-bg)] hover:text-(--accent-600) transition-colors cursor-pointer"
+          className="relative w-10 h-10 flex items-center justify-center rounded-xl text-(--muted) hover:bg-(--hover-bg) hover:text-(--accent-600) transition-colors cursor-pointer"
         >
           <Bell size={18} />
           {notifNaoLidas > 0 && (
             <span
-              className="absolute top-1.5 right-1.5 min-w-[14px] h-[14px] flex items-center justify-center rounded-full text-[9px] font-bold text-white px-0.5 ring-2 ring-[var(--surface)]"
+              className="absolute top-1.5 right-1.5 min-w-[14px] h-[14px] flex items-center justify-center rounded-full text-[9px] font-bold text-white px-0.5 ring-2 ring-(--surface)"
               style={{ background: 'linear-gradient(135deg, var(--accent-gradient-from), var(--accent-gradient-to))' }}
             >
               {notifNaoLidas > 99 ? '99+' : notifNaoLidas}
@@ -225,10 +225,10 @@ export function TopBar({ activePage, user, onLogout, onNavigate }: TopBarProps) 
               animate={{ opacity: 1, y: 0, scale: 1 }}
               exit={{ opacity: 0, y: 8, scale: 0.96 }}
               transition={{ duration: 0.15 }}
-              className="absolute right-0 top-12 w-80 z-50 bg-[var(--dropdown-bg)] rounded-2xl shadow-2xl border border-[var(--dropdown-border)] overflow-hidden"
+              className="absolute right-0 top-12 w-80 z-50 bg-(--dropdown-bg) rounded-2xl shadow-2xl border border-(--dropdown-border) overflow-hidden"
             >
-              <div className="px-4 py-3 border-b border-[var(--border)] flex items-center justify-between bg-[var(--surface-soft)]">
-                <span className="text-sm font-bold text-[var(--heading)]">{t('topbar.notif')}</span>
+              <div className="px-4 py-3 border-b border-(--border) flex items-center justify-between bg-(--surface-soft)">
+                <span className="text-sm font-bold text-(--heading)">{t('topbar.notif')}</span>
                 {notifNaoLidas > 0 && (
                   <span
                     className="text-xs text-white font-medium px-2.5 py-0.5 rounded-full"
@@ -238,14 +238,14 @@ export function TopBar({ activePage, user, onLogout, onNavigate }: TopBarProps) 
                   </span>
                 )}
               </div>
-              <div className="divide-y divide-[var(--border)] max-h-80 overflow-y-auto">
+              <div className="divide-y divide-(--border) max-h-80 overflow-y-auto">
                 {notifications.length === 0 ? (
                   <div className="px-4 py-6 text-center text-xs" style={{ color: 'var(--muted)' }}>
                     {lang === 'pt' ? 'Nenhuma notificação ainda.' : 'No notifications yet.'}
                   </div>
                 ) : (
                   notifications.slice(0, 20).map(n => (
-                    <div key={n.id} className={cn('px-4 py-3 hover:bg-[var(--hover-bg)] cursor-pointer transition-colors', !n.lida && 'bg-[var(--accent-50)]/30')}>
+                    <div key={n.id} className={cn('px-4 py-3 hover:bg-(--hover-bg) cursor-pointer transition-colors', !n.lida && 'bg-(--accent-50)/30')}>
                       <div className="flex items-start gap-3">
                         {!n.lida ? (
                           <div
@@ -256,9 +256,9 @@ export function TopBar({ activePage, user, onLogout, onNavigate }: TopBarProps) 
                           <div className="w-2 h-2 mt-1.5 shrink-0 rounded-full bg-transparent" />
                         )}
                         <div className="flex-1 min-w-0">
-                          <p className="text-sm font-medium text-[var(--heading)] truncate">{n.titulo}</p>
-                          <p className="text-xs text-[var(--muted)] mt-0.5 leading-relaxed">{n.mensagem}</p>
-                          <p className="text-xs text-[var(--muted)] mt-1 opacity-70">
+                          <p className="text-sm font-medium text-(--heading) truncate">{n.titulo}</p>
+                          <p className="text-xs text-(--muted) mt-0.5 leading-relaxed">{n.mensagem}</p>
+                          <p className="text-xs text-(--muted) mt-1 opacity-70">
                             {new Date(n.criadaEm).toLocaleString(lang === 'pt' ? 'pt-BR' : 'en-US', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' })}
                           </p>
                         </div>
@@ -276,7 +276,7 @@ export function TopBar({ activePage, user, onLogout, onNavigate }: TopBarProps) 
       <div className="relative">
         <button
           onClick={() => { setProfileOpen(v => !v); setNotifOpen(false); setChatOpen(false); }}
-          className="flex items-center gap-2 h-10 px-2 rounded-xl hover:bg-[var(--hover-bg)] transition-colors"
+          className="flex items-center gap-2 h-10 px-2 rounded-xl hover:bg-(--hover-bg) transition-colors"
         >
           <div
             className="w-9 h-9 rounded-xl overflow-hidden shrink-0 shadow-lg ring-2 ring-(--accent-100)"
@@ -291,10 +291,10 @@ export function TopBar({ activePage, user, onLogout, onNavigate }: TopBarProps) 
             )}
           </div>
           <div className="hidden sm:block text-left">
-            <p className="text-sm font-semibold text-[var(--heading)] leading-tight">{user.name || 'Usuario'}</p>
-            <p className="text-xs text-[var(--muted)] leading-tight">{user.role === 'teacher' ? t('topbar.professor') : t('topbar.student')}</p>
+            <p className="text-sm font-semibold text-(--heading) leading-tight">{user.name || 'Usuario'}</p>
+            <p className="text-xs text-(--muted) leading-tight">{user.role === 'teacher' ? t('topbar.professor') : t('topbar.student')}</p>
           </div>
-          <ChevronDown size={14} className={cn('text-[var(--muted)] transition-transform', profileOpen && 'rotate-180')} />
+          <ChevronDown size={14} className={cn('text-(--muted) transition-transform', profileOpen && 'rotate-180')} />
         </button>
 
         <AnimatePresence>
@@ -304,25 +304,25 @@ export function TopBar({ activePage, user, onLogout, onNavigate }: TopBarProps) 
               animate={{ opacity: 1, y: 0, scale: 1 }}
               exit={{ opacity: 0, y: 8, scale: 0.96 }}
               transition={{ duration: 0.15 }}
-              className="absolute right-0 top-12 w-56 z-50 bg-[var(--dropdown-bg)] rounded-2xl shadow-2xl border border-[var(--dropdown-border)] overflow-hidden"
+              className="absolute right-0 top-12 w-56 z-50 bg-(--dropdown-bg) rounded-2xl shadow-2xl border border-(--dropdown-border) overflow-hidden"
             >
-              <div className="px-4 py-3 border-b border-[var(--border)] bg-[var(--surface-soft)]">
+              <div className="px-4 py-3 border-b border-(--border) bg-(--surface-soft)">
                 <div className="flex items-center gap-2">
-                  <p className="text-sm font-bold text-[var(--heading)]">{user.name || 'Usuario'}</p>
+                  <p className="text-sm font-bold text-(--heading)">{user.name || 'Usuario'}</p>
                   <Music size={12} className="text-(--accent-600)" />
                 </div>
-                <p className="text-xs text-[var(--muted)]">{user.email}</p>
+                <p className="text-xs text-(--muted)">{user.email}</p>
               </div>
               {[
-                { icon: <User size={14} />, label: t('topbar.myProfile'), color: 'text-[var(--accent-600)]', roles: ['teacher', 'student'] as AuthUser['role'][], action: () => { sessionStorage.setItem('marcos-music:settings:section', 'profile'); onNavigate('settings'); } },
-                { icon: <Settings size={14} />, label: t('topbar.settings'), color: 'text-[var(--muted)]', roles: ['teacher'] as AuthUser['role'][], action: () => onNavigate('settings') },
+                { icon: <User size={14} />, label: t('topbar.myProfile'), color: 'text-(--accent-600)', roles: ['teacher', 'student'] as AuthUser['role'][], action: () => { sessionStorage.setItem('marcos-music:settings:section', 'profile'); onNavigate('settings'); } },
+                { icon: <Settings size={14} />, label: t('topbar.settings'), color: 'text-(--muted)', roles: ['teacher'] as AuthUser['role'][], action: () => onNavigate('settings') },
               ].filter(item => item.roles.includes(user.role)).map(item => (
-                <button key={item.label} onClick={() => { setProfileOpen(false); item.action(); }} className="flex items-center gap-3 w-full px-4 py-2.5 text-sm text-[var(--text)] hover:bg-[var(--hover-bg)] transition-colors group">
+                <button key={item.label} onClick={() => { setProfileOpen(false); item.action(); }} className="flex items-center gap-3 w-full px-4 py-2.5 text-sm text-(--text) hover:bg-(--hover-bg) transition-colors group">
                   <span className={cn('transition-colors', item.color)}>{item.icon}</span>
                   {item.label}
                 </button>
               ))}
-              <div className="border-t border-[var(--border)]">
+              <div className="border-t border-(--border)">
                 <button
                   onClick={onLogout}
                   className="flex items-center gap-3 w-full px-4 py-2.5 text-sm text-rose-500 hover:bg-rose-50 transition-colors font-medium"

@@ -82,13 +82,13 @@ function Field({
 }) {
   return (
     <div className="flex flex-col gap-1.5">
-      <label className="text-xs font-semibold text-[var(--muted)] uppercase tracking-wide flex items-center gap-1.5">
-        <Icon size={11} className="text-[var(--accent-500)]" />
+      <label className="text-xs font-semibold text-(--muted) uppercase tracking-wide flex items-center gap-1.5">
+        <Icon size={11} className="text-(--accent-500)" />
         {label}
         {required && <span className="text-red-400 font-bold normal-case tracking-normal">*</span>}
       </label>
       {children}
-      {hint && !error && <span className="text-[11px] text-[var(--muted)] -mt-0.5">{hint}</span>}
+      {hint && !error && <span className="text-[11px] text-(--muted) -mt-0.5">{hint}</span>}
       {error && <span className="text-xs text-red-500">{error}</span>}
     </div>
   );
@@ -117,7 +117,7 @@ function TextInput({
     ? 'border-red-400 focus:border-red-400 focus:ring-red-300/20'
     : isValid
       ? 'border-emerald-400 focus:border-emerald-400 focus:ring-emerald-300/20'
-      : 'border-[var(--input-border)] focus:border-[var(--accent-500)] focus:ring-[var(--accent-500)]/30';
+      : 'border-(--input-border) focus:border-(--accent-500) focus:ring-(--accent-500)/30';
 
   const showRightIcon = iconRight || isValid || hasError;
 
@@ -130,9 +130,9 @@ function TextInput({
         placeholder={placeholder}
         disabled={disabled}
         className={`
-          h-10 px-3 rounded-xl text-sm bg-[var(--input-bg)] w-full
+          h-10 px-3 rounded-xl text-sm bg-(--input-bg) w-full
           border transition-all outline-none
-          text-[var(--text)] placeholder:text-[var(--muted)]
+          text-(--text) placeholder:text-(--muted)
           focus:ring-2
           disabled:opacity-60 disabled:cursor-not-allowed
           ${showRightIcon ? 'pr-8' : ''}
@@ -141,7 +141,7 @@ function TextInput({
       />
       {/* Ícone à direita: prioridade: prop iconRight > isValid > hasError */}
       {iconRight && (
-        <span className="absolute right-2.5 top-1/2 -translate-y-1/2 text-[var(--muted)] pointer-events-none">
+        <span className="absolute right-2.5 top-1/2 -translate-y-1/2 text-(--muted) pointer-events-none">
           {iconRight}
         </span>
       )}
@@ -258,7 +258,7 @@ export function AlunoModal({ aluno, open, onClose, onSave }: AlunoModalProps) {
         <>
           {/* Backdrop */}
           <motion.div
-            className="fixed inset-0 bg-black/30 backdrop-blur-[2px] z-[80]"
+            className="fixed inset-0 bg-black/30 backdrop-blur-[2px] z-80"
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
@@ -267,7 +267,7 @@ export function AlunoModal({ aluno, open, onClose, onSave }: AlunoModalProps) {
 
           {/* Modal */}
           <motion.div
-            className="fixed inset-0 z-[90] flex items-center justify-center p-4"
+            className="fixed inset-0 z-90 flex items-center justify-center p-4"
             initial={{ opacity: 0, scale: 0.96, y: 12 }}
             animate={{ opacity: 1, scale: 1, y: 0 }}
             exit={{ opacity: 0, scale: 0.96, y: 12 }}
@@ -275,13 +275,13 @@ export function AlunoModal({ aluno, open, onClose, onSave }: AlunoModalProps) {
           >
             <div
               className="
-                w-full max-w-md bg-[var(--surface)] rounded-2xl shadow-2xl
-                border border-[var(--border)] overflow-hidden
+                w-full max-w-md bg-(--surface) rounded-2xl shadow-2xl
+                border border-(--border) overflow-hidden
               "
               onClick={e => e.stopPropagation()}
             >
               {/* Header */}
-              <div className="flex items-center justify-between px-6 py-4 border-b border-[var(--border)]">
+              <div className="flex items-center justify-between px-6 py-4 border-b border-(--border)">
                 <div className="flex items-center gap-3">
                   {isEdit ? (
                     <div
@@ -291,15 +291,15 @@ export function AlunoModal({ aluno, open, onClose, onSave }: AlunoModalProps) {
                       {aluno.nome.trim().charAt(0).toUpperCase()}
                     </div>
                   ) : (
-                    <div className="w-9 h-9 rounded-xl bg-[var(--accent-500)]/10 flex items-center justify-center shrink-0">
-                      <UserPlus size={16} className="text-[var(--accent-500)]" />
+                    <div className="w-9 h-9 rounded-xl bg-(--accent-500)/10 flex items-center justify-center shrink-0">
+                      <UserPlus size={16} className="text-(--accent-500)" />
                     </div>
                   )}
                   <div>
-                    <h2 className="text-sm font-bold text-[var(--heading)]">
+                    <h2 className="text-sm font-bold text-(--heading)">
                       {isEdit ? t('modals.student.editTitle') : t('modals.student.newTitle')}
                     </h2>
-                    <p className="text-xs text-[var(--muted)]">
+                    <p className="text-xs text-(--muted)">
                       {isEdit ? aluno.nome : t('modals.student.subtitle')}
                     </p>
                   </div>
@@ -308,8 +308,8 @@ export function AlunoModal({ aluno, open, onClose, onSave }: AlunoModalProps) {
                   onClick={onClose}
                   className="
                     w-7 h-7 rounded-lg flex items-center justify-center
-                    text-[var(--muted)] hover:text-[var(--text)]
-                    hover:bg-[var(--input-bg)] transition-colors
+                    text-(--muted) hover:text-(--text)
+                    hover:bg-(--input-bg) transition-colors
                   "
                 >
                   <X size={15} />
@@ -359,10 +359,10 @@ export function AlunoModal({ aluno, open, onClose, onSave }: AlunoModalProps) {
                         borderColor: 'color-mix(in srgb, var(--accent-500) 30%, transparent)',
                       }}
                     >
-                      <Info size={13} className="text-[var(--accent-500)] mt-0.5 shrink-0" />
-                      <p className="text-xs text-[var(--muted)] leading-relaxed">
+                      <Info size={13} className="text-(--accent-500) mt-0.5 shrink-0" />
+                      <p className="text-xs text-(--muted) leading-relaxed">
                         {t('modals.student.passwordHintPre')}{' '}
-                        <span className="font-bold text-[var(--text)]">123456</span>.
+                        <span className="font-bold text-(--text)">123456</span>.
                         {' '}{t('modals.student.passwordHintPost')}
                       </p>
                     </div>
@@ -370,9 +370,9 @@ export function AlunoModal({ aluno, open, onClose, onSave }: AlunoModalProps) {
 
                   {/* Divisor campos opcionais */}
                   <div className="flex items-center gap-2 pt-1">
-                    <div className="flex-1 h-px bg-[var(--border)]" />
-                    <span className="text-[10px] font-semibold uppercase tracking-widest text-[var(--muted)]">{t('common.optional')}</span>
-                    <div className="flex-1 h-px bg-[var(--border)]" />
+                    <div className="flex-1 h-px bg-(--border)" />
+                    <span className="text-[10px] font-semibold uppercase tracking-widest text-(--muted)">{t('common.optional')}</span>
+                    <div className="flex-1 h-px bg-(--border)" />
                   </div>
 
                   <Field label={t('modals.student.phoneLabel')} icon={Phone} error={errors.telefone}
@@ -403,8 +403,8 @@ export function AlunoModal({ aluno, open, onClose, onSave }: AlunoModalProps) {
                   {/* Toggle ativo */}
                   <div className="flex items-center justify-between py-1">
                     <div>
-                      <span className="text-sm text-[var(--text)] font-medium">{t('modals.student.statusLabel')}</span>
-                      <p className="text-[11px] text-[var(--muted)] mt-0.5">
+                      <span className="text-sm text-(--text) font-medium">{t('modals.student.statusLabel')}</span>
+                      <p className="text-[11px] text-(--muted) mt-0.5">
                         {form.ativo ? t('modals.student.activeDesc') : t('modals.student.inactiveDesc')}
                       </p>
                     </div>
@@ -414,13 +414,13 @@ export function AlunoModal({ aluno, open, onClose, onSave }: AlunoModalProps) {
                       className="flex items-center gap-2 shrink-0 ml-4"
                       aria-label={form.ativo ? 'Desativar aluno' : 'Ativar aluno'}
                     >
-                      <span className={`text-xs font-semibold ${form.ativo ? 'text-emerald-600' : 'text-[var(--muted)]'}`}>
+                      <span className={`text-xs font-semibold ${form.ativo ? 'text-emerald-600' : 'text-(--muted)'}`}>
                         {form.ativo ? t('modals.student.activeLabel') : t('modals.student.inactiveLabel')}
                       </span>
                       <div
                         className={`
                           relative w-10 h-5 rounded-full transition-colors duration-200 focus:outline-none
-                          ${form.ativo ? 'bg-emerald-500' : 'bg-[var(--input-border)]'}
+                          ${form.ativo ? 'bg-emerald-500' : 'bg-(--input-border)'}
                         `}
                       >
                         <span
@@ -445,15 +445,15 @@ export function AlunoModal({ aluno, open, onClose, onSave }: AlunoModalProps) {
                 )}
 
                 {/* Footer */}
-                <div className="flex items-center justify-end gap-2 px-6 py-4 border-t border-[var(--border)] bg-[var(--input-bg)]/40">
+                <div className="flex items-center justify-end gap-2 px-6 py-4 border-t border-(--border) bg-(--input-bg)/40">
                   <button
                     type="button"
                     onClick={onClose}
                     disabled={loading}
                     className="
                       h-9 px-4 rounded-xl text-sm font-medium
-                      text-[var(--muted)] hover:text-[var(--text)]
-                      hover:bg-[var(--input-bg)] transition-colors
+                      text-(--muted) hover:text-(--text)
+                      hover:bg-(--input-bg) transition-colors
                       disabled:opacity-50
                     "
                   >
@@ -464,7 +464,7 @@ export function AlunoModal({ aluno, open, onClose, onSave }: AlunoModalProps) {
                     disabled={loading}
                     className="
                       h-9 px-5 rounded-xl text-sm font-semibold text-white
-                      bg-[var(--accent-500)] hover:bg-[var(--accent-600)]
+                      bg-(--accent-500) hover:bg-(--accent-600)
                       transition-colors flex items-center gap-2
                       disabled:opacity-60 disabled:cursor-not-allowed
                     "

@@ -190,24 +190,24 @@ export function AgendaPage({
     <div className="flex flex-col h-full">
       {/* Barra de status de carregamento / erro */}
       {loadingLessons && (
-        <div className="px-6 py-1.5 text-xs text-[var(--muted)] bg-[var(--surface-soft)] border-b border-[var(--border)] shrink-0">
+        <div className="px-6 py-1.5 text-xs text-(--muted) bg-(--surface-soft) border-b border-(--border) shrink-0">
           Carregando aulas…
         </div>
       )}
       {googleBanner && (
-        <div className="flex items-center gap-3 px-5 py-2 text-xs bg-[var(--surface-soft)] border-b border-[var(--border)] shrink-0">
+        <div className="flex items-center gap-3 px-5 py-2 text-xs bg-(--surface-soft) border-b border-(--border) shrink-0">
           <span className="w-5 h-5 rounded-md flex items-center justify-center text-white font-bold text-[11px] shrink-0" style={{ backgroundColor: '#0F9D58' }}>G</span>
-          <span className="text-[var(--muted)] flex-1">Sincronize suas aulas com o Google Calendar para manter tudo atualizado.</span>
+          <span className="text-(--muted) flex-1">Sincronize suas aulas com o Google Calendar para manter tudo atualizado.</span>
           <button
             onClick={() => {
               sessionStorage.setItem('marcos-music:settings:section', 'integrations');
               onNavigate?.('settings');
             }}
-            className="text-[var(--accent-600)] font-semibold hover:underline shrink-0"
+            className="text-(--accent-600) font-semibold hover:underline shrink-0"
           >
             Conectar agora
           </button>
-          <button onClick={() => setGoogleBanner(false)} className="text-[var(--muted)] hover:text-[var(--text)] ml-1 shrink-0">✕</button>
+          <button onClick={() => setGoogleBanner(false)} className="text-(--muted) hover:text-(--text) ml-1 shrink-0">✕</button>
         </div>
       )}
       {apiError && !loadingLessons && (

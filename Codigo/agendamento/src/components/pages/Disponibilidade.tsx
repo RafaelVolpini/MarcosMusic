@@ -1,4 +1,4 @@
-ï»¿import { useEffect, useMemo, useState, useCallback } from 'react';
+import { useEffect, useMemo, useState, useCallback } from 'react';
 import { motion } from 'framer-motion';
 import { AlertTriangle, CalendarClock, Check, Clock3, RefreshCw, Save, Trash2 } from 'lucide-react';
 import type { WeeklyAvailability, DayKey } from '../../types';
@@ -66,7 +66,7 @@ export function DisponibilidadePage({
       const dtos = await buscarDisponibilidade();
       applyDTOs(dtos);
     } catch {
-      // fallback: mantÃ©m estado atual
+      // fallback: mantém estado atual
     } finally {
       setLoadingDb(false);
     }
@@ -84,7 +84,7 @@ export function DisponibilidadePage({
     [availabilityReposicao],
   );
 
-  // Ciclo 3 estados: indisponÃ­vel â†’ disponÃ­vel â†’ reposiÃ§Ã£o â†’ indisponÃ­vel
+  // Ciclo 3 estados: indisponível ? disponível ? reposição ? indisponível
   const toggleSlot = (day: DayKey, time: string) => {
     const isAvail = availability[day].includes(time);
     const isReposicao = availabilityReposicao[day].includes(time);
@@ -93,14 +93,14 @@ export function DisponibilidadePage({
     setSaveStatus('idle');
 
     if (!isAvail && !isReposicao) {
-      // indisponÃ­vel â†’ disponÃ­vel
+      // indisponível ? disponível
       onChangeAvailability({ ...availability, [day]: [...availability[day], time].sort((a, b) => timeToMinutes(a) - timeToMinutes(b)) });
     } else if (isAvail) {
-      // disponÃ­vel â†’ reposiÃ§Ã£o
+      // disponível ? reposição
       onChangeAvailability({ ...availability, [day]: availability[day].filter(s => s !== time) });
       onChangeAvailabilityReposicao({ ...availabilityReposicao, [day]: [...availabilityReposicao[day], time].sort((a, b) => timeToMinutes(a) - timeToMinutes(b)) });
     } else {
-      // reposiÃ§Ã£o â†’ indisponÃ­vel
+      // reposição ? indisponível
       onChangeAvailabilityReposicao({ ...availabilityReposicao, [day]: availabilityReposicao[day].filter(s => s !== time) });
     }
   };
@@ -131,8 +131,8 @@ export function DisponibilidadePage({
     <div className="p-6">
       <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-4 mb-6">
         <div>
-          <h1 className="text-xl font-black text-[var(--heading)]">{t('availability.title')}</h1>
-          <p className="text-sm text-[var(--muted)] mt-0.5">
+          <h1 className="text-xl font-black text-(--heading)">{t('availability.title')}</h1>
+          <p className="text-sm text-(--muted) mt-0.5">
             {t('availability.hint')}
           </p>
         </div>
@@ -146,13 +146,13 @@ export function DisponibilidadePage({
       )}
 
       <div className="flex items-center justify-between gap-4 mb-5 flex-wrap">
-        <div className="flex flex-wrap items-center gap-4 text-xs text-[var(--muted)]">
+        <div className="flex flex-wrap items-center gap-4 text-xs text-(--muted)">
           <span className="flex items-center gap-1.5">
             <span
               className="inline-block w-4 h-4 rounded"
               style={{ background: 'linear-gradient(135deg, var(--accent-gradient-from), var(--accent-gradient-to))' }}
             />
-            DisponÃ­vel
+            Disponível
           </span>
           <span className="flex items-start gap-1.5">
             <span className="inline-flex items-center justify-center w-5 h-5 rounded bg-violet-500 border-2 border-violet-600">
@@ -161,7 +161,7 @@ export function DisponibilidadePage({
             {t('availability.reposicao')}
           </span>
           <span className="flex items-start gap-1.5">
-            <span className="inline-block w-4 h-4 rounded bg-[var(--surface-soft)] border border-[var(--border)]" />
+            <span className="inline-block w-4 h-4 rounded bg-(--surface-soft) border border-(--border)" />
             {t('availability.unavailable')}
           </span>
         </div>
@@ -203,11 +203,11 @@ export function DisponibilidadePage({
                 className="px-4 py-3 flex items-center justify-between border-b"
                 style={{ borderColor: 'var(--border)', backgroundColor: 'var(--surface-soft)' }}
               >
-                <span className="text-sm font-black text-[var(--heading)]">{label}</span>
+                <span className="text-sm font-black text-(--heading)">{label}</span>
                 <span
                   className={cn(
                     'text-xs font-semibold px-2 py-0.5 rounded-full border',
-                    daySlots.length > 0 ? 'text-[var(--accent-700)]' : 'text-[var(--muted)]',
+                    daySlots.length > 0 ? 'text-(--accent-700)' : 'text-(--muted)',
                   )}
                   style={{
                     borderColor: daySlots.length > 0 ? 'var(--accent-100)' : 'var(--border)',
@@ -240,7 +240,7 @@ export function DisponibilidadePage({
                           ? 'text-white border-2 border-transparent shadow-sm hover:brightness-110'
                           : isReposicao
                           ? 'bg-violet-500 text-white border-2 border-violet-600 shadow-sm hover:brightness-110'
-                          : 'bg-[var(--surface)] text-[var(--muted)] border border-[var(--border)] hover:border-[var(--accent-300)] hover:text-[var(--text)]',
+                          : 'bg-(--surface) text-(--muted) border border-(--border) hover:border-(--accent-300) hover:text-(--text)',
                       )}
                       style={
                         isActive
@@ -268,13 +268,13 @@ export function DisponibilidadePage({
         className="mt-6 px-5 py-4 rounded-2xl border flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2 text-sm"
         style={{ borderColor: 'var(--border)', backgroundColor: 'var(--surface-soft)' }}
       >
-        <div className="flex items-center gap-2 text-[var(--muted)]">
+        <div className="flex items-center gap-2 text-(--muted)">
           <CalendarClock size={15} className="opacity-60 shrink-0" />
           {t('availability.info')}
         </div>
         <div className="flex items-center gap-3 shrink-0">
-          <span className="flex items-center gap-1.5 font-semibold text-[var(--heading)]">
-            <Clock3 size={14} className="text-[var(--accent-600)]" />
+          <span className="flex items-center gap-1.5 font-semibold text-(--heading)">
+            <Clock3 size={14} className="text-(--accent-600)" />
             {totalSlots} {t('availability.available')}
           </span>
           {totalReposicaoSlots > 0 && (

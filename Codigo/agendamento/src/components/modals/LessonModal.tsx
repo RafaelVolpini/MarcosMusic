@@ -190,7 +190,7 @@ export function LessonModal({
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="fixed inset-0 bg-black/40 backdrop-blur-sm z-[80]"
+            className="fixed inset-0 bg-black/40 backdrop-blur-sm z-80"
             onClick={onClose}
           />
 
@@ -200,7 +200,7 @@ export function LessonModal({
             animate={{ opacity: 1, scale: 1, y: 0 }}
             exit={{ opacity: 0, scale: 0.95, y: 20 }}
             transition={{ type: "spring", stiffness: 340, damping: 28 }}
-            className="fixed inset-0 z-[90] flex items-center justify-center pointer-events-none px-4"
+            className="fixed inset-0 z-90 flex items-center justify-center pointer-events-none px-4"
           >
             <div className="app-surface rounded-3xl shadow-2xl w-full max-w-lg pointer-events-auto overflow-hidden">
               {/* Header with color accent */}
@@ -211,7 +211,7 @@ export function LessonModal({
                     "linear-gradient(90deg, var(--accent-gradient-from), var(--accent-gradient-to))",
                 }}
               />
-              <div className="px-6 py-5 border-b border-[var(--border)]">
+              <div className="px-6 py-5 border-b border-(--border)">
                 <div className="flex items-start justify-between">
                   <div>
                     <div className="flex items-center gap-2 mb-1">
@@ -222,10 +222,10 @@ export function LessonModal({
                         {TYPE_LABELS[lesson.type]}
                       </Badge>
                     </div>
-                    <h2 className="text-lg font-bold text-[var(--heading)]">
+                    <h2 className="text-lg font-bold text-(--heading)">
                       {lesson.instrument}
                     </h2>
-                    <p className="text-sm text-[var(--muted)] mt-0.5">
+                    <p className="text-sm text-(--muted) mt-0.5">
                       {new Date(lesson.date).toLocaleDateString("pt-BR", {
                         weekday: "long",
                         day: "numeric",
@@ -235,7 +235,7 @@ export function LessonModal({
                   </div>
                   <button
                     onClick={onClose}
-                    className="w-8 h-8 flex items-center justify-center rounded-xl text-[var(--muted)] hover:text-[var(--text)] hover:bg-[var(--hover-bg)] transition-colors"
+                    className="w-8 h-8 flex items-center justify-center rounded-xl text-(--muted) hover:text-(--text) hover:bg-(--hover-bg) transition-colors"
                   >
                     <X size={16} />
                   </button>
@@ -249,17 +249,17 @@ export function LessonModal({
                   <InfoRow icon={<User size={14} />} label={t('modals.lesson.labelStudent')}>
                     <div className="flex items-center gap-2">
                       <Avatar name={lesson.studentName} size="sm" />
-                      <span className="text-sm font-medium text-[var(--heading)]">
+                      <span className="text-sm font-medium text-(--heading)">
                         {lesson.studentName}
                       </span>
                     </div>
                   </InfoRow>
                   <InfoRow icon={<Clock size={14} />} label={t('modals.lesson.labelTime')}>
-                    <span className="text-sm text-[var(--heading)]">
+                    <span className="text-sm text-(--heading)">
                       {formatTime(lesson.startTime)} –{" "}
                       {formatTime(lesson.endTime)}
                     </span>
-                    <span className="text-xs text-[var(--muted)] ml-1">
+                    <span className="text-xs text-(--muted) ml-1">
                       ({duration})
                     </span>
                   </InfoRow>
@@ -304,14 +304,14 @@ export function LessonModal({
                   </InfoRow>
                   <InfoRow icon={<CheckCircle size={14} />} label={t('modals.lesson.labelAttendance')}>
                     {editing ? (
-                      <label className="flex items-center gap-2 text-sm text-[var(--text)]">
+                      <label className="flex items-center gap-2 text-sm text-(--text)">
                         <input
                           type="checkbox"
                           checked={attendanceConfirmed}
                           onChange={(e) =>
                             setAttendanceConfirmed(e.target.checked)
                           }
-                          className="rounded border-[var(--input-border)]"
+                          className="rounded border-(--input-border)"
                         />
                         {t('modals.lesson.confirmed')}
                       </label>
@@ -335,12 +335,12 @@ export function LessonModal({
                       onChange={(e) => setNotes(e.target.value)}
                       rows={3}
                       placeholder="Adicionar observações sobre a aula..."
-                      className="w-full text-sm border border-[var(--input-border)] rounded-xl px-3 py-2 resize-none focus:outline-none focus:ring-2 focus:ring-(--accent-100) text-[var(--text)] bg-[var(--input-bg)]"
+                      className="w-full text-sm border border-(--input-border) rounded-xl px-3 py-2 resize-none focus:outline-none focus:ring-2 focus:ring-(--accent-100) text-(--text) bg-(--input-bg)"
                     />
                   ) : (
-                    <p className="text-sm text-[var(--text)]">
+                    <p className="text-sm text-(--text)">
                       {notes || (
-                        <span className="text-[var(--muted)] italic">
+                        <span className="text-(--muted) italic">
                           {t('modals.lesson.noNotes')}
                         </span>
                       )}
@@ -351,15 +351,15 @@ export function LessonModal({
                 {/* Recording */}
                 {lesson.recording && (
                   <InfoRow icon={<Music size={14} />} label={t('modals.lesson.labelRecording')}>
-                    <div className="flex items-center gap-2 bg-[var(--surface-soft)] rounded-xl px-3 py-2">
+                    <div className="flex items-center gap-2 bg-(--surface-soft) rounded-xl px-3 py-2">
                       <div className="w-8 h-8 rounded-lg bg-(--accent-50) flex items-center justify-center">
                         <Video size={14} className="text-(--accent-600)" />
                       </div>
                       <div className="flex-1 min-w-0">
-                        <p className="text-xs font-medium text-[var(--heading)] truncate">
+                        <p className="text-xs font-medium text-(--heading) truncate">
                           {lesson.recording.title}
                         </p>
-                        <p className="text-xs text-[var(--muted)]">
+                        <p className="text-xs text-(--muted)">
                           {Math.floor(lesson.recording.duration / 60)} min
                         </p>
                       </div>
@@ -375,10 +375,10 @@ export function LessonModal({
               </div>
 
               {/* Footer actions */}
-              <div className="px-6 py-4 border-t border-[var(--border)] flex items-center gap-2 flex-wrap">
+              <div className="px-6 py-4 border-t border-(--border) flex items-center gap-2 flex-wrap">
                 {rescheduling ? (
                   <div className="flex flex-col gap-3 w-full">
-                    <p className="text-sm font-semibold text-[var(--heading)]">
+                    <p className="text-sm font-semibold text-(--heading)">
                       {t('modals.lesson.newTime')}
                     </p>
                     <div className="flex gap-2">
@@ -396,12 +396,12 @@ export function LessonModal({
                             }
                           }
                         }}
-                        className="flex-1 border border-[var(--input-border)] rounded-xl px-3 py-2 text-sm text-[var(--text)] bg-[var(--input-bg)] focus:outline-none focus:ring-2 focus:ring-[var(--accent-100)]"
+                        className="flex-1 border border-(--input-border) rounded-xl px-3 py-2 text-sm text-(--text) bg-(--input-bg) focus:outline-none focus:ring-2 focus:ring-(--accent-100)"
                       />
                       <select
                         value={rescheduleTime}
                         onChange={(e) => setRescheduleTime(e.target.value)}
-                        className="flex-1 border border-[var(--input-border)] rounded-xl px-3 py-2 text-sm text-[var(--text)] bg-[var(--input-bg)] focus:outline-none focus:ring-2 focus:ring-[var(--accent-100)]"
+                        className="flex-1 border border-(--input-border) rounded-xl px-3 py-2 text-sm text-(--text) bg-(--input-bg) focus:outline-none focus:ring-2 focus:ring-(--accent-100)"
                       >
                         {availableHours.map((h) => (
                           <option key={h} value={h}>
@@ -433,7 +433,7 @@ export function LessonModal({
                             </Button>
                           ) : (
                             <div className="ml-auto flex items-center gap-2">
-                              <span className="text-xs text-[var(--muted)]">
+                              <span className="text-xs text-(--muted)">
                                 {t('modals.lesson.deleteConfirmQ')}
                               </span>
                               <Button variant="danger" size="sm" onClick={() => onDelete(lesson.id)}>
@@ -445,7 +445,7 @@ export function LessonModal({
                             </div>
                           ))}
                         {currentUser.role !== "teacher" && (
-                          <span className="text-xs text-[var(--muted)] italic">
+                          <span className="text-xs text-(--muted) italic">
                             {t('modals.lesson.readOnly')}
                           </span>
                         )}
@@ -479,12 +479,12 @@ export function LessonModal({
                           </span>
                         )}
                         {isLockedByAttendance && (
-                          <span className="text-xs text-[var(--muted)] italic ml-auto">
+                          <span className="text-xs text-(--muted) italic ml-auto">
                             {t('modals.lesson.lockedByAttendance')}
                           </span>
                         )}
                         {!canModify && (
-                          <span className="text-xs text-[var(--muted)] italic">
+                          <span className="text-xs text-(--muted) italic">
                             {t('modals.lesson.readOnly')}
                           </span>
                         )}
@@ -501,7 +501,7 @@ export function LessonModal({
                             </Button>
                           ) : (
                             <div className="ml-auto flex items-center gap-2">
-                              <span className="text-xs text-[var(--muted)]">
+                              <span className="text-xs text-(--muted)">
                                 {t('modals.lesson.deleteConfirmQ')}
                               </span>
                               <Button variant="danger" size="sm" onClick={() => onDelete(lesson.id)}>
@@ -551,8 +551,8 @@ function InfoRow({ icon, label, children }: InfoRowProps) {
   return (
     <div>
       <div className="flex items-center gap-1.5 mb-1">
-        <span className="text-[var(--muted)]">{icon}</span>
-        <span className="text-xs font-medium text-[var(--muted)] uppercase tracking-wide">
+        <span className="text-(--muted)">{icon}</span>
+        <span className="text-xs font-medium text-(--muted) uppercase tracking-wide">
           {label}
         </span>
       </div>

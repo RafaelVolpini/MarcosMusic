@@ -143,8 +143,8 @@ export function NewLessonModal({
     onClose();
   };
 
-  const inputClass = 'w-full border border-[var(--input-border)] rounded-xl px-3 py-2 text-sm text-[var(--text)] focus:outline-none focus:ring-2 focus:ring-[var(--accent-100)] bg-[var(--input-bg)]';
-  const labelClass = 'text-xs font-medium text-[var(--muted)] mb-1 block';
+  const inputClass = 'w-full border border-(--input-border) rounded-xl px-3 py-2 text-sm text-(--text) focus:outline-none focus:ring-2 focus:ring-(--accent-100) bg-(--input-bg)';
+  const labelClass = 'text-xs font-medium text-(--muted) mb-1 block';
   const { t } = useLanguage();
 
   return (
@@ -155,7 +155,7 @@ export function NewLessonModal({
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="fixed inset-0 bg-black/40 backdrop-blur-sm z-[80]"
+            className="fixed inset-0 bg-black/40 backdrop-blur-sm z-80"
             onClick={onClose}
           />
           <motion.div
@@ -163,18 +163,18 @@ export function NewLessonModal({
             animate={{ opacity: 1, scale: 1, y: 0 }}
             exit={{ opacity: 0, scale: 0.96, y: 16 }}
             transition={{ type: 'spring', stiffness: 360, damping: 30 }}
-            className="fixed inset-0 z-[90] flex items-center justify-center pointer-events-none px-4"
+            className="fixed inset-0 z-90 flex items-center justify-center pointer-events-none px-4"
           >
             <div className="app-surface rounded-3xl shadow-2xl w-full max-w-md pointer-events-auto overflow-hidden">
               {/* Header */}
-              <div className="flex items-center justify-between px-6 py-5 border-b border-[var(--border)]">
+              <div className="flex items-center justify-between px-6 py-5 border-b border-(--border)">
                 <div className="flex items-center gap-2">
                   <div className="w-8 h-8 bg-(--accent-50) rounded-xl flex items-center justify-center">
                     <Plus size={16} className="text-(--accent-600)" />
                   </div>
-                  <h2 className="text-base font-bold text-[var(--heading)]">{t('modals.newLesson.title')}</h2>
+                  <h2 className="text-base font-bold text-(--heading)">{t('modals.newLesson.title')}</h2>
                 </div>
-                <button onClick={onClose} className="w-8 h-8 flex items-center justify-center rounded-xl text-[var(--muted)] hover:text-[var(--text)] hover:bg-[var(--hover-bg)]">
+                <button onClick={onClose} className="w-8 h-8 flex items-center justify-center rounded-xl text-(--muted) hover:text-(--text) hover:bg-(--hover-bg)">
                   <X size={16} />
                 </button>
               </div>
@@ -196,21 +196,21 @@ export function NewLessonModal({
                         onClick={() => setStudentDropdownOpen(o => !o)}
                         className={`${inputClass} flex items-center justify-between text-left`}
                       >
-                        <span className={selectedStudent ? 'text-[var(--text)]' : 'text-[var(--muted)]'}>
+                        <span className={selectedStudent ? 'text-(--text)' : 'text-(--muted)'}>
                           {selectedStudent?.nome ?? t('modals.newLesson.student')}
                         </span>
-                        <ChevronDown size={14} className={`text-[var(--muted)] transition-transform ${studentDropdownOpen ? 'rotate-180' : ''}`} />
+                        <ChevronDown size={14} className={`text-(--muted) transition-transform ${studentDropdownOpen ? 'rotate-180' : ''}`} />
                       </button>
                       {studentDropdownOpen && (
-                        <div className="absolute z-[200] mt-1 w-full rounded-xl border border-[var(--border)] bg-[var(--surface)] shadow-lg overflow-hidden">
+                        <div className="absolute z-200 mt-1 w-full rounded-xl border border-(--border) bg-(--surface) shadow-lg overflow-hidden">
                           <div className="max-h-48 overflow-y-auto">
                             {selectableStudents.map((student) => (
                               <button
                                 key={student.id}
                                 type="button"
                                 onClick={() => { setStudentId(student.id); setStudentDropdownOpen(false); }}
-                                className={`w-full text-left px-3 py-2 text-sm hover:bg-[var(--hover-bg)] transition-colors ${
-                                  studentId === student.id ? 'text-[var(--accent-600)] font-medium bg-[var(--accent-50)]' : 'text-[var(--text)]'
+                                className={`w-full text-left px-3 py-2 text-sm hover:bg-(--hover-bg) transition-colors ${
+                                  studentId === student.id ? 'text-(--accent-600) font-medium bg-(--accent-50)' : 'text-(--text)'
                                 }`}
                               >
                                 {student.nome}
@@ -224,7 +224,7 @@ export function NewLessonModal({
                     <input
                       value={selectedStudent?.nome ?? ''}
                       disabled
-                      className={`${inputClass} bg-[var(--surface-soft)] text-[var(--muted)]`}
+                      className={`${inputClass} bg-(--surface-soft) text-(--muted)`}
                     />
                   )}
                 </div>
@@ -244,7 +244,7 @@ export function NewLessonModal({
                     <input
                       value="Marcos Mello"
                       disabled
-                      className={`${inputClass} bg-[var(--surface-soft)] text-[var(--muted)]`}
+                      className={`${inputClass} bg-(--surface-soft) text-(--muted)`}
                     />
                   </div>
                 </div>
@@ -265,13 +265,13 @@ export function NewLessonModal({
                   </div>
                   <div>
                     <label className={labelClass}>{t('modals.newLesson.end')}</label>
-                    <input type="time" value={endTime} readOnly disabled className={`${inputClass} bg-[var(--surface-soft)] text-[var(--muted)]`} />
+                    <input type="time" value={endTime} readOnly disabled className={`${inputClass} bg-(--surface-soft) text-(--muted)`} />
                   </div>
                 </div>
 
-                <p className="text-[11px] text-[var(--muted)] -mt-2">{t('modals.newLesson.duration50')}</p>
+                <p className="text-[11px] text-(--muted) -mt-2">{t('modals.newLesson.duration50')}</p>
 
-                <label className="flex items-center justify-between rounded-xl border border-[var(--border)] px-3 py-2 text-sm text-[var(--text)]">
+                <label className="flex items-center justify-between rounded-xl border border-(--border) px-3 py-2 text-sm text-(--text)">
                   <span className="flex items-center gap-2">
                     <Video size={14} className="text-(--accent-600)" />
                     {t('modals.newLesson.meetCheck')}
@@ -280,11 +280,11 @@ export function NewLessonModal({
                     type="checkbox"
                     checked={isOnline}
                     onChange={(e) => setIsOnline(e.target.checked)}
-                    className="rounded border-[var(--input-border)]"
+                    className="rounded border-(--input-border)"
                   />
                 </label>
 
-                <label className="flex items-center justify-between rounded-xl border border-[var(--border)] px-3 py-2 text-sm text-[var(--text)]">
+                <label className="flex items-center justify-between rounded-xl border border-(--border) px-3 py-2 text-sm text-(--text)">
                   <span className="flex items-center gap-2">
                     <Repeat size={14} className="text-(--accent-600)" />
                     {t('modals.newLesson.recurringCheck')}
@@ -293,7 +293,7 @@ export function NewLessonModal({
                     type="checkbox"
                     checked={recorrente}
                     onChange={(e) => setRecorrente(e.target.checked)}
-                    className="rounded border-[var(--input-border)]"
+                    className="rounded border-(--input-border)"
                   />
                 </label>
                 {recorrente && (
@@ -303,7 +303,7 @@ export function NewLessonModal({
                 )}
 
                 {selectedStudent && (
-                  <p className="text-xs text-[var(--muted)]">
+                  <p className="text-xs text-(--muted)">
                     {t('modals.newLesson.contact')} {selectedStudent.telefone || t('modals.newLesson.noPhone')}
                   </p>
                 )}
@@ -315,7 +315,7 @@ export function NewLessonModal({
               </div>
 
               {/* Footer */}
-              <div className="px-6 py-4 border-t border-[var(--border)] flex items-center gap-2 justify-end">
+              <div className="px-6 py-4 border-t border-(--border) flex items-center gap-2 justify-end">
                 <Button variant="secondary" onClick={onClose}>{t('modals.newLesson.cancel')}</Button>
                 <Button onClick={handleSubmit}>{t('modals.newLesson.create')}</Button>
               </div>

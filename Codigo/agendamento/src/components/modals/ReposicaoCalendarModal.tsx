@@ -93,7 +93,7 @@ export function ReposicaoCalendarModal({
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         exit={{ opacity: 0 }}
-        className="fixed inset-0 bg-black/40 backdrop-blur-sm z-[80]"
+        className="fixed inset-0 bg-black/40 backdrop-blur-sm z-80"
         onClick={onClose}
       />
 
@@ -103,10 +103,10 @@ export function ReposicaoCalendarModal({
         animate={{ opacity: 1, scale: 1, y: 0 }}
         exit={{ opacity: 0, scale: 0.95, y: 10 }}
         transition={{ type: 'spring', stiffness: 400, damping: 30 }}
-        className="fixed inset-0 z-[90] flex items-center justify-center pointer-events-none px-4"
+        className="fixed inset-0 z-90 flex items-center justify-center pointer-events-none px-4"
       >
         <div
-          className="w-full max-w-sm bg-[var(--surface)] rounded-2xl shadow-2xl border border-[var(--border)] overflow-hidden pointer-events-auto"
+          className="w-full max-w-sm bg-(--surface) rounded-2xl shadow-2xl border border-(--border) overflow-hidden pointer-events-auto"
           onClick={e => e.stopPropagation()}
         >
           {/* Accent stripe using theme gradient */}
@@ -116,10 +116,10 @@ export function ReposicaoCalendarModal({
           />
 
           {/* Header */}
-          <div className="flex items-center justify-between px-5 py-4 border-b border-[var(--border)]">
+          <div className="flex items-center justify-between px-5 py-4 border-b border-(--border)">
             <div className="flex items-center gap-2 flex-wrap min-w-0">
-              <RefreshCw size={14} className="text-[var(--accent-600)] shrink-0" />
-              <span className="font-semibold text-[var(--heading)] text-sm truncate">
+              <RefreshCw size={14} className="text-(--accent-600) shrink-0" />
+              <span className="font-semibold text-(--heading) text-sm truncate">
                 {DAY_LABELS[reposicao.diaSemana] ?? reposicao.diaSemana} · {reposicao.horario}
               </span>
               <span className={`text-[10px] font-medium px-2 py-0.5 rounded-full shrink-0 ${STATUS_COLOR[reposicao.status] ?? ''}`}>
@@ -128,7 +128,7 @@ export function ReposicaoCalendarModal({
             </div>
             <button
               onClick={onClose}
-              className="text-[var(--muted)] hover:text-[var(--text)] transition-colors shrink-0 ml-2"
+              className="text-(--muted) hover:text-(--text) transition-colors shrink-0 ml-2"
             >
               <X size={16} />
             </button>
@@ -137,8 +137,8 @@ export function ReposicaoCalendarModal({
           {/* Body */}
           <div className="p-5 space-y-4">
             {/* Date */}
-            <div className="flex items-center gap-2 text-sm text-[var(--text)]">
-              <Clock size={13} className="text-[var(--muted)] shrink-0" />
+            <div className="flex items-center gap-2 text-sm text-(--text)">
+              <Clock size={13} className="text-(--muted) shrink-0" />
               <span>
                 {new Date(`${reposicao.dataAula}T12:00:00`).toLocaleDateString('pt-BR', {
                   weekday: 'long', day: 'numeric', month: 'long',
@@ -148,34 +148,34 @@ export function ReposicaoCalendarModal({
 
             {/* Observation */}
             {reposicao.observacao && (
-              <p className="text-xs text-[var(--muted)] italic">{reposicao.observacao}</p>
+              <p className="text-xs text-(--muted) italic">{reposicao.observacao}</p>
             )}
 
             {/* Enrolled students */}
             <div>
               <div className="flex items-center gap-1.5 mb-2">
-                <Users size={12} className="text-[var(--muted)]" />
-                <span className="text-xs font-semibold text-[var(--muted)] uppercase tracking-wider">
+                <Users size={12} className="text-(--muted)" />
+                <span className="text-xs font-semibold text-(--muted) uppercase tracking-wider">
                   Alunos inscritos ({reposicao.alunos.length})
                 </span>
               </div>
               {reposicao.alunos.length === 0 ? (
-                <p className="text-xs text-[var(--muted)] italic py-1">Nenhum aluno inscrito ainda.</p>
+                <p className="text-xs text-(--muted) italic py-1">Nenhum aluno inscrito ainda.</p>
               ) : (
                 <div className="space-y-1.5 max-h-40 overflow-y-auto">
                   {reposicao.alunos.map(aluno => (
                     <div
                       key={aluno.id}
-                      className="flex items-center gap-3 px-3 py-2 rounded-xl bg-[var(--surface-soft)] border border-[var(--border)]"
+                      className="flex items-center gap-3 px-3 py-2 rounded-xl bg-(--surface-soft) border border-(--border)"
                     >
                       <Avatar name={aluno.nome} size="sm" />
-                      <span className="flex-1 text-sm text-[var(--text)] truncate">{aluno.nome}</span>
+                      <span className="flex-1 text-sm text-(--text) truncate">{aluno.nome}</span>
                       {isTeacher && (
                         <button
                           type="button"
                           onClick={() => handleRemoveAluno(aluno.id)}
                           disabled={busy}
-                          className="text-[var(--muted)] hover:text-rose-500 transition-colors disabled:opacity-40 shrink-0"
+                          className="text-(--muted) hover:text-rose-500 transition-colors disabled:opacity-40 shrink-0"
                           title={`Remover ${aluno.nome}`}
                         >
                           <X size={13} />

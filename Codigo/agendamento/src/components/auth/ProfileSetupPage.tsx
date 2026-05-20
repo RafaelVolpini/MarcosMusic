@@ -40,7 +40,7 @@ export function ProfileSetupPage({ user, onComplete, inApp = false }: ProfileSet
   const pct = Math.round((filled / total) * 100);
 
   const inputCls =
-    'w-full rounded-xl border px-3 py-2.5 text-sm outline-none transition focus:border-transparent focus:ring-2 focus:ring-[var(--accent-300)]';
+    'w-full rounded-xl border px-3 py-2.5 text-sm outline-none transition focus:border-transparent focus:ring-2 focus:ring-(--accent-300)';
   const inputStyle = { borderColor: 'var(--border)', color: 'var(--text)', backgroundColor: 'var(--input-bg, var(--surface))' };
   const labelCls = 'mb-1.5 block text-xs font-semibold uppercase tracking-wide';
 

@@ -158,33 +158,33 @@ function StudentCombobox({ students, selectedId, onSelect }: ComboboxProps) {
   }, []);
 
   return (
-    <div className="px-3 py-2.5 border-b border-[var(--border)]">
+    <div className="px-3 py-2.5 border-b border-(--border)">
       <button
         ref={buttonRef}
         onClick={() => setOpen(o => !o)}
         className="
           w-full flex items-center gap-2.5 px-3 py-2.5 rounded-xl
-          bg-[var(--input-bg)] border border-[var(--input-border)]
-          hover:border-[var(--accent-500)]/50 transition-colors
-          focus:outline-none focus:ring-2 focus:ring-[var(--accent-500)]/25
+          bg-(--input-bg) border border-(--input-border)
+          hover:border-(--accent-500)/50 transition-colors
+          focus:outline-none focus:ring-2 focus:ring-(--accent-500)/25
         "
       >
         {selected ? (
           <>
             <Avatar name={selected.nome} size="sm" />
             <div className="flex-1 min-w-0 text-left">
-              <p className="text-sm font-semibold text-[var(--heading)] truncate">{selected.nome}</p>
-              <p className="text-xs text-[var(--muted)] truncate">
+              <p className="text-sm font-semibold text-(--heading) truncate">{selected.nome}</p>
+              <p className="text-xs text-(--muted) truncate">
                 {selected.telefone ? formatPhoneGlobal(selected.telefone) : 'Sem telefone cadastrado'}
               </p>
             </div>
           </>
         ) : (
-          <span className="flex-1 text-left text-sm text-[var(--muted)]">Selecione um aluno...</span>
+          <span className="flex-1 text-left text-sm text-(--muted)">Selecione um aluno...</span>
         )}
         <ChevronDown
           size={14}
-          className={`text-[var(--muted)] transition-transform shrink-0 ${open ? 'rotate-180' : ''}`}
+          className={`text-(--muted) transition-transform shrink-0 ${open ? 'rotate-180' : ''}`}
         />
       </button>
 
@@ -197,11 +197,11 @@ function StudentCombobox({ students, selectedId, onSelect }: ComboboxProps) {
             exit={{ opacity: 0, y: -4, scale: 0.97 }}
             transition={{ duration: 0.13 }}
             style={{ position: 'fixed', top: pos.top, left: pos.left, width: pos.width, zIndex: 9999 }}
-            className="bg-[var(--surface)] border border-[var(--border)] rounded-xl shadow-xl overflow-hidden"
+            className="bg-(--surface) border border-(--border) rounded-xl shadow-xl overflow-hidden"
           >
-            <div className="p-2 border-b border-[var(--border)]">
+            <div className="p-2 border-b border-(--border)">
               <div className="relative">
-                <Search size={12} className="absolute left-3 top-1/2 -translate-y-1/2 text-[var(--muted)] pointer-events-none" />
+                <Search size={12} className="absolute left-3 top-1/2 -translate-y-1/2 text-(--muted) pointer-events-none" />
                 <input
                   autoFocus
                   value={query}
@@ -209,16 +209,16 @@ function StudentCombobox({ students, selectedId, onSelect }: ComboboxProps) {
                   placeholder="Buscar aluno..."
                   className="
                     w-full h-8 pl-8 pr-3 rounded-lg text-sm
-                    bg-[var(--input-bg)] border border-[var(--input-border)]
-                    text-[var(--text)] placeholder:text-[var(--muted)]
-                    outline-none focus:ring-2 focus:ring-[var(--accent-500)]/25
+                    bg-(--input-bg) border border-(--input-border)
+                    text-(--text) placeholder:text-(--muted)
+                    outline-none focus:ring-2 focus:ring-(--accent-500)/25
                   "
                 />
               </div>
             </div>
             <div className="max-h-56 overflow-y-auto">
               {filtered.length === 0 ? (
-                <p className="text-xs text-[var(--muted)] text-center py-5">Nenhum aluno encontrado.</p>
+                <p className="text-xs text-(--muted) text-center py-5">Nenhum aluno encontrado.</p>
               ) : (
                 filtered.map(s => (
                   <button
@@ -226,18 +226,18 @@ function StudentCombobox({ students, selectedId, onSelect }: ComboboxProps) {
                     onClick={() => { onSelect(s.id); setOpen(false); setQuery(''); }}
                     className={`
                       w-full flex items-center gap-3 px-4 py-2.5 transition-colors text-left
-                      ${s.id === selectedId ? 'bg-[var(--accent-500)]/10' : 'hover:bg-[var(--hover-bg)]'}
+                      ${s.id === selectedId ? 'bg-(--accent-500)/10' : 'hover:bg-(--hover-bg)'}
                     `}
                   >
                     <Avatar name={s.nome} size="sm" />
                     <div className="flex-1 min-w-0">
-                      <p className="text-sm font-medium text-[var(--heading)] truncate">
+                      <p className="text-sm font-medium text-(--heading) truncate">
                         {s.nome}
                         {s.apelido && (
-                          <span className="text-[var(--muted)] font-normal ml-1">({s.apelido})</span>
+                          <span className="text-(--muted) font-normal ml-1">({s.apelido})</span>
                         )}
                       </p>
-                      <p className="text-xs text-[var(--muted)] truncate">
+                      <p className="text-xs text-(--muted) truncate">
                         {s.telefone ? formatPhoneGlobal(s.telefone) : 'Sem telefone'}
                       </p>
                     </div>
@@ -293,9 +293,9 @@ function MessagePanel({
 
   return (
     <Card className="overflow-hidden">
-      <div className="px-5 py-4 border-b border-[var(--border)]">
-        <h3 className="text-sm font-semibold text-[var(--heading)]">Mensagem via WhatsApp</h3>
-        <p className="text-xs text-[var(--muted)] mt-0.5">Selecione um template e envie diretamente</p>
+      <div className="px-5 py-4 border-b border-(--border)">
+        <h3 className="text-sm font-semibold text-(--heading)">Mensagem via WhatsApp</h3>
+        <p className="text-xs text-(--muted) mt-0.5">Selecione um template e envie diretamente</p>
       </div>
 
       <div className="p-5 space-y-5">
@@ -312,7 +312,7 @@ function MessagePanel({
                   transition-all whitespace-nowrap
                   ${isActive
                     ? cat.colorActive
-                    : 'border-[var(--border)] text-[var(--muted)] hover:bg-[var(--hover-bg)] hover:text-[var(--text)]'
+                    : 'border-(--border) text-(--muted) hover:bg-(--hover-bg) hover:text-(--text)'
                   }
                 `}
               >
@@ -335,12 +335,12 @@ function MessagePanel({
           >
             {activeCategory === 'personalizado' ? (
               <div className="space-y-2.5">
-                <p className="text-[11px] text-[var(--muted)]">
+                <p className="text-[11px] text-(--muted)">
                   Variáveis:{' '}
                   {['{nome}', '{instrumento}', '{data}', '{hora}'].map(v => (
                     <code
                       key={v}
-                      className="mx-0.5 px-1.5 py-0.5 rounded-md bg-[var(--input-bg)] text-[var(--accent-500)] font-mono text-[11px]"
+                      className="mx-0.5 px-1.5 py-0.5 rounded-md bg-(--input-bg) text-(--accent-500) font-mono text-[11px]"
                     >
                       {v}
                     </code>
@@ -351,7 +351,7 @@ function MessagePanel({
                   onChange={e => setCustomText(e.target.value)}
                   rows={4}
                   placeholder="Digite sua mensagem aqui..."
-                  className="w-full rounded-xl border border-[var(--input-border)] bg-[var(--input-bg)] px-3 py-2.5 text-sm text-[var(--text)] outline-none focus:ring-2 focus:ring-[var(--accent-500)]/30 resize-none placeholder:text-[var(--muted)]"
+                  className="w-full rounded-xl border border-(--input-border) bg-(--input-bg) px-3 py-2.5 text-sm text-(--text) outline-none focus:ring-2 focus:ring-(--accent-500)/30 resize-none placeholder:text-(--muted)"
                 />
               </div>
             ) : (
@@ -363,21 +363,21 @@ function MessagePanel({
                     w-full text-left px-4 py-3 rounded-xl border transition-all flex items-start gap-3
                     ${selectedTemplateId === option.id
                       ? currentCat.colorActive
-                      : 'border-[var(--border)] hover:bg-[var(--hover-bg)]'
+                      : 'border-(--border) hover:bg-(--hover-bg)'
                     }
                   `}
                 >
                   <span className={`mt-0.5 shrink-0 w-2 h-2 rounded-full ${currentCat.colorDot}`} />
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center justify-between mb-1">
-                      <span className="text-xs font-semibold text-[var(--heading)]">{option.label}</span>
+                      <span className="text-xs font-semibold text-(--heading)">{option.label}</span>
                       {selectedTemplateId === option.id && (
-                        <span className="shrink-0 w-4 h-4 rounded-full bg-[var(--accent-500)] flex items-center justify-center">
+                        <span className="shrink-0 w-4 h-4 rounded-full bg-(--accent-500) flex items-center justify-center">
                           <ChevronRight size={9} className="text-white" />
                         </span>
                       )}
                     </div>
-                    <p className="text-xs text-[var(--muted)] leading-relaxed line-clamp-2">{option.text}</p>
+                    <p className="text-xs text-(--muted) leading-relaxed line-clamp-2">{option.text}</p>
                   </div>
                 </button>
               ))
@@ -386,13 +386,13 @@ function MessagePanel({
         </AnimatePresence>
 
         {/* preview */}
-        <div className="space-y-3 pt-1 border-t border-[var(--border)]">
-          <p className="text-[11px] font-semibold text-[var(--muted)] uppercase tracking-wider">Prévia da mensagem</p>
-          <div className="rounded-xl bg-[var(--input-bg)] border border-[var(--border)] px-4 py-3 min-h-[64px]">
+        <div className="space-y-3 pt-1 border-t border-(--border)">
+          <p className="text-[11px] font-semibold text-(--muted) uppercase tracking-wider">Prévia da mensagem</p>
+          <div className="rounded-xl bg-(--input-bg) border border-(--border) px-4 py-3 min-h-[64px]">
             {previewMessage ? (
-              <p className="text-sm text-[var(--text)] whitespace-pre-wrap leading-relaxed">{previewMessage}</p>
+              <p className="text-sm text-(--text) whitespace-pre-wrap leading-relaxed">{previewMessage}</p>
             ) : (
-              <p className="text-sm text-[var(--muted)] italic">
+              <p className="text-sm text-(--muted) italic">
                 {!lesson
                   ? 'Selecione uma aula à esquerda.'
                   : !templateText.trim()
@@ -403,11 +403,11 @@ function MessagePanel({
           </div>
 
           {student && (
-            <div className="flex items-center gap-2 text-xs text-[var(--muted)]">
-              <Phone size={11} className="text-[var(--accent-500)] shrink-0" />
+            <div className="flex items-center gap-2 text-xs text-(--muted)">
+              <Phone size={11} className="text-(--accent-500) shrink-0" />
               <span>
                 Para{' '}
-                <strong className="text-[var(--text)]">
+                <strong className="text-(--text)">
                   {student.apelido || student.nome.split(' ')[0]}
                 </strong>
                 {student.telefone ? (
@@ -556,7 +556,7 @@ export function LessonAlertsPage() {
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center h-64 gap-2 text-[var(--muted)]">
+      <div className="flex items-center justify-center h-64 gap-2 text-(--muted)">
         <Loader2 size={18} className="animate-spin" />
         <span className="text-sm">Carregando aulas...</span>
       </div>
@@ -573,7 +573,7 @@ export function LessonAlertsPage() {
           <div className="app-surface rounded-2xl border shadow-sm">
 
             {/* Tabs finas no topo */}
-            <div className="flex rounded-t-2xl overflow-hidden border-b border-[var(--border)]">
+            <div className="flex rounded-t-2xl overflow-hidden border-b border-(--border)">
               {TABS.map(tab => (
                 <button
                   key={tab.id}
@@ -582,8 +582,8 @@ export function LessonAlertsPage() {
                     relative flex-1 flex items-center justify-center gap-1.5
                     px-4 py-3 text-xs font-semibold transition-colors
                     ${mode === tab.id
-                      ? 'text-[var(--accent-500)]'
-                      : 'text-[var(--muted)] hover:text-[var(--text)] hover:bg-[var(--hover-bg)]'
+                      ? 'text-(--accent-500)'
+                      : 'text-(--muted) hover:text-(--text) hover:bg-(--hover-bg)'
                     }
                   `}
                 >
@@ -622,11 +622,11 @@ export function LessonAlertsPage() {
             </AnimatePresence>
 
             {/* Cabeçalho da lista */}
-            <div className="px-4 py-3 border-b border-[var(--border)]">
-              <p className="text-xs font-semibold text-[var(--heading)]">
+            <div className="px-4 py-3 border-b border-(--border)">
+              <p className="text-xs font-semibold text-(--heading)">
                 {mode === 'aula' ? 'Aulas agendadas' : 'Aulas do aluno'}
               </p>
-              <p className="text-[11px] text-[var(--muted)] mt-0.5">
+              <p className="text-[11px] text-(--muted) mt-0.5">
                 {mode === 'aula'
                   ? `${lessonsWithPhone.length} de ${allScheduled.length} com WhatsApp`
                   : `${studentLessons.length} próximas agendadas`}
@@ -634,7 +634,7 @@ export function LessonAlertsPage() {
             </div>
 
             {/* Lista de aulas */}
-            <div className="divide-y divide-[var(--border)] max-h-[460px] overflow-y-auto rounded-b-2xl">
+            <div className="divide-y divide-(--border) max-h-[460px] overflow-y-auto rounded-b-2xl">
               <AnimatePresence mode="wait">
                 {mode === 'aula' ? (
                   <motion.div
@@ -645,7 +645,7 @@ export function LessonAlertsPage() {
                     transition={{ duration: 0.12 }}
                   >
                     {allScheduled.length === 0 ? (
-                      <div className="px-5 py-10 text-center text-sm text-[var(--muted)]">
+                      <div className="px-5 py-10 text-center text-sm text-(--muted)">
                         Nenhuma aula nos próximos 7 dias.
                       </div>
                     ) : (
@@ -663,25 +663,25 @@ export function LessonAlertsPage() {
                             disabled={!hasPhone}
                             className={`
                               w-full text-left flex items-center gap-3 px-4 py-3 transition-colors relative
-                              ${isSelected ? 'bg-[var(--accent-500)]/8' : 'hover:bg-[var(--hover-bg)]'}
+                              ${isSelected ? 'bg-(--accent-500)/8' : 'hover:bg-(--hover-bg)'}
                               ${!hasPhone ? 'opacity-40 cursor-not-allowed' : ''}
                             `}
                           >
                             {isSelected && (
-                              <span className="absolute left-0 top-2 bottom-2 w-0.5 rounded-r bg-[var(--accent-500)]" />
+                              <span className="absolute left-0 top-2 bottom-2 w-0.5 rounded-r bg-(--accent-500)" />
                             )}
                             <Avatar name={lesson.studentName} size="sm" />
                             <div className="flex-1 min-w-0">
-                              <p className="text-sm font-medium text-[var(--heading)] truncate">
+                              <p className="text-sm font-medium text-(--heading) truncate">
                                 {lesson.studentName}
                               </p>
-                              <p className="text-xs text-[var(--muted)]">{lesson.instrument}</p>
+                              <p className="text-xs text-(--muted)">{lesson.instrument}</p>
                             </div>
                             <div className="text-right shrink-0">
-                              <p className="text-xs font-medium text-[var(--text)]">
+                              <p className="text-xs font-medium text-(--text)">
                                 {new Date(`${lesson.date}T00:00:00`).toLocaleDateString('pt-BR', { day: 'numeric', month: 'short' })}
                               </p>
-                              <p className="text-xs text-[var(--muted)]">{formatTime(lesson.startTime)}</p>
+                              <p className="text-xs text-(--muted)">{formatTime(lesson.startTime)}</p>
                             </div>
                             <span className={`shrink-0 w-2 h-2 rounded-full ${hasPhone ? 'bg-emerald-400' : 'bg-amber-400'}`} />
                           </motion.button>
@@ -698,7 +698,7 @@ export function LessonAlertsPage() {
                     transition={{ duration: 0.12 }}
                   >
                     {studentLessons.length === 0 ? (
-                      <div className="px-5 py-10 text-center text-sm text-[var(--muted)]">
+                      <div className="px-5 py-10 text-center text-sm text-(--muted)">
                         Nenhuma aula nos próximos 7 dias.
                       </div>
                     ) : (
@@ -714,34 +714,34 @@ export function LessonAlertsPage() {
                             onClick={() => setSelectedStudentLessonId(lesson.id)}
                             className={`
                               w-full text-left flex items-center gap-3 px-4 py-3 transition-colors relative
-                              ${isSelected ? 'bg-[var(--accent-500)]/8' : 'hover:bg-[var(--hover-bg)]'}
+                              ${isSelected ? 'bg-(--accent-500)/8' : 'hover:bg-(--hover-bg)'}
                             `}
                           >
                             {isSelected && (
-                              <span className="absolute left-0 top-2 bottom-2 w-0.5 rounded-r bg-[var(--accent-500)]" />
+                              <span className="absolute left-0 top-2 bottom-2 w-0.5 rounded-r bg-(--accent-500)" />
                             )}
                             <div
                               className={`
                                 shrink-0 w-10 h-10 rounded-xl flex flex-col items-center justify-center text-center
-                                ${isSelected ? 'bg-[var(--accent-500)] text-white' : 'bg-[var(--input-bg)] text-[var(--text)]'}
+                                ${isSelected ? 'bg-(--accent-500) text-white' : 'bg-(--input-bg) text-(--text)'}
                               `}
                             >
-                              <span className={`text-[9px] font-bold uppercase leading-none ${isSelected ? 'text-white/70' : 'text-[var(--muted)]'}`}>
+                              <span className={`text-[9px] font-bold uppercase leading-none ${isSelected ? 'text-white/70' : 'text-(--muted)'}`}>
                                 {lessonDate.toLocaleDateString('pt-BR', { month: 'short' }).replace('.', '')}
                               </span>
                               <span className="text-sm font-black leading-tight">{lessonDate.getDate()}</span>
-                              <span className={`text-[9px] font-bold uppercase leading-none ${isSelected ? 'text-white/70' : 'text-[var(--muted)]'}`}>
+                              <span className={`text-[9px] font-bold uppercase leading-none ${isSelected ? 'text-white/70' : 'text-(--muted)'}`}>
                                 {lessonDate.toLocaleDateString('pt-BR', { weekday: 'short' }).replace('.', '')}
                               </span>
                             </div>
                             <div className="flex-1 min-w-0">
-                              <p className="text-sm font-medium text-[var(--heading)]">{lesson.instrument}</p>
-                              <p className="text-xs text-[var(--muted)]">
+                              <p className="text-sm font-medium text-(--heading)">{lesson.instrument}</p>
+                              <p className="text-xs text-(--muted)">
                                 {formatTime(lesson.startTime)} {formatTime(lesson.endTime)}
                               </p>
                             </div>
                             {isSelected && (
-                              <span className="shrink-0 w-5 h-5 rounded-full bg-[var(--accent-500)] flex items-center justify-center">
+                              <span className="shrink-0 w-5 h-5 rounded-full bg-(--accent-500) flex items-center justify-center">
                                 <CheckCircle2 size={11} className="text-white" />
                               </span>
                             )}

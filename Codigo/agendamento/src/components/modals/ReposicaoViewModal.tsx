@@ -68,34 +68,34 @@ export function ReposicaoViewModal({
   };
 
   return (
-    <div className="fixed inset-0 z-[90] flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm">
+    <div className="fixed inset-0 z-90 flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm">
       <motion.div
         initial={{ opacity: 0, scale: 0.95, y: 10 }}
         animate={{ opacity: 1, scale: 1, y: 0 }}
         exit={{ opacity: 0, scale: 0.95, y: 10 }}
         transition={{ type: 'spring', stiffness: 400, damping: 30 }}
-        className="w-full max-w-md bg-[var(--surface)] rounded-2xl shadow-2xl border border-[var(--border)] overflow-hidden"
+        className="w-full max-w-md bg-(--surface) rounded-2xl shadow-2xl border border-(--border) overflow-hidden"
       >
         {/* Header */}
-        <div className="flex items-center justify-between px-5 py-4 border-b border-[var(--border)]">
+        <div className="flex items-center justify-between px-5 py-4 border-b border-(--border)">
           <div className="flex items-center gap-2 flex-wrap">
-            <Eye size={16} className="text-[var(--accent-600)] shrink-0" />
-            <span className="font-semibold text-[var(--heading)] text-sm">
+            <Eye size={16} className="text-(--accent-600) shrink-0" />
+            <span className="font-semibold text-(--heading) text-sm">
               {DAY_LABELS[reposicao.diaSemana] ?? reposicao.diaSemana} • {reposicao.horario}
             </span>
             <span className={`text-[10px] font-medium px-2 py-0.5 rounded-full ${STATUS_COLOR[reposicao.status] ?? ''}`}>
               {STATUS_LABEL[reposicao.status] ?? reposicao.status}
             </span>
           </div>
-          <button onClick={onClose} className="text-[var(--muted)] hover:text-[var(--text)] transition-colors shrink-0 ml-2">
+          <button onClick={onClose} className="text-(--muted) hover:text-(--text) transition-colors shrink-0 ml-2">
             <X size={16} />
           </button>
         </div>
 
         <div className="p-5 space-y-4">
           {/* Date */}
-          <div className="flex items-center gap-2 text-sm text-[var(--text)]">
-            <Clock size={14} className="text-[var(--muted)] shrink-0" />
+          <div className="flex items-center gap-2 text-sm text-(--text)">
+            <Clock size={14} className="text-(--muted) shrink-0" />
             <span>
               {new Date(`${reposicao.dataAula}T12:00:00`).toLocaleDateString('pt-BR', {
                 weekday: 'long', day: 'numeric', month: 'long',
@@ -105,7 +105,7 @@ export function ReposicaoViewModal({
 
           {/* Observacao */}
           {reposicao.observacao && (
-            <p className="text-xs text-[var(--muted)] italic px-1">{reposicao.observacao}</p>
+            <p className="text-xs text-(--muted) italic px-1">{reposicao.observacao}</p>
           )}
 
           {/* Enrollment cutoff warning (student only) */}
@@ -122,26 +122,26 @@ export function ReposicaoViewModal({
 
           {/* Enrolled students */}
           <div>
-            <p className="text-xs font-semibold text-[var(--muted)] mb-2 uppercase tracking-wider">
+            <p className="text-xs font-semibold text-(--muted) mb-2 uppercase tracking-wider">
               {t('modals.reposicao.enrolledStudents')} ({reposicao.alunos.length})
             </p>
             {reposicao.alunos.length === 0 ? (
-              <p className="text-xs text-[var(--muted)] italic py-2">{t('modals.reposicao.noStudents')}</p>
+              <p className="text-xs text-(--muted) italic py-2">{t('modals.reposicao.noStudents')}</p>
             ) : (
               <div className="space-y-1.5 max-h-48 overflow-y-auto">
                 {reposicao.alunos.map(aluno => (
                   <div
                     key={aluno.id}
-                    className="flex items-center gap-3 px-3 py-2 rounded-xl bg-[var(--surface-soft)] border border-[var(--border)]"
+                    className="flex items-center gap-3 px-3 py-2 rounded-xl bg-(--surface-soft) border border-(--border)"
                   >
                     <Avatar name={aluno.nome} size="sm" />
-                    <span className="flex-1 text-sm text-[var(--text)]">{aluno.nome}</span>
+                    <span className="flex-1 text-sm text-(--text)">{aluno.nome}</span>
                     {isTeacher && (
                       <button
                         type="button"
                         onClick={() => handleRemoveAluno(aluno.id)}
                         disabled={busy}
-                        className="text-[var(--muted)] hover:text-rose-500 transition-colors disabled:opacity-40"
+                        className="text-(--muted) hover:text-rose-500 transition-colors disabled:opacity-40"
                         title={`Remover ${aluno.nome}`}
                       >
                         <X size={13} />

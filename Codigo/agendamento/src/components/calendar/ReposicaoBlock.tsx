@@ -30,8 +30,8 @@ export function ReposicaoBlock({ reposicao, hourStart, cellHeight, onClick }: Re
         'border border-dashed',
         onClick ? 'cursor-pointer hover:z-30' : 'cursor-default',
         isFull
-          ? 'border-[var(--accent-400)] bg-[color-mix(in_srgb,var(--accent-500)_10%,var(--surface))]'
-          : 'border-[var(--border)] bg-[var(--surface-soft)]',
+          ? 'border-(--accent-400) bg-[color-mix(in_srgb,var(--accent-500)_10%,var(--surface))]'
+          : 'border-(--border) bg-(--surface-soft)',
       )}
       style={{ top: `${top}px`, height: `${height}px` }}
     >
@@ -43,12 +43,12 @@ export function ReposicaoBlock({ reposicao, hourStart, cellHeight, onClick }: Re
 
       {/* Content */}
       <div className="flex items-center gap-1 pl-2 pr-1 h-full min-w-0">
-        <RefreshCw size={9} className="shrink-0 text-[var(--accent-600)] opacity-70" />
-        <p className="text-[10px] font-semibold truncate text-[var(--accent-700)] leading-tight">
+        <RefreshCw size={9} className="shrink-0 text-(--accent-600) opacity-70" />
+        <p className="text-[10px] font-semibold truncate text-(--accent-700) leading-tight">
           {t('calendar.makeUp')}
         </p>
         {height > 30 && count > 0 && (
-          <span className="ml-auto shrink-0 text-[9px] font-medium text-[var(--muted)]">
+          <span className="ml-auto shrink-0 text-[9px] font-medium text-(--muted)">
             {count}↑
           </span>
         )}
@@ -56,10 +56,10 @@ export function ReposicaoBlock({ reposicao, hourStart, cellHeight, onClick }: Re
 
       {/* Hover tooltip */}
       <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-1 pointer-events-none z-50 opacity-0 group-hover/repos:opacity-100 transition-opacity duration-150 flex flex-col items-center">
-        <div className="px-2 py-0.5 rounded text-[9px] font-semibold border shadow-md whitespace-nowrap bg-[var(--surface)] border-[var(--border)] text-[var(--text)]">
+        <div className="px-2 py-0.5 rounded text-[9px] font-semibold border shadow-md whitespace-nowrap bg-(--surface) border-(--border) text-(--text)">
           {t('calendar.makeUp')} · {formatTime(reposicao.horario, lang)} · {count} {count !== 1 ? t('calendar.students') : t('calendar.student')}
         </div>
-        <div className="w-0 h-0 border-l-4 border-r-4 border-t-4 border-l-transparent border-r-transparent border-t-[var(--border)]" />
+        <div className="w-0 h-0 border-l-4 border-r-4 border-t-4 border-l-transparent border-r-transparent border-t-(--border)" />
       </div>
     </div>
   );

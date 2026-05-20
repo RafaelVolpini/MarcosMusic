@@ -14,7 +14,7 @@ export function Card({ children, className, onClick, hoverable }: CardProps) {
       onClick={onClick}
       className={cn(
         'app-surface rounded-2xl border shadow-sm',
-        hoverable && 'cursor-pointer hover:shadow-lg hover:border-[var(--accent-500)]/30 transition-all duration-300',
+        hoverable && 'cursor-pointer hover:shadow-lg hover:border-(--accent-500)/30 transition-all duration-300',
         className,
       )}
     >
