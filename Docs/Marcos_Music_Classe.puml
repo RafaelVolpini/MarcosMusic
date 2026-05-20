@@ -96,15 +96,68 @@ class Reposicao {
     + getStatus(): String
     + getObservação(): String 
 }
+class Chat{
+    - id: Long (PK)
+    - criadoEm: LocalDateTime
+    - aluno: Aluno
+    ---
+}
 
-' Relacionamentos
-Usuario "1" -- "0..1" Aluno : perfil
-Usuario "1" -- "0..*" TermsHistory : termos
-Aluno "1" -- "n" Aula : agendadas
-Aluno "1" -- "n" AulaAluno : horários recorrentes
-Aula "0..1" -- "0..*" AulaAluno : log
-Role -- Usuario : define papel
-Reposicao "0..*" -- "1" Aula: aula
-Reposicao "0..*" -- "0..*" Aluno: alunos
-Reposicao "0..*" -- "1" Disponibilidade: disponibilidade
-@enduml
+class ChatMensagem{
+    - id: Long (PK)
+    - remetente: String
+    - remetenteId: UUID
+    - conteudo: String
+    - tipo: String
+    - lida: Boolean
+    - criadaEm: LocalDateTime
+}
+
+class Notificacao {
+    - id: Long (PK)
+    - destinatario: String
+    - tipo: String
+    - titulo: String
+    - mensagem: String
+    - lida: Boolean
+    - criadaEm: LocalDateTime
+    - refId: Long
+}
+
+
+' Herança
+Usuario <|-- Aluno  
+' Aluno herda os atributos básicos de Usuario
+
+Usuario "1" *-- "0..*" TermsHistory : termos  
+' Um Usuario compõe varios registros de aceite
+Role -- Usuario : define papel 
+ ' Usuario tem um Role (papel/perfil)
+
+Aluno "1" o-- "0..*" Aula : agendadas  
+' Um Aluno pode ter varias Aulas agendadas
+Aluno "1" *-- "0..*" AulaAluno : horários recorrentes  
+' Registros de horario pertencem ao Aluno
+Aula "0..1" o-- "0..*" AulaAluno : log  
+' Uma Aula pode ter varios logs (opcional)
+
+Reposicao "0..*" o-- "1" Disponibilidade : disponibilidade  
+' Cada Reposicao usa 1 Disponibilidade
+Reposicao "0..*" -- "0..1" Aula : aula  
+' Reposicao pode referenciar uma Aula (opcional)
+Reposicao "0..*" -- "0..*" Aluno : alunos  
+' Relacao muitos-para-muitos
+
+Chat "1" o-- "0..*" ChatMensagem  
+' Chat agrega varias mensagens
+Aluno "1" o-- "0..*" Chat  
+' Aluno pode ter varios chats
+
+Notificacao "0..*" --> "0..1" Aula  
+' Notificacao pode apontar uma Aula
+Notificacao "0..*" --> "0..1" Reposicao  
+' Notificacao pode apontar uma Reposicao
+Notificacao "0..*" --> "0..1" Chat  
+' Notificacao pode apontar um Chat
+Usuario "1" <-- "0..*" Notificacao : destinatario  
+' Usuario recebe varias notificacoes
