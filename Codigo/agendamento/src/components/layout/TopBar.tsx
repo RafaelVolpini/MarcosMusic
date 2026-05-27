@@ -187,7 +187,7 @@ export function TopBar({ activePage, user, onLogout, onNavigate }: TopBarProps) 
       <div className="relative">
         <button
           onClick={() => { setChatOpen(v => !v); setNotifOpen(false); setProfileOpen(false); }}
-          className="relative w-10 h-10 flex items-center justify-center rounded-xl text-(--muted) hover:bg-(--hover-bg) hover:text-(--accent-600) transition-colors cursor-pointer"
+          className="relative w-10 h-10 flex items-center justify-center rounded-xl text-[var(--muted)] hover:bg-[var(--hover-bg)] hover:text-[var(--accent-600)] transition-colors cursor-pointer"
         >
           <MessageSquare size={18} />
           {chatNaoLidas > 0 && (
@@ -205,7 +205,7 @@ export function TopBar({ activePage, user, onLogout, onNavigate }: TopBarProps) 
       <div className="relative">
         <button
           onClick={handleOpenNotif}
-          className="relative w-10 h-10 flex items-center justify-center rounded-xl text-(--muted) hover:bg-(--hover-bg) hover:text-(--accent-600) transition-colors cursor-pointer"
+          className="relative w-10 h-10 flex items-center justify-center rounded-xl text-[var(--muted)] hover:bg-[var(--hover-bg)] hover:text-[var(--accent-600)] transition-colors cursor-pointer"
         >
           <Bell size={18} />
           {notifNaoLidas > 0 && (
