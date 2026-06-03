@@ -186,8 +186,10 @@ export function TopBar({ activePage, user, onLogout, onNavigate }: TopBarProps) 
       {/* Chat */}
       <div className="relative">
         <button
+          aria-label={t('topbar.chat')}
+          aria-expanded={chatOpen}
           onClick={() => { setChatOpen(v => !v); setNotifOpen(false); setProfileOpen(false); }}
-          className="relative w-10 h-10 flex items-center justify-center rounded-xl text-(--muted) hover:bg-(--hover-bg) hover:text-(--accent-600) transition-colors cursor-pointer"
+          className="relative w-10 h-10 flex items-center justify-center rounded-xl text-[var(--muted)] hover:bg-[var(--hover-bg)] hover:text-[var(--accent-600)] transition-colors cursor-pointer"
         >
           <MessageSquare size={18} />
           {chatNaoLidas > 0 && (
@@ -204,8 +206,10 @@ export function TopBar({ activePage, user, onLogout, onNavigate }: TopBarProps) 
       {/* Notifications */}
       <div className="relative">
         <button
+          aria-label={t('topbar.notif')}
+          aria-expanded={notifOpen}
           onClick={handleOpenNotif}
-          className="relative w-10 h-10 flex items-center justify-center rounded-xl text-(--muted) hover:bg-(--hover-bg) hover:text-(--accent-600) transition-colors cursor-pointer"
+          className="relative w-10 h-10 flex items-center justify-center rounded-xl text-[var(--muted)] hover:bg-[var(--hover-bg)] hover:text-[var(--accent-600)] transition-colors cursor-pointer"
         >
           <Bell size={18} />
           {notifNaoLidas > 0 && (
@@ -275,6 +279,8 @@ export function TopBar({ activePage, user, onLogout, onNavigate }: TopBarProps) 
       {/* Profile */}
       <div className="relative">
         <button
+          aria-label={t('topbar.profile')}
+          aria-expanded={profileOpen}
           onClick={() => { setProfileOpen(v => !v); setNotifOpen(false); setChatOpen(false); }}
           className="flex items-center gap-2 h-10 px-2 rounded-xl hover:bg-(--hover-bg) transition-colors"
         >

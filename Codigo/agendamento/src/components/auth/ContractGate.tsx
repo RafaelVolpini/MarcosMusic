@@ -73,7 +73,7 @@ export function ContractGate({ user, onAccepted }: ContractGateProps) {
         heightLeft -= pdfHeight;
       }
 
-      pdf.save('contrato-aulas-musisca.pdf');
+      pdf.save('contrato-aulas-musica.pdf');
     } catch (error) {
       console.error('Erro ao gerar PDF:', error);
     } finally {
