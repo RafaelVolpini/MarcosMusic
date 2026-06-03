@@ -124,6 +124,19 @@ class Notificacao {
     - refId: Long
 }
 
+class Modulo {
+    - id: Long (PK)
+    - nome: String (not null)
+    - uploads: List<UploadModulo>
+}
+
+class UploadModulo {
+    - id: Long (PK)
+    - nomeArquivo: String (not null)
+    - url: String (not null)
+    - modulos: Modulo (FK)
+}
+
 
 ' Herança
 Usuario <|-- Aluno  
@@ -161,3 +174,4 @@ Notificacao "0..*" --> "0..1" Chat
 ' Notificacao pode apontar um Chat
 Usuario "1" <-- "0..*" Notificacao : destinatario  
 ' Usuario recebe varias notificacoes
+Modulo "1" o-- "0..*" UploadModulo : uploads
