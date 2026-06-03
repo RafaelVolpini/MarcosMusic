@@ -11,4 +11,6 @@ public class CriarAulaDTO {
     private String studentId;       // UUID do aluno (obrigatório quando professor cria)
     private LocalDateTime dataInicio;
     private LocalDateTime dataFim;
+    private Boolean recorrente = false;
+    private Boolean isOnline = false;
 }

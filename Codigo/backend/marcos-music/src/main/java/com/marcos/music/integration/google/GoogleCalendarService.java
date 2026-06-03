@@ -3,6 +3,9 @@ package com.marcos.music.integration.google;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.marcos.music.entity.Aula;
+import com.marcos.music.entity.GoogleOAuthToken;
+import com.marcos.music.repository.Aula.AulaRepository;
+import com.marcos.music.repository.GoogleOAuthTokenRepository;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
@@ -25,11 +28,14 @@ public class GoogleCalendarService {
     private static final String GOOGLE_AUTH_URL = "https://accounts.google.com/o/oauth2/auth";
     private static final String GOOGLE_TOKEN_URL = "https://oauth2.googleapis.com/token";
     private static final String GOOGLE_CALENDAR_URL = "https://www.googleapis.com/calendar/v3/calendars/primary/events?conferenceDataVersion=1";
+    private static final String GOOGLE_USERINFO_URL = "https://www.googleapis.com/oauth2/v3/userinfo";
     private static final String TIME_ZONE = "America/Sao_Paulo";
 
     private final ObjectMapper mapper = new ObjectMapper();
     private final HttpClient httpClient = HttpClient.newHttpClient();
 
+    private final AulaRepository aulaRepository;
+    private final GoogleOAuthTokenRepository tokenRepository;
     private final Map<String, GoogleAuthState> states = new ConcurrentHashMap<>();
     private final Map<UUID, GoogleToken> tokens = new ConcurrentHashMap<>();
 
@@ -44,6 +50,11 @@ public class GoogleCalendarService {
 
     @Value("${google.oauth.frontend-redirect}")
     private String frontendRedirect;
+
+    public GoogleCalendarService(AulaRepository aulaRepository, GoogleOAuthTokenRepository tokenRepository) {
+        this.aulaRepository = aulaRepository;
+        this.tokenRepository = tokenRepository;
+    }
 
     public String buildAuthUrl(UUID userId, String loginHint, String returnUrl) {
         if (clientId == null || clientId.isBlank() || clientSecret == null || clientSecret.isBlank()) {
@@ -75,21 +86,69 @@ public class GoogleCalendarService {
         }
         GoogleToken token = exchangeCode(code);
         tokens.put(authState.userId(), token);
+        saveTokenToDB(authState.userId(), token);
         return authState.returnUrl();
     }
 
     public int syncLessons(UUID userId, List<Aula> lessons) throws IOException, InterruptedException {
         String accessToken = getAccessToken(userId);
-        int success = 0;
+        int synced = 0;
         for (Aula lesson : lessons) {
-            boolean ok = createEvent(accessToken, lesson);
-            if (ok) success++;
+            try {
+                if (lesson.getGoogleEventId() != null && !lesson.getGoogleEventId().isBlank()) {
+                    // Event already created — update time/title only (no new duplicate)
+                    updateEvent(accessToken, lesson.getGoogleEventId(), lesson);
+                    synced++;
+                } else {
+                    // First time syncing this lesson — create event
+                    EventCreationResult result = createEvent(accessToken, lesson);
+                    if (result.eventId() != null) {
+                        lesson.setGoogleEventId(result.eventId());
+                        if (result.hangoutLink() != null && !result.hangoutLink().isBlank()) {
+                            lesson.setMeetLink(result.hangoutLink());
+                        }
+                        aulaRepository.save(lesson);
+                        synced++;
+                    }
+                }
+            } catch (Exception e) {
+                // Continue with next lesson on error
+            }
         }
-        return success;
+        return synced;
+    }
+
+    /**
+     * Creates a single Google Meet room for the given lesson and returns the hangoutLink.
+     * Also saves the Google event ID to prevent duplicates on future syncs.
+     * Throws IllegalStateException if the user is not connected to Google.
+     */
+    public String createMeetLink(UUID userId, Aula aula) throws IOException, InterruptedException {
+        String accessToken = getAccessToken(userId);
+        EventCreationResult result = createEvent(accessToken, aula);
+        if (result.eventId() != null) {
+            aula.setGoogleEventId(result.eventId());
+            aulaRepository.save(aula);
+        }
+        return result.hangoutLink();
     }
 
     public boolean hasToken(UUID userId) {
-        return tokens.containsKey(userId);
+        return tokens.containsKey(userId) || tokenRepository.existsById(userId);
+    }
+
+    /** Returns the Google profile photo URL for the given user, or null if unavailable. */
+    public String getProfilePhoto(UUID userId) throws IOException, InterruptedException {
+        String accessToken = getAccessToken(userId);
+        HttpRequest request = HttpRequest.newBuilder(URI.create(GOOGLE_USERINFO_URL))
+                .header("Authorization", "Bearer " + accessToken)
+                .GET()
+                .build();
+        HttpResponse<String> response = httpClient.send(request, HttpResponse.BodyHandlers.ofString());
+        if (response.statusCode() < 200 || response.statusCode() >= 300) return null;
+        JsonNode json = mapper.readTree(response.body());
+        String picture = json.path("picture").asText(null);
+        return (picture != null && !picture.isBlank()) ? picture : null;
     }
 
     public String getFrontendRedirect() {
@@ -99,12 +158,17 @@ public class GoogleCalendarService {
     private String getAccessToken(UUID userId) throws IOException, InterruptedException {
         GoogleToken token = tokens.get(userId);
         if (token == null) {
-            throw new IllegalStateException("Conta Google não conectada");
+            token = loadTokenFromDB(userId);
+            if (token == null) {
+                throw new IllegalStateException("Conta Google não conectada");
+            }
+            tokens.put(userId, token);
         }
         if (!token.isExpired()) return token.accessToken();
 
         GoogleToken refreshed = refreshToken(token);
         tokens.put(userId, refreshed);
+        saveTokenToDB(userId, refreshed);
         return refreshed.accessToken();
     }
 
@@ -159,14 +223,16 @@ public class GoogleCalendarService {
         return new GoogleToken(accessToken, token.refreshToken(), Instant.now().plusSeconds(expiresIn));
     }
 
-    private boolean createEvent(String accessToken, Aula lesson) throws IOException, InterruptedException {
+    private record EventCreationResult(String hangoutLink, String eventId) {}
+
+    private EventCreationResult createEvent(String accessToken, Aula lesson) throws IOException, InterruptedException {
         String alunoNome = (lesson.getAluno() != null) ? lesson.getAluno().getNome() : "Aluno";
         String alunoEmail = (lesson.getAluno() != null && lesson.getAluno().getUsuario() != null) 
                             ? lesson.getAluno().getUsuario().getEmail() : null;
 
         java.time.format.DateTimeFormatter formatter = java.time.format.DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ssXXX");
-        String startStr = lesson.getDataInicio().atZone(ZoneId.systemDefault()).format(formatter);
-        String endStr = lesson.getDataFim().atZone(ZoneId.systemDefault()).format(formatter);
+        String startStr = lesson.getDataInicio().atZone(ZoneId.of(TIME_ZONE)).format(formatter);
+        String endStr = lesson.getDataFim().atZone(ZoneId.of(TIME_ZONE)).format(formatter);
 
         Map<String, Object> payloadMap = new java.util.HashMap<>();
         payloadMap.put("summary", "Aula de Música: " + alunoNome);
@@ -187,10 +253,10 @@ public class GoogleCalendarService {
             payloadMap.put("attendees", List.of(Map.of("email", alunoEmail)));
         }
 
-        // Adiciona a solicitação de criação de link do Google Meet
+        // Stable requestId so Google deduplicates if the same request is retried
         payloadMap.put("conferenceData", Map.of(
                 "createRequest", Map.of(
-                        "requestId", "musga-" + lesson.getId() + "-" + System.currentTimeMillis(),
+                        "requestId", "marcos-music-aula-" + lesson.getId(),
                         "conferenceSolutionKey", Map.of("type", "hangoutsMeet")
                 )
         ));
@@ -215,10 +281,70 @@ public class GoogleCalendarService {
         
         if (response.statusCode() < 200 || response.statusCode() >= 300) {
             System.err.println("Erro do Google (Status " + response.statusCode() + "): " + response.body());
-            return false;
+            return new EventCreationResult(null, null);
         }
-        
-        return true;
+
+        JsonNode responseJson = mapper.readTree(response.body());
+        String eventId = responseJson.path("id").asText(null);
+        String hangoutLink = responseJson.path("hangoutLink").asText(null);
+        if (hangoutLink == null || hangoutLink.isBlank()) {
+            // Fallback: check conferenceData.entryPoints for video entry
+            JsonNode entryPoints = responseJson.path("conferenceData").path("entryPoints");
+            if (entryPoints.isArray()) {
+                for (JsonNode ep : entryPoints) {
+                    if ("video".equals(ep.path("entryPointType").asText())) {
+                        hangoutLink = ep.path("uri").asText(null);
+                        break;
+                    }
+                }
+            }
+        }
+        return new EventCreationResult(hangoutLink, eventId);
+    }
+
+    /** PATCHes an existing Google Calendar event to update title and time. */
+    private void updateEvent(String accessToken, String eventId, Aula lesson) throws IOException, InterruptedException {
+        String alunoNome = (lesson.getAluno() != null) ? lesson.getAluno().getNome() : "Aluno";
+        java.time.format.DateTimeFormatter formatter = java.time.format.DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ssXXX");
+        String startStr = lesson.getDataInicio().atZone(ZoneId.of(TIME_ZONE)).format(formatter);
+        String endStr   = lesson.getDataFim().atZone(ZoneId.of(TIME_ZONE)).format(formatter);
+
+        Map<String, Object> patch = new java.util.HashMap<>();
+        patch.put("summary", "Aula de Música: " + alunoNome);
+        patch.put("start", Map.of("dateTime", startStr, "timeZone", TIME_ZONE));
+        patch.put("end",   Map.of("dateTime", endStr,   "timeZone", TIME_ZONE));
+
+        String url = "https://www.googleapis.com/calendar/v3/calendars/primary/events/" + eventId + "?conferenceDataVersion=1";
+        HttpRequest request = HttpRequest.newBuilder(URI.create(url))
+                .header("Authorization", "Bearer " + accessToken)
+                .header("Content-Type", "application/json")
+                .method("PATCH", HttpRequest.BodyPublishers.ofString(mapper.writeValueAsString(patch)))
+                .build();
+
+        HttpResponse<String> response = httpClient.send(request, HttpResponse.BodyHandlers.ofString());
+        if (response.statusCode() == 404) {
+            // Event was deleted from Google Calendar — reset so it gets recreated on next sync
+            lesson.setGoogleEventId(null);
+            aulaRepository.save(lesson);
+        }
+    }
+
+    private void saveTokenToDB(UUID userId, GoogleToken token) {
+        GoogleOAuthToken entity = tokenRepository.findById(userId)
+                .orElseGet(() -> { GoogleOAuthToken e = new GoogleOAuthToken(); e.setUserId(userId); return e; });
+        entity.setAccessToken(token.accessToken());
+        entity.setRefreshToken(token.refreshToken());
+        entity.setExpiresAt(token.expiresAt() != null ? token.expiresAt().getEpochSecond() : 0L);
+        tokenRepository.save(entity);
+    }
+
+    private GoogleToken loadTokenFromDB(UUID userId) {
+        return tokenRepository.findById(userId)
+                .map(e -> new GoogleToken(
+                        e.getAccessToken(),
+                        e.getRefreshToken(),
+                        Instant.ofEpochSecond(e.getExpiresAt())))
+                .orElse(null);
     }
 
     private String normalizeReturnUrl(String returnUrl) {

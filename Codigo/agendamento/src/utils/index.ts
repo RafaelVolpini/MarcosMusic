@@ -1,16 +1,20 @@
 import { clsx, type ClassValue } from 'clsx';
 import { twMerge } from 'tailwind-merge';
+import type { DayKey } from '../types';
 
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
 }
 
-export function formatTime(time: string): string {
-  const [h, m] = time.split(':');
-  const hour = parseInt(h, 10);
-  const ampm = hour >= 12 ? 'PM' : 'AM';
-  const displayHour = hour % 12 || 12;
-  return `${displayHour}:${m} ${ampm}`;
+export function formatTime(time: string, lang = 'pt'): string {
+  if (lang === 'en') {
+    const [h, m] = time.split(':');
+    const hour = parseInt(h, 10);
+    const ampm = hour >= 12 ? 'PM' : 'AM';
+    const displayHour = hour % 12 || 12;
+    return `${displayHour}:${m} ${ampm}`;
+  }
+  return time; // HH:MM  formato 24h brasileiro
 }
 
 export function formatDuration(startTime: string, endTime: string): string {
@@ -23,6 +27,22 @@ export function formatDuration(startTime: string, endTime: string): string {
     return m > 0 ? `${h}h ${m}min` : `${h}h`;
   }
   return `${totalMinutes}min`;
+}
+
+/** Formata telefone para exibição no formato global: +55 XX XXXXX-XXXX */
+export function formatPhoneGlobal(phone: string): string {
+  const d = phone.replace(/\D/g, '');
+  const local = d.startsWith('55') && d.length >= 12 ? d.slice(2) : d;
+  if (local.length === 10) return `+55 ${local.slice(0, 2)} ${local.slice(2, 6)}-${local.slice(6)}`;
+  if (local.length === 11) return `+55 ${local.slice(0, 2)} ${local.slice(2, 7)}-${local.slice(7)}`;
+  return phone;
+}
+
+/** Converte telefone para o formato da API do WhatsApp (só dígitos com código do país 55) */
+export function phoneToWhatsApp(phone: string): string {
+  const d = phone.replace(/\D/g, '');
+  if (d.startsWith('55') && d.length >= 12) return d;
+  return `55${d}`;
 }
 
 export function formatBytes(bytes: number): string {
@@ -87,7 +107,29 @@ export function generateMeetLink(): string {
   return `https://meet.google.com/${seg(3)}-${seg(4)}-${seg(3)}`;
 }
 
-export function getDayKeyFromISODate(dateISO: string): 'mon' | 'tue' | 'wed' | 'thu' | 'fri' | 'sat' | 'sun' {
+export function getDayKeyFromISODate(dateISO: string): DayKey {
   const day = new Date(`${dateISO}T00:00:00`).getDay();
-  return (['sun', 'mon', 'tue', 'wed', 'thu', 'fri', 'sat'][day] as 'mon' | 'tue' | 'wed' | 'thu' | 'fri' | 'sat' | 'sun');
+  return (['dom', 'seg', 'ter', 'qua', 'qui', 'sex', 'sab'][day] as DayKey);
+}
+
+/**
+ * Returns a Date object whose getHours/getMinutes/getDate etc. reflect the
+ * current wall-clock time in the given IANA timezone (e.g. 'America/Sao_Paulo').
+ * Useful for isPast / isOngoing comparisons that must be timezone-aware.
+ */
+export function getNowInTimezone(tz: string): Date {
+  const now = new Date();
+  const fmt = new Intl.DateTimeFormat('en-CA', {
+    timeZone: tz,
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+    hour: '2-digit',
+    minute: '2-digit',
+    second: '2-digit',
+    hour12: false,
+  });
+  const parts = fmt.formatToParts(now);
+  const get = (type: string) => parseInt(parts.find(p => p.type === type)?.value ?? '0', 10);
+  return new Date(get('year'), get('month') - 1, get('day'), get('hour'), get('minute'), get('second'));
 }

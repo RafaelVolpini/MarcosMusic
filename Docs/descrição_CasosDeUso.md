@@ -1,4 +1,4 @@
-## Sistema de Gestão de Aulas de Música — Casos de Uso
+## Sistema de Gestão de Aulas de Música Casos de Uso
 
 ### Atores
 - **Professor**
@@ -8,7 +8,7 @@
 
 
 
-### UC-01 — Cadastrar-se
+### UC-01 Cadastrar-se
 **Atores principais:** Professor, Aluno  
 **Objetivo:** Permitir criação de conta na plataforma.  
 **Pré-condições:** Usuário não autenticado.  
@@ -27,7 +27,7 @@
 
 
 
-### UC-02 — Autenticação
+### UC-02 Autenticação
 **Atores principais:** Professor, Aluno  
 **Objetivo:** Permitir acesso à área autenticada do sistema.  
 **Pré-condições:** Conta existente.  
@@ -43,7 +43,7 @@
 
 
 
-### UC-03 — Definir disponibilidade
+### UC-03 Definir disponibilidade
 **Ator principal:** Professor  
 **Objetivo:** Registrar horários disponíveis para aulas.  
 **Pré-condições:** Professor autenticado.  
@@ -60,7 +60,7 @@
 
 
 
-### UC-04 — Visualizar agenda
+### UC-04 Visualizar agenda
 **Atores principais:** Professor, Aluno  
 **Objetivo:** Consultar compromissos e horários disponíveis/ocupados.  
 **Pré-condições:** Usuário autenticado.  
@@ -73,7 +73,7 @@
 
 
 
-### UC-05 — Agendar aula
+### UC-05 Agendar aula
 **Atores principais:** Aluno (e/ou Professor)  
 **Objetivo:** Criar um novo compromisso de aula.  
 **Pré-condições:** Usuário autenticado; horário disponível.  
@@ -96,7 +96,7 @@
 
 
 
-### UC-06 — Remarcar aula
+### UC-06 Remarcar aula
 **Atores principais:** Aluno, Professor  
 **Objetivo:** Alterar data/horário de aula já agendada.  
 **Pré-condições:** Aula existente; usuários com permissão.  
@@ -116,7 +116,7 @@
 
 
 
-### UC-07 — Gerenciar reposições
+### UC-07 Gerenciar reposições
 **Atores principais:** Aluno, Professor  
 **Objetivo:** Controlar reposições decorrentes de faltas/cancelamentos/remarcações.  
 **Pré-condições:** Existência de ocorrência que gere reposição.  
@@ -133,7 +133,7 @@
 
 
 
-### UC-08 — Acessar videoaulas
+### UC-08 Acessar videoaulas
 **Atores principais:** Aluno (e possivelmente Professor)  
 **Objetivo:** Consumir conteúdo de videoaulas disponibilizado na plataforma.  
 **Pré-condições:** Usuário com permissão de acesso.  
@@ -146,7 +146,7 @@
 
 
 
-### UC-09 — Visualizar página "sobre mim"
+### UC-09 Visualizar página "sobre mim"
 **Atores principais:** Usuário sem login, Aluno, Professor  
 **Objetivo:** Exibir informações institucionais/profissionais da escola/professor.  
 **Pré-condições:** Nenhuma.  
@@ -158,7 +158,7 @@
 
 
 
-### UC-10 — Informações de contato
+### UC-10 Informações de contato
 **Atores principais:** Usuário sem login, Aluno, Professor  
 **Objetivo:** Exibir canais de contato da escola/professor.  
 **Pré-condições:** Nenhuma.  
@@ -170,7 +170,7 @@
 
 
 
-### UC-11 — Enviar notificação
+### UC-11 Enviar notificação
 **Atores principais:** Sistema  
 **Objetivo:** Notificar envolvidos sobre criação/alteração de aula.  
 **Pré-condições:** Evento de agenda gerado (ex.: agendamento).  
@@ -183,7 +183,7 @@
 
 
 
-### UC-12 — Confirmar presença
+### UC-12 Confirmar presença
 **Atores principais:** Sistema (com resposta de Aluno/Professor)  
 **Objetivo:** Registrar confirmação de participação na aula.  
 **Pré-condições:** Aula agendada e notificada.  
@@ -196,7 +196,7 @@
 
 
 
-### UC-13 — Agendar reunião online
+### UC-13 Agendar reunião online
 **Atores principais:** Aluno, Professor  
 **Objetivo:** Gerar sessão remota para aulas online.  
 **Pré-condições:** Aula definida como remota.  
@@ -209,7 +209,7 @@
 
 
 
-### UC-14 — Aplicar regra de contrato
+### UC-14 Aplicar regra de contrato
 **Atores principais:** Sistema  
 **Objetivo:** Validar ações de reposição/remarcação conforme contrato.  
 **Pré-condições:** Solicitação sujeita a regras contratuais.  
@@ -220,7 +220,7 @@
 2. Avalia limite de faltas, reposições e prazos.
 3. Retorna decisão para o caso de uso chamador.
 
-### UC-15 — Verificar disponibilidade de horários
+### UC-15 Verificar disponibilidade de horários
 **Ator principal:** Sistema  
 **Objetivo:** Verificar se um horário está disponível para reagendamento.  
 **Pré-condições:** Existe solicitação de remarcação.  
@@ -230,5 +230,88 @@
 1. Sistema recebe solicitação de remarcação.
 2. Verifica horários disponíveis.
 3. Retorna resultado para o caso chamador.
+
+
+
+### UC-16 Integrar Google Calendar
+**Atores principais:** Professor  
+**Objetivo:** Conectar a conta Google do professor à plataforma para sincronizar aulas e gerar links de videoconferência (Google Meet).  
+**Pré-condições:** Professor autenticado; credenciais OAuth2 do Google configuradas no servidor.  
+**Pós-condições:** Token de acesso Google armazenado; aulas sincronizadas no Google Calendar; links Meet vinculados às aulas remotas.
+
+**Fluxo principal:**
+1. Professor acessa as configurações e clica em "Conectar Google".
+2. Sistema gera URL de autorização OAuth2 e redireciona ao Google.
+3. Usuário autoriza os escopos solicitados (calendar.events).
+4. Google retorna código de autorização; sistema troca pelo access/refresh token.
+5. Sistema armazena o token e redireciona ao frontend com confirmação.
+6. Professor aciona sincronização; sistema cria/atualiza eventos no Google Calendar.
+7. Para aulas remotas, sistema gera conferência Google Meet e salva o link na aula.
+
+**Fluxos alternativos/exceções:**
+- Credenciais Google não configuradas: sistema informa indisponibilidade da integração.
+- Token expirado/revogado: sistema detecta `disconnected` e solicita nova autorização.
+- Falha na sincronização de evento específico: sistema contabiliza falhas e retorna resumo (total, sucesso, falhas).
+
+
+
+### UC-17 Gerenciar perfil do usuário
+**Atores principais:** Professor, Aluno  
+**Objetivo:** Permitir que o usuário visualize e atualize seus dados de perfil, preferências de tema e idioma.  
+**Pré-condições:** Usuário autenticado.  
+**Pós-condições:** Dados de perfil atualizados; preferências salvas localmente.
+
+**Fluxo principal:**
+1. Usuário acessa a página de configurações.
+2. Sistema exibe dados atuais: nome, telefone, e-mail (somente leitura), foto de perfil.
+3. Usuário edita nome e/ou telefone e confirma.
+4. Sistema valida e envia ao backend para persistência.
+5. Usuário pode alternar tema (claro/escuro) e idioma (PT/EN).
+6. Sistema aplica preferências imediatamente e as persiste localmente.
+
+**Fluxos alternativos/exceções:**
+- Perfil do professor sem registro de aluno no banco: sistema cria o registro automaticamente antes de atualizar.
+- Campos em branco: sistema mantém os valores anteriores.
+
+
+
+### UC-18 Gerenciar alunos
+**Ator principal:** Professor  
+**Objetivo:** Cadastrar, editar, ativar/desativar e excluir alunos da plataforma.  
+**Pré-condições:** Professor autenticado.  
+**Pós-condições:** Cadastro de alunos atualizado; conta do aluno criada, alterada ou removida.
+
+**Fluxo principal:**
+1. Professor acessa a página de alunos.
+2. Sistema lista todos os alunos cadastrados (excluindo o próprio professor).
+3. Para cadastrar: professor preenche nome, e-mail, telefone, apelido e horários.
+4. Sistema cria conta de usuário com senha padrão e víncula o perfil de aluno.
+5. Para editar: professor seleciona aluno, altera dados e confirma.
+6. Sistema atualiza nome, telefone, status (ativo/inativo) e horários fixos.
+7. Para excluir: professor confirma exclusão; sistema remove aluno e sua conta.
+
+**Fluxos alternativos/exceções:**
+- E-mail já cadastrado: sistema informa conflito e cancela criação.
+- Exclusão com aulas vinculadas: banco aplica cascade e remove registros dependentes.
+- Professor não aparece na lista de alunos (filtro por papel ADMIN aplicado no backend).
+
+
+
+### UC-19 Visualizar alertas e notificações
+**Atores principais:** Professor, Aluno  
+**Objetivo:** Consultar notificações geradas pelo sistema sobre aulas, reposições e eventos relevantes.  
+**Pré-condições:** Usuário autenticado.  
+**Pós-condições:** Notificações exibidas; notificações lidas marcadas como lidas.
+
+**Fluxo principal:**
+1. Usuário acessa a página de alertas.
+2. Sistema busca notificações associadas ao usuário autenticado.
+3. Sistema exibe lista ordenada por data, indicando status de leitura.
+4. Usuário visualiza detalhes de uma notificação.
+5. Sistema marca a notificação como lida.
+
+**Fluxos alternativos/exceções:**
+- Sem notificações: sistema exibe mensagem informativa.
+- Falha na busca: sistema exibe mensagem de erro e permite nova tentativa.
 
 ---

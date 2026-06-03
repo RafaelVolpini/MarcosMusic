@@ -27,6 +27,7 @@ public class Aluno {
     @OneToOne
     @MapsId
     @JoinColumn(name = "id")
+    @JsonIgnore
     private Usuario usuario;
 
     @Column(nullable = false, length = 255)
@@ -43,6 +44,9 @@ public class Aluno {
 
     @Column(name = "termos")
     private Boolean termos = false;
+
+    @Column(name = "apelido", length = 100)
+    private String apelido;
 
 
     @OneToMany(mappedBy = "aluno", cascade = CascadeType.ALL, orphanRemoval = true)

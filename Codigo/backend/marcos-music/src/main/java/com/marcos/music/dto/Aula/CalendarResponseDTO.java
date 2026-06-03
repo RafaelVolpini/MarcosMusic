@@ -20,4 +20,8 @@ public class CalendarResponseDTO {
     private String nomeAluno;
     private Boolean flagCancelada;
     private Boolean presencaConfirmada;
+    private Boolean recorrente;
+    private Boolean flagRealizada;
+    private String meetLink;
+    private Boolean isOnline;
 }

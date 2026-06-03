@@ -11,7 +11,6 @@ import java.util.UUID;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import org.springframework.transaction.annotation.Transactional;
 
 import com.marcos.music.dto.Aula.CalendarFilterDTO;
 import com.marcos.music.dto.Aula.CalendarResponseDTO;
@@ -25,9 +24,9 @@ import com.marcos.music.repository.AlunoRepository;
 import com.marcos.music.repository.Aula.AulaAlunoRepository;
 import com.marcos.music.repository.Aula.AulaCustomRepository;
 import com.marcos.music.repository.Aula.AulaRepository;
+import com.marcos.music.repository.ReposicaoRepository;
 import com.marcos.music.repository.UsuarioRepository;
-
-
+import com.marcos.music.integration.google.GoogleCalendarService;
 @Service
 public class AulaService {
     private final AulaRepository repository;
@@ -36,6 +35,9 @@ public class AulaService {
     private final AulaCustomRepository aulaCustomRepository;
     private final UsuarioRepository usuarioRepository;
     private final AlunoRepository alunoRepository;
+    private final ReposicaoRepository reposicaoRepository;
+    private final NotificacaoService notificacaoService;
+    private final GoogleCalendarService googleCalendarService;
 
 
     public AulaService(
@@ -44,7 +46,10 @@ public class AulaService {
         @Lazy AlunoService alunoService,
         AulaCustomRepository aulaCustomRepository,
         UsuarioRepository usuarioRepository,
-        AlunoRepository alunoRepository
+        AlunoRepository alunoRepository,
+        ReposicaoRepository reposicaoRepository,
+        NotificacaoService notificacaoService,
+        @Lazy GoogleCalendarService googleCalendarService
     ){
         this.repository = repository;
         this.aulaAlunoRepository = aulaAlunoRepository;
@@ -52,11 +57,21 @@ public class AulaService {
         this.aulaCustomRepository = aulaCustomRepository;
         this.usuarioRepository = usuarioRepository;
         this.alunoRepository = alunoRepository;
+        this.reposicaoRepository = reposicaoRepository;
+        this.notificacaoService = notificacaoService;
+        this.googleCalendarService = googleCalendarService;
     }
 
     public Aula salvar(Aula a) throws RuntimeException{
         if (a.getId() == null && repository.validarData(a.getDataInicio(), a.getDataFim())) {
             throw new RuntimeException("Já existe uma aula nesse horário");
+        }
+        if (a.getId() == null) {
+            String horario = String.format("%02d:%02d",
+                a.getDataInicio().getHour(), a.getDataInicio().getMinute());
+            if (reposicaoRepository.existsConflito(a.getDataInicio().toLocalDate(), horario)) {
+                throw new RuntimeException("Horário reservado para uma reposição");
+            }
         }
         return repository.save(a);
     }
@@ -65,10 +80,9 @@ public class AulaService {
         return aulaCustomRepository.buscar(f);
     }
 
-    public Aula criar(String email, CriarAulaDTO dto) {
+    public List<Aula> criar(String email, CriarAulaDTO dto) {
         Aluno aluno;
         if (dto.getStudentId() != null && !dto.getStudentId().isBlank()) {
-            // Professor criando aula para um aluno específico
             UUID studentUUID;
             try {
                 studentUUID = UUID.fromString(dto.getStudentId());
@@ -78,15 +92,61 @@ public class AulaService {
             aluno = alunoRepository.findById(studentUUID)
                     .orElseThrow(() -> new RuntimeException("Aluno não encontrado"));
         } else {
-            // Aluno criando sua própria aula via JWT
             Usuario usuario = usuarioRepository.findByEmail(email)
                     .orElseThrow(() -> new RuntimeException("Usuário não encontrado"));
             aluno = alunoRepository.findById(usuario.getId())
                     .orElseThrow(() -> new RuntimeException("Aluno não encontrado"));
         }
-        Aula nova = salvar(new Aula(dto.getDataInicio(), dto.getDataFim(), aluno));
-        logAula(nova, "AGENDADO");
-        return nova;
+
+        boolean recorrente = Boolean.TRUE.equals(dto.getRecorrente());
+        List<Aula> aulas = new ArrayList<>();
+
+        boolean isOnline = Boolean.TRUE.equals(dto.getIsOnline());
+
+        Aula primeiraAula = new Aula(dto.getDataInicio(), dto.getDataFim(), aluno, recorrente);
+        primeiraAula.setIsOnline(isOnline);
+        Aula primeira = salvar(primeiraAula);
+        logAula(primeira, "AGENDADO");
+        notificacaoService.aulaAgendada(aluno.getId(), primeira.getId(), primeira.getDataInicio());
+        aulas.add(primeira);
+
+        if (recorrente) {
+            // Cria aulas semanais por 1 ano (51 ocorrências adicionais = 52 no total)
+            for (int i = 1; i <= 51; i++) {
+                LocalDateTime nextInicio = dto.getDataInicio().plusWeeks(i);
+                LocalDateTime nextFim = dto.getDataFim().plusWeeks(i);
+                try {
+                    Aula proximaAula = new Aula(nextInicio, nextFim, aluno, true);
+                    proximaAula.setIsOnline(isOnline);
+                    Aula proxima = salvar(proximaAula);
+                    logAula(proxima, "AGENDADO");
+                    aulas.add(proxima);
+                } catch (RuntimeException e) {
+                    // Ignora semanas com conflito de horário
+                }
+            }
+        }
+
+        // If isOnline, try to create Google Meet links for each lesson
+        if (isOnline && dto.getStudentId() != null && !dto.getStudentId().isBlank()) {
+            UUID professorId = usuarioRepository.findByEmail(email)
+                    .map(u -> u.getId()).orElse(null);
+            if (professorId != null) {
+                for (Aula aula : aulas) {
+                    try {
+                        String hangoutLink = googleCalendarService.createMeetLink(professorId, aula);
+                        if (hangoutLink != null && !hangoutLink.isBlank()) {
+                            aula.setMeetLink(hangoutLink);
+                            repository.save(aula);
+                        }
+                    } catch (Exception e) {
+                        // Google not connected or API error — lesson created without Meet link
+                    }
+                }
+            }
+        }
+
+        return aulas;
     }
 
     public List<Aula> gerarPorHorario(AulaAluno e) throws RuntimeException{
@@ -147,6 +207,7 @@ public class AulaService {
 
             repository.save(a);
             logAula(a, "CANCELADO");
+            notificacaoService.alunoCancelou(a.getAluno().getNome(), a.getId(), a.getDataInicio());
 
             return a;
         } catch (RuntimeException e){
@@ -170,6 +231,7 @@ public class AulaService {
         a.setDataFim(novaDataFim);
         Aula salva = repository.save(a);
         logAula(salva, "REAGENDADO");
+        notificacaoService.aulaReagendada(a.getAluno().getId(), salva.getId(), novaDataInicio);
         return salva;
     }
 
@@ -178,7 +240,22 @@ public class AulaService {
         Aula a = repository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Aula n\u00e3o encontrada"));
         a.setPresencaConfirmada(true);
-        return repository.save(a);
+        Aula salva = repository.save(a);
+        notificacaoService.alunoConfirmouPresenca(a.getAluno().getNome(), salva.getId(), a.getDataInicio());
+        return salva;
+    }
+
+    public Aula regenerateMeetLink(Long id, String email) throws Exception {
+        Aula aula = repository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Aula não encontrada"));
+        Usuario professor = usuarioRepository.findByEmail(email)
+                .orElseThrow(() -> new RuntimeException("Usuário não encontrado"));
+        String hangoutLink = googleCalendarService.createMeetLink(professor.getId(), aula);
+        if (hangoutLink == null || hangoutLink.isBlank()) {
+            throw new RuntimeException("Não foi possível gerar o link. Verifique se o Google Calendar está conectado.");
+        }
+        aula.setMeetLink(hangoutLink);
+        return repository.save(aula);
     }
 
     public List<AulaAluno> findDeletedsHorarios(UUID idAluno, List<Long> ids){

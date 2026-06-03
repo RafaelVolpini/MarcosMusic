@@ -43,7 +43,11 @@ public class AulaCustomRepository {
                 aluno.get("id"),
                 aluno.get("nome"),
                 root.get("flagCancelada"),
-                root.get("presencaConfirmada")
+                root.get("presencaConfirmada"),
+                root.get("recorrente"),
+                root.get("flagRealizada"),
+                root.get("meetLink"),
+                root.get("isOnline")
         ));
 
         predicates.add(cb.equal(root.get("flagCancelada"), false));

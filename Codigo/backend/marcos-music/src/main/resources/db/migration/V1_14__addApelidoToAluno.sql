@@ -1,0 +1,1 @@
+ALTER TABLE aluno ADD apelido VARCHAR(100) NULL;

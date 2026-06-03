@@ -3,8 +3,6 @@ package com.marcos.music.entity;
 import jakarta.persistence.*;
 import java.time.LocalDateTime;
 
-import org.springframework.cglib.core.Local;
-
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -34,6 +32,24 @@ public class Aula {
     @Column(name = "presenca_confirmada")
     private Boolean presencaConfirmada = false;
 
+    @Column(name = "recorrente")
+    private Boolean recorrente = false;
+
+    @Column(name = "is_reposicao")
+    private Boolean isReposicao = false;
+
+    @Column(name = "flag_realizada")
+    private Boolean flagRealizada = false;
+
+    @Column(name = "meet_link", length = 500)
+    private String meetLink;
+
+    @Column(name = "is_online")
+    private Boolean isOnline = false;
+
+    @Column(name = "google_event_id", length = 255)
+    private String googleEventId;
+
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "id_aluno", nullable = false)
     private Aluno aluno;
@@ -42,6 +58,13 @@ public class Aula {
         this.dataInicio = dataInicio;
         this.dataFim = dataFim;
         this.aluno = aluno;
+    }
+
+    public Aula(LocalDateTime dataInicio, LocalDateTime dataFim, Aluno aluno, Boolean recorrente){
+        this.dataInicio = dataInicio;
+        this.dataFim = dataFim;
+        this.aluno = aluno;
+        this.recorrente = recorrente != null ? recorrente : false;
     }
 
 }

@@ -1,9 +1,9 @@
 package com.marcos.music.repository.Aula;
 
 import java.time.LocalDateTime;
+import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
-import java.util.List;
 
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
@@ -13,6 +13,8 @@ import com.marcos.music.entity.Aula;
 
 public interface AulaRepository extends JpaRepository<Aula, Long>{
     Optional<Aula> findByAlunoIdAndDataInicioAndDataFim(UUID alunoId, LocalDateTime dataInicio, LocalDateTime dataFim);
+
+    List<Aula> findByFlagCanceladaFalse();
 
     List<Aula> findByDataInicioBetweenAndFlagCanceladaFalse(LocalDateTime dataInicio, LocalDateTime dataFim);
 
@@ -29,4 +31,8 @@ public interface AulaRepository extends JpaRepository<Aula, Long>{
         @Param("inicioNovo") LocalDateTime inicioNovo,
         @Param("fimNovo") LocalDateTime fimNovo
     );
+
+    List<Aula> findByFlagCanceladaFalseAndFlagRealizadaFalseAndDataFimBefore(LocalDateTime dateTime);
+
+    List<Aula> findByFlagCanceladaFalseAndFlagRealizadaFalseAndDataFimAfter(LocalDateTime dateTime);
 }

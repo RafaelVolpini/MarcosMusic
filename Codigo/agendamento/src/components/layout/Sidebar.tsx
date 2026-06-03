@@ -1,6 +1,5 @@
 import { motion, AnimatePresence } from 'framer-motion';
 import {
-  Disc3,
   CalendarDays,
   Users,
   CalendarClock,
@@ -9,13 +8,15 @@ import {
   MessageCircle,
   Settings,
   ChevronLeft,
-  Gamepad2,
+  LayoutDashboard,
 } from 'lucide-react';
 import type { ReactNode } from 'react';
 import type { Page } from '../../types';
 import { cn } from '../../utils';
 import marcosPhoto from '../../assets/image.png';
 import type { AuthUser } from '../../lib/auth';
+import { MarcosLogoMark } from '../ui/MarcosLogo';
+import { useLanguage } from '../../context/LanguageContext';
 
 interface NavItem {
   id: Page;
@@ -25,17 +26,18 @@ interface NavItem {
   roles: Array<'teacher' | 'student'>;
 }
 
-const NAV_ITEMS: NavItem[] = [
-  { id: 'dashboard',    label: 'Dashboard',       icon: <Disc3 size={20} />,           color: 'var(--accent-500)', roles: ['teacher'] },
-  { id: 'aboutMe',      label: 'Sobre Mim',       icon: <Gamepad2 size={20} />,        color: 'var(--accent-500)', roles: ['teacher', 'student'] },
-  { id: 'agenda',       label: 'Agenda',          icon: <CalendarDays size={20} />,    color: 'var(--accent-500)', roles: ['teacher', 'student'] },
-  { id: 'students',     label: 'Alunos',          icon: <Users size={20} />,           color: 'var(--accent-500)', roles: ['teacher'] },
-  { id: 'rooms',        label: 'Calendario',      icon: <CalendarClock size={20} />,   color: 'var(--accent-500)', roles: ['teacher'] },
-  { id: 'rescheduling', label: 'Reagendamentos',  icon: <RefreshCw size={20} />,       color: 'var(--accent-500)', roles: ['teacher', 'student'] },
-  { id: 'video',        label: 'Aulas Online',    icon: <Music size={20} />,           color: 'var(--accent-500)', roles: ['teacher', 'student'] },
-  { id: 'lessonAlerts', label: 'Alertar Aula',    icon: <MessageCircle size={20} />,   color: 'var(--accent-500)', roles: ['teacher'] },
-  { id: 'settings',     label: 'Configurações',   icon: <Settings size={20} />,        color: 'var(--accent-500)', roles: ['teacher'] },
-];
+function getNavItems(t: (k: string) => string): NavItem[] {
+  return [
+    { id: 'dashboard',    label: t('nav.dashboard'),    icon: <LayoutDashboard size={20} />, color: 'var(--accent-500)', roles: ['teacher'] },
+    { id: 'agenda',       label: t('nav.agenda'),       icon: <CalendarDays size={20} />,    color: 'var(--accent-500)', roles: ['teacher', 'student'] },
+    { id: 'rooms',        label: t('nav.rooms'),        icon: <CalendarClock size={20} />,   color: 'var(--accent-500)', roles: ['teacher'] },
+    { id: 'rescheduling', label: t('nav.rescheduling'), icon: <RefreshCw size={20} />,       color: 'var(--accent-500)', roles: ['teacher', 'student'] },
+    { id: 'video',        label: t('nav.video'),        icon: <Music size={20} />,           color: 'var(--accent-500)', roles: ['teacher', 'student'] },
+    { id: 'lessonAlerts', label: t('nav.lessonAlerts'), icon: <MessageCircle size={20} />,   color: 'var(--accent-500)', roles: ['teacher'] },
+    { id: 'students',     label: t('nav.students'),     icon: <Users size={20} />,           color: 'var(--accent-500)', roles: ['teacher'] },
+    { id: 'settings',     label: t('nav.settings'),     icon: <Settings size={20} />,        color: 'var(--accent-500)', roles: ['teacher', 'student'] },
+  ];
+}
 
 interface SidebarProps {
   collapsed: boolean;
@@ -46,7 +48,8 @@ interface SidebarProps {
 }
 
 export function Sidebar({ collapsed, onToggle, activePage, onNavigate, user }: SidebarProps) {
-  const visibleNavItems = NAV_ITEMS.filter((item) => item.roles.includes(user.role));
+  const { t } = useLanguage();
+  const visibleNavItems = getNavItems(t).filter((item) => item.roles.includes(user.role));
   const initials = `${user.firstName?.[0] ?? ''}${user.lastName?.[0] ?? ''}`.trim().toUpperCase() || user.email.slice(0, 2).toUpperCase();
   const studentAvatarBg = 'linear-gradient(135deg, var(--accent-gradient-from), var(--accent-gradient-to))';
 
@@ -55,7 +58,7 @@ export function Sidebar({ collapsed, onToggle, activePage, onNavigate, user }: S
       initial={false}
       animate={{ width: collapsed ? 80 : 260 }}
       transition={{ type: 'spring', stiffness: 300, damping: 30 }}
-      className="relative flex flex-col h-full overflow-hidden z-10 shrink-0 bg-[var(--surface)] border-r border-[var(--border)]"
+      className="relative flex flex-col h-full overflow-hidden z-10 shrink-0 bg-(--surface) border-r border-(--border)"
     >
       {/* Gradient accent line */}
       <div
@@ -64,25 +67,21 @@ export function Sidebar({ collapsed, onToggle, activePage, onNavigate, user }: S
       />
 
       {/* Logo / brand */}
-      <div className="flex items-center gap-3 px-5 py-6">
-        <motion.div 
-          whileHover={{ scale: 1.05, rotate: 5 }}
-          className="flex items-center justify-center w-11 h-11 rounded-2xl text-white shrink-0 shadow-lg"
-          style={{ background: 'linear-gradient(135deg, var(--accent-gradient-from) 0%, var(--accent-gradient-to) 100%)' }}
-        >
-          <Disc3 size={22} />
+      <div className="flex items-center gap-3 px-4 py-5">
+        <motion.div whileHover={{ scale: 1.06 }} whileTap={{ scale: 0.95 }} className="shrink-0">
+          <MarcosLogoMark size={40} />
         </motion.div>
         <AnimatePresence initial={false}>
           {!collapsed && (
             <motion.div
-              initial={{ opacity: 0, x: -16 }}
+              initial={{ opacity: 0, x: -12 }}
               animate={{ opacity: 1, x: 0 }}
-              exit={{ opacity: 0, x: -16 }}
-              transition={{ duration: 0.2 }}
-              className="overflow-hidden"
+              exit={{ opacity: 0, x: -12 }}
+              transition={{ duration: 0.18 }}
+              className="overflow-hidden leading-none"
             >
-              <p className="font-bold text-[var(--heading)] leading-tight tracking-tight text-lg whitespace-nowrap">Musga</p>
-              <p className="text-xs text-[var(--muted)] whitespace-nowrap">Gestão de Aulas</p>
+              <p className="font-black text-(--heading) tracking-tight text-sm whitespace-nowrap">Marcos Music</p>
+              <p className="text-[10px] font-bold uppercase tracking-widest whitespace-nowrap" style={{ color: 'var(--accent-600)' }}>Agenda</p>
             </motion.div>
           )}
         </AnimatePresence>
@@ -104,7 +103,7 @@ export function Sidebar({ collapsed, onToggle, activePage, onNavigate, user }: S
       </nav>
 
       {/* User card & toggle */}
-      <div className="p-3 border-t border-[var(--border)]">
+      <div className="p-3 border-t border-(--border)">
         {/* Mini profile */}
         <AnimatePresence initial={false}>
           {!collapsed && (
@@ -112,7 +111,7 @@ export function Sidebar({ collapsed, onToggle, activePage, onNavigate, user }: S
               initial={{ opacity: 0, height: 0 }}
               animate={{ opacity: 1, height: 'auto' }}
               exit={{ opacity: 0, height: 0 }}
-              className="mb-3 p-3 rounded-xl bg-[var(--surface-soft)] border border-[var(--border)]"
+              className="mb-3 p-3 rounded-xl bg-(--surface-soft) border border-(--border)"
             >
               <div className="flex items-center gap-3">
                 <div
@@ -129,10 +128,10 @@ export function Sidebar({ collapsed, onToggle, activePage, onNavigate, user }: S
                 </div>
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-1.5">
-                    <p className="text-sm font-medium text-[var(--heading)] truncate">{user.name || 'Usuario'}</p>
+                    <p className="text-sm font-medium text-(--heading) truncate">{user.name || 'Usuario'}</p>
                     <Music size={11} style={{ color: 'var(--accent-600)' }} className="shrink-0" />
                   </div>
-                  <p className="text-xs text-[var(--muted)] truncate">{user.role === 'teacher' ? 'Professor' : 'Aluno'}</p>
+                  <p className="text-xs text-(--muted) truncate">{user.role === 'teacher' ? 'Professor' : 'Aluno'}</p>
                 </div>
               </div>
             </motion.div>
@@ -143,7 +142,7 @@ export function Sidebar({ collapsed, onToggle, activePage, onNavigate, user }: S
         <button
           onClick={onToggle}
           className={cn(
-            'flex items-center justify-center gap-2 w-full rounded-xl h-10 text-[var(--muted)] hover:text-[var(--text)] hover:bg-[var(--hover-bg)] transition-all duration-200',
+            'flex items-center justify-center gap-2 w-full rounded-xl h-10 text-(--muted) hover:text-(--text) hover:bg-(--hover-bg) transition-all duration-200',
             collapsed && 'w-10 mx-auto',
           )}
           title={collapsed ? 'Expandir' : 'Recolher'}
@@ -191,8 +190,8 @@ function NavButton({ item, active, collapsed, onClick }: NavButtonProps) {
         'relative flex items-center gap-3 rounded-xl transition-all duration-200 w-full text-left overflow-hidden group',
         'px-3 h-12',
         active
-          ? 'text-[var(--heading)]'
-          : 'text-[var(--muted)] hover:text-[var(--text)] hover:bg-[var(--hover-bg)]',
+          ? 'text-(--heading)'
+          : 'text-(--muted) hover:text-(--text) hover:bg-(--hover-bg)',
       )}
       style={active ? { backgroundColor: 'var(--accent-icon-bg)' } : {}}
       title={collapsed ? item.label : undefined}

@@ -6,8 +6,8 @@ export interface AuthUser {
   name: string;
   email: string;
   phone: string;
-  token?: string;
   termos?: boolean | null;
+  photoUrl?: string;
 }
 
 export interface ContractAcceptance {
@@ -17,8 +17,9 @@ export interface ContractAcceptance {
 
 const BACKEND_URL = '';
 
-const SESSION_KEY = 'musga:auth:session';
-const PROFILE_KEY = 'musga:auth:profiles';
+// User metadata only the access token lives in an HttpOnly cookie managed by the browser
+const SESSION_KEY = 'marcos-music:auth:session';
+const PROFILE_KEY = 'marcos-music:auth:profiles';
 
 interface StoredProfile {
   firstName: string;
@@ -49,14 +50,25 @@ function getProfile(email: string): StoredProfile | null {
   return profiles[normalizedEmail] ?? null;
 }
 
-// ─── Session helpers (token + user stored in sessionStorage) ────────────────
+// ─── Session helpers ─────────────────────────────────────────────────────────
+//
+// User metadata (name, role, etc.) is stored in sessionStorage (tab-scoped) or
+// localStorage (when "remember me"). The access token is an HttpOnly cookie 
+// the browser sends it automatically and JS cannot read it.
 
-function saveSession(user: AuthUser): void {
-  sessionStorage.setItem(SESSION_KEY, JSON.stringify(user));
+function saveSession(user: AuthUser, persistent: boolean): void {
+  const payload = JSON.stringify(user);
+  if (persistent) {
+    localStorage.setItem(SESSION_KEY, payload);
+    sessionStorage.removeItem(SESSION_KEY);
+  } else {
+    sessionStorage.setItem(SESSION_KEY, payload);
+    localStorage.removeItem(SESSION_KEY);
+  }
 }
 
 export function getUser(): AuthUser | null {
-  const raw = sessionStorage.getItem(SESSION_KEY);
+  const raw = localStorage.getItem(SESSION_KEY) ?? sessionStorage.getItem(SESSION_KEY);
   if (!raw) return null;
   try {
     return JSON.parse(raw) as AuthUser;
@@ -65,14 +77,27 @@ export function getUser(): AuthUser | null {
   }
 }
 
+/**
+ * No-op kept for API compatibility. The access token is an HttpOnly cookie 
+ * JS cannot read it, and it is sent automatically by the browser on every request.
+ */
 export function getToken(): string | null {
-  return getUser()?.token ?? null;
+  return null;
 }
 
-export function logout(): void {
+export async function logout(): Promise<void> {
+  // Ask the server to clear the HttpOnly cookie
+  try {
+    await fetch(`${BACKEND_URL}/auth/logout`, {
+      method: 'POST',
+      credentials: 'include',
+    });
+  } catch {
+    // Ignore network errors clear local state regardless
+  }
   sessionStorage.removeItem(SESSION_KEY);
+  localStorage.removeItem(SESSION_KEY);
 }
-
 
 export async function registerUser(input: {
   firstName: string;
@@ -84,6 +109,7 @@ export async function registerUser(input: {
   const res = await fetch(`${BACKEND_URL}/auth/register`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
+    credentials: 'include',
     body: JSON.stringify({
       email: input.email.trim().toLowerCase(),
       password: input.password,
@@ -102,7 +128,6 @@ export async function registerUser(input: {
 // ─── Login ───────────────────────────────────────────────────────────────────
 
 interface LoginResponse {
-  token: string;
   termos: boolean | null;
   ultimoLogin: string | null;
   nome: string | null;
@@ -111,25 +136,27 @@ interface LoginResponse {
   id: string | null;
 }
 
-export async function login(emailInput: string, passwordInput: string): Promise<AuthUser | null> {
+export async function login(emailInput: string, passwordInput: string, rememberMe = false): Promise<AuthUser | null> {
   const email = emailInput.trim().toLowerCase();
   const password = passwordInput.trim();
 
   const res = await fetch(`${BACKEND_URL}/auth/login`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
+    credentials: 'include', // browser stores the HttpOnly cookie from Set-Cookie response header
     body: JSON.stringify({ email, password }),
   });
 
-  if (!res.ok) return null;
+  if (!res.ok) {
+    const msg = await res.text().catch(() => '');
+    throw new Error(msg || 'Credenciais inválidas');
+  }
 
   const data: LoginResponse = await res.json();
 
-  // Papel: usa o role retornado pelo backend; fallback para email fixo
   const backendRole = data.role?.toUpperCase();
   const role: AuthUser['role'] = backendRole === 'ADMIN' ? 'teacher' : 'student';
 
-  // Nome: usa o nome do Aluno retornado pelo backend; fallback para perfil local
   const profile = getProfile(email);
   const nomeBackend = data.nome?.trim() || '';
   const parts = nomeBackend.split(' ');
@@ -144,11 +171,12 @@ export async function login(emailInput: string, passwordInput: string): Promise<
     name: nomeBackend || `${firstName} ${lastName}`.trim(),
     email,
     phone: data.telefone?.trim() || profile?.phone?.trim() || '',
-    token: data.token,
     termos: data.termos ?? false,
   };
 
-  saveSession(user);
+  // Save profile data for future logins (name pre-fill, etc.)
+  saveProfile(email, { firstName, lastName, phone: user.phone });
+  saveSession(user, rememberMe);
   return user;
 }
 
@@ -160,6 +188,7 @@ export async function acceptContract(email: string): Promise<ContractAcceptance>
   const res = await fetch(`${BACKEND_URL}/auth/accept-terms`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
+    credentials: 'include',
     body: JSON.stringify({ email: normalizedEmail }),
   });
 
@@ -167,10 +196,10 @@ export async function acceptContract(email: string): Promise<ContractAcceptance>
     throw new Error('Falha ao registrar aceitação dos termos');
   }
 
-  // Persiste termos=true na sessão para que recargas/hasAcceptedContract funcionem
   const current = getUser();
   if (current) {
-    saveSession({ ...current, termos: true });
+    const isPersistent = !!localStorage.getItem(SESSION_KEY);
+    saveSession({ ...current, termos: true }, isPersistent);
   }
 
   return { email: normalizedEmail, acceptedAt: new Date().toISOString() };
@@ -181,3 +210,4 @@ export function hasAcceptedContract(email: string): boolean {
   if (!user || user.email !== email.trim().toLowerCase()) return false;
   return user.termos === true;
 }
+

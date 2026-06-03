@@ -5,23 +5,21 @@ import com.marcos.music.dto.Aula.CalendarResponseDTO;
 import com.marcos.music.dto.Aula.CriarAulaDTO;
 import com.marcos.music.dto.Aula.RemarcarAulaDTO;
 import com.marcos.music.entity.Aula;
-import com.marcos.music.security.JwtService;
 import com.marcos.music.service.AulaService;
 
 import java.util.List;
 
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
 @RequestMapping("/aula")
 public class AulaController {
     private final AulaService service;
-    private final JwtService jwtService;
 
-    public AulaController(AulaService service, JwtService jwtService) {
+    public AulaController(AulaService service) {
         this.service = service;
-        this.jwtService = jwtService;
     }
 
     private CalendarResponseDTO toDTO(Aula aula) {
@@ -32,7 +30,11 @@ public class AulaController {
                 aula.getAluno().getId(),
                 aula.getAluno().getNome(),
                 aula.getFlagCancelada(),
-                aula.getPresencaConfirmada()
+                aula.getPresencaConfirmada(),
+                aula.getRecorrente(),
+                aula.getFlagRealizada(),
+                aula.getMeetLink(),
+                aula.getIsOnline()
         );
     }
 
@@ -69,16 +71,33 @@ public class AulaController {
     }
 
     @PostMapping("/criar")
-    public ResponseEntity<?> criar(
-            @RequestBody CriarAulaDTO dto,
-            @RequestHeader(value = "Authorization", required = false) String authHeader) {
+    public ResponseEntity<?> criar(@RequestBody CriarAulaDTO dto) {
         try {
-            if (authHeader == null || !authHeader.startsWith("Bearer ")) {
+            var auth = SecurityContextHolder.getContext().getAuthentication();
+            if (auth == null || auth.getPrincipal() == null) {
                 return ResponseEntity.status(401).body("Token não fornecido");
             }
-            String email = jwtService.getEmailFromToken(authHeader.substring(7));
-            return ResponseEntity.ok(toDTO(service.criar(email, dto)));
+            String email = auth.getName();
+            List<CalendarResponseDTO> result = service.criar(email, dto)
+                    .stream()
+                    .map(this::toDTO)
+                    .collect(java.util.stream.Collectors.toList());
+            return ResponseEntity.ok(result);
         } catch (RuntimeException e) {
+            return ResponseEntity.badRequest().body(e.getMessage());
+        }
+    }
+
+    @PostMapping("/{id}/regenerate-meet")
+    public ResponseEntity<?> regenerateMeet(@PathVariable Long id) {
+        try {
+            var auth = SecurityContextHolder.getContext().getAuthentication();
+            if (auth == null || auth.getPrincipal() == null) {
+                return ResponseEntity.status(401).body("Token não fornecido");
+            }
+            String email = auth.getName();
+            return ResponseEntity.ok(toDTO(service.regenerateMeetLink(id, email)));
+        } catch (Exception e) {
             return ResponseEntity.badRequest().body(e.getMessage());
         }
     }

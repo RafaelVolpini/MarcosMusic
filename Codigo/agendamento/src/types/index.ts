@@ -1,48 +1,19 @@
 export type ViewType = 'week' | 'day';
-export type DayKey = 'mon' | 'tue' | 'wed' | 'thu' | 'fri' | 'sat' | 'sun';
+export type DayKey = 'seg' | 'ter' | 'qua' | 'qui' | 'sex' | 'sab' | 'dom';
 export type WeeklyAvailability = Record<DayKey, string[]>;
 
 export type LessonType = 'individual' | 'group' | 'online' | 'trial';
 
 export type LessonStatus = 'scheduled' | 'completed' | 'cancelled' | 'rescheduled';
 
-export interface Student {
+export interface Aluno {
   id: string;
-  name: string;
+  nome: string;
   email: string;
-  phone: string;
-  active?: boolean;
-  avatar?: string;
-  instrument: string;
-  level: 'beginner' | 'intermediate' | 'advanced';
-  teacherId: string;
-  enrolledAt: string;
-  nextLesson?: string;
-  totalLessons: number;
-  balance: number;
-}
-
-export interface Teacher {
-  id: string;
-  name: string;
-  email: string;
-  phone: string;
-  avatar?: string;
-  instruments: string[];
-  color: string;
-  availability: string[];
-  studentsCount: number;
-  rating: number;
-}
-
-export interface Room {
-  id: string;
-  name: string;
-  capacity: number;
-  instruments: string[];
-  floor: number;
-  features: string[];
-  color: string;
+  telefone: string;
+  ativo: boolean;
+  apelido?: string;
+  reposicoes?: number;
 }
 
 export interface Lesson {
@@ -50,10 +21,6 @@ export interface Lesson {
   studentId: string;
   studentName: string;
   studentPhone?: string;
-  teacherId: string;
-  teacherName: string;
-  roomId: string;
-  roomName: string;
   date: string; // ISO date string
   startTime: string; // HH:mm
   endTime: string; // HH:mm
@@ -62,12 +29,14 @@ export interface Lesson {
   instrument: string;
   notes?: string;
   meetLink?: string;
+  isOnline?: boolean;
   attendanceConfirmed?: boolean;
   attendanceConfirmedAt?: string;
   reminderMinutesBefore?: number;
   lastReminderSentAt?: string;
   color: string;
   recording?: VideoRecording;
+  recorrente?: boolean;
 }
 
 export interface VideoRecording {
@@ -95,11 +64,11 @@ export interface Payment {
 
 export type Page =
   | 'dashboard'
-  | 'aboutMe'
   | 'agenda'
   | 'students'
   | 'rooms'
   | 'rescheduling'
   | 'video'
   | 'lessonAlerts'
-  | 'settings';
+  | 'settings'
+  | 'profile';

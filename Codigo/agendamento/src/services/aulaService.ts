@@ -1,4 +1,4 @@
-import { getToken } from '../lib/auth';
+import type { WeeklyAvailability } from '../types';
 
 // ─── DTOs espelhados do backend ──────────────────────────────────────────────
 
@@ -9,7 +9,11 @@ export interface CalendarResponseDTO {
   idAluno?: string;
   nomeAluno?: string;
   flagCancelada?: boolean;
+  flagRealizada?: boolean;
   presencaConfirmada?: boolean;
+  recorrente?: boolean;
+  meetLink?: string;
+  isOnline?: boolean;
 }
 
 export interface HorarioValidatorDTO {
@@ -19,14 +23,6 @@ export interface HorarioValidatorDTO {
 }
 
 // ─── Helpers internos ────────────────────────────────────────────────────────
-
-function authHeaders(): HeadersInit {
-  const token = getToken();
-  return {
-    'Content-Type': 'application/json',
-    ...(token ? { Authorization: `Bearer ${token}` } : {}),
-  };
-}
 
 async function handleResponse<T>(res: Response): Promise<T> {
   if (!res.ok) {
@@ -53,7 +49,8 @@ export async function buscarAulas(
   try {
     const res = await fetch('/aula/buscar', {
       method: 'POST',
-      headers: authHeaders(),
+      headers: { 'Content-Type': 'application/json' },
+      credentials: 'include',
       body: JSON.stringify({ dataInicio, dataFim }),
     });
     return handleResponse<CalendarResponseDTO[]>(res);
@@ -71,7 +68,7 @@ export async function cancelarAula(id: string): Promise<void> {
   try {
     const res = await fetch(`/aula/cancelar/${id}`, {
       method: 'GET',
-      headers: authHeaders(),
+      credentials: 'include',
     });
     if (!res.ok) {
       const msg = await res.text().catch(() => '');
@@ -87,20 +84,25 @@ export interface CriarAulaDTO {
   studentId: string;   // UUID do aluno
   dataInicio: string;  // ISO-8601 "2026-04-22T09:00:00"
   dataFim: string;     // ISO-8601 "2026-04-22T09:50:00"
+  recorrente?: boolean;
+  isOnline?: boolean;
 }
 
 /**
  * POST /aula/criar
- * Cria uma nova aula para o aluno autenticado (identificado pelo JWT).
+ * Cria uma ou mais aulas (recorrente = toda semana por 1 ano).
+ * Retorna sempre um array de CalendarResponseDTO.
  */
-export async function criarAula(dto: CriarAulaDTO): Promise<CalendarResponseDTO> {
+export async function criarAula(dto: CriarAulaDTO): Promise<CalendarResponseDTO[]> {
   try {
     const res = await fetch('/aula/criar', {
       method: 'POST',
-      headers: authHeaders(),
+      headers: { 'Content-Type': 'application/json' },
+      credentials: 'include',
       body: JSON.stringify(dto),
     });
-    return handleResponse<CalendarResponseDTO>(res);
+    const raw = await handleResponse<CalendarResponseDTO[] | CalendarResponseDTO>(res);
+    return Array.isArray(raw) ? raw : [raw];
   } catch (err) {
     if (err instanceof Error) throw err;
     throw new Error('Não foi possível criar a aula. Verifique sua conexão.');
@@ -118,7 +120,8 @@ export async function reagendarAula(
 ): Promise<CalendarResponseDTO> {
   const res = await fetch(`/aula/reagendar/${id}`, {
     method: 'PUT',
-    headers: authHeaders(),
+    headers: { 'Content-Type': 'application/json' },
+    credentials: 'include',
     body: JSON.stringify({ dataInicio, dataFim }),
   });
   return handleResponse<CalendarResponseDTO>(res);
@@ -131,7 +134,19 @@ export async function reagendarAula(
 export async function confirmarPresenca(id: string): Promise<CalendarResponseDTO> {
   const res = await fetch(`/aula/confirmarPresenca/${id}`, {
     method: 'PUT',
-    headers: authHeaders(),
+    credentials: 'include',
+  });
+  return handleResponse<CalendarResponseDTO>(res);
+}
+
+/**
+ * POST /aula/{id}/regenerate-meet
+ * Gera (ou regenera) o link do Google Meet para uma aula (professor only).
+ */
+export async function regenerarMeetLink(id: string): Promise<CalendarResponseDTO> {
+  const res = await fetch(`/aula/${id}/regenerate-meet`, {
+    method: 'POST',
+    credentials: 'include',
   });
   return handleResponse<CalendarResponseDTO>(res);
 }
@@ -144,7 +159,8 @@ export async function validarHorario(dto: HorarioValidatorDTO): Promise<boolean>
   try {
     const res = await fetch('/aluno/validar-horario', {
       method: 'POST',
-      headers: authHeaders(),
+      headers: { 'Content-Type': 'application/json' },
+      credentials: 'include',
       body: JSON.stringify(dto),
     });
     return handleResponse<boolean>(res);
@@ -152,4 +168,40 @@ export async function validarHorario(dto: HorarioValidatorDTO): Promise<boolean>
     if (err instanceof Error) throw err;
     throw new Error('Não foi possível validar o horário. Tente novamente.');
   }
+}
+
+// ─── Disponibilidade ─────────────────────────────────────────────────────────
+
+export interface DisponibilidadeResponseDTO {
+  id: number;
+  diaSemana: string;
+  horario: string;
+  disponivel: boolean;
+  reposicao: boolean;
+}
+
+/**
+ * GET /disponibilidade
+ * Lista todos os slots de disponibilidade cadastrados no banco.
+ */
+export async function buscarDisponibilidade(): Promise<DisponibilidadeResponseDTO[]> {
+  const res = await fetch('/disponibilidade', { credentials: 'include' });
+  return handleResponse<DisponibilidadeResponseDTO[]>(res);
+}
+
+/**
+ * POST /disponibilidade/salvar
+ * Salva (upsert) a disponibilidade semanal completa do professor.
+ */
+export async function salvarDisponibilidade(
+  availability: WeeklyAvailability,
+  availabilityReposicao: WeeklyAvailability,
+): Promise<DisponibilidadeResponseDTO[]> {
+  const res = await fetch('/disponibilidade/salvar', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    credentials: 'include',
+    body: JSON.stringify({ availability, availabilityReposicao }),
+  });
+  return handleResponse<DisponibilidadeResponseDTO[]>(res);
 }

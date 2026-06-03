@@ -1,122 +1,224 @@
-import { useState } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Search, Bell, ChevronDown, Music, X, Settings, LogOut, User } from 'lucide-react';
+import { Bell, ChevronDown, Music, Settings, LogOut, User, MessageSquare } from 'lucide-react';
+import { ChatPanel } from '../modals/ChatPanel';
+import { chatService } from '../../services/chatService';
+import { notificacaoService, type NotificacaoDTO } from '../../services/notificacaoService';
+import { chatBus } from '../../lib/chatBus';
 import type { Page } from '../../types';
 import { cn } from '../../utils';
+import type { AuthUser } from '../../lib/auth'; 
 import marcosPhoto from '../../assets/image.png';
-import type { AuthUser } from '../../lib/auth';
-
-const PAGE_LABELS: Record<Page, string> = {
-  dashboard: 'Dashboard',
-  aboutMe: 'Sobre Mim',
-  agenda: 'Agenda',
-  students: 'Alunos',
-  rooms: 'Calendario de Disponibilidade',
-  rescheduling: 'Reagendamentos',
-  video: 'Aulas Online & Vídeos',
-  lessonAlerts: 'Alertar Aula',
-  settings: 'Configurações',
-};
-
-interface Notification {
-  id: string;
-  title: string;
-  message: string;
-  time: string;
-  unread: boolean;
-}
-
-const TEACHER_NOTIFICATIONS: Notification[] = [
-  { id: 'n1', title: 'Aula em 30 min', message: 'Pedro Alves - Piano às 10:00', time: '2h atrás', unread: true },
-  { id: 'n2', title: 'Pagamento em atraso', message: 'Gabriel Mendes - R$ 480,00 vencido', time: '1d atrás', unread: true },
-  { id: 'n3', title: 'Nova mensagem', message: 'Thiago: "Preciso reagendar minha aula"', time: '2d atrás', unread: false },
-];
-
-const STUDENT_NOTIFICATIONS: Notification[] = [
-  { id: 's1', title: 'Aula confirmada', message: 'Sua próxima aula foi confirmada para amanhã às 18:00.', time: '1h atrás', unread: true },
-  { id: 's2', title: 'Lembrete enviado', message: 'Lembrete de presença foi enviado para seu WhatsApp.', time: '5h atrás', unread: false },
-];
+import { useLanguage } from '../../context/LanguageContext';
 
 interface TopBarProps {
   activePage: Page;
   user: AuthUser;
   onLogout: () => void;
+  onNavigate: (page: Page) => void;
 }
 
-export function TopBar({ activePage, user, onLogout }: TopBarProps) {
-  const [searchOpen, setSearchOpen] = useState(false);
+export function TopBar({ activePage, user, onLogout, onNavigate }: TopBarProps) {
+  const { lang, setLang, t } = useLanguage();
   const [notifOpen, setNotifOpen] = useState(false);
   const [profileOpen, setProfileOpen] = useState(false);
-  const [query, setQuery] = useState('');
+  const [chatOpen, setChatOpen] = useState(false);
+  const [chatNaoLidas, setChatNaoLidas] = useState(0);
+  const [notifications, setNotifications] = useState<NotificacaoDTO[]>([]);
+  const [notifNaoLidas, setNotifNaoLidas] = useState(0);
+  const [chatTargetAlunoId, setChatTargetAlunoId] = useState<string | undefined>();
 
-  const notifications = user.role === 'teacher' ? TEACHER_NOTIFICATIONS : STUDENT_NOTIFICATIONS;
-  const unreadCount = notifications.filter(n => n.unread).length;
+  const dest = user.role === 'teacher' ? 'PROFESSOR' : (user.id ?? '');
+  const remetente = user.role === 'teacher' ? 'professor' : 'aluno';
+
+  // ── Chat não lidas ────────────────────────────────────────────────────────
+  const refreshChatNaoLidas = useCallback(async () => {
+    try {
+      const total = await chatService.naoLidas(remetente as 'professor' | 'aluno');
+      setChatNaoLidas(total);
+    } catch { /* silencia */ }
+  }, [remetente]);
+
+  // ── Notificações ──────────────────────────────────────────────────────────
+  const refreshNotificacoes = useCallback(async () => {
+    if (!dest) return;
+    try {
+      const [lista, total] = await Promise.all([
+        notificacaoService.listar(dest),
+        notificacaoService.naoLidas(dest),
+      ]);
+      setNotifications(lista);
+      setNotifNaoLidas(total);
+    } catch { /* silencia */ }
+  }, [dest]);
+
+  // Polling inicial + periódico
+  useEffect(() => {
+    refreshChatNaoLidas();
+    const id1 = setInterval(refreshChatNaoLidas, 10000);
+    return () => clearInterval(id1);
+  }, [refreshChatNaoLidas]);
+
+  useEffect(() => {
+    refreshNotificacoes();
+    const id2 = setInterval(refreshNotificacoes, 10000);
+    return () => clearInterval(id2);
+  }, [refreshNotificacoes]);
+
+  // Atualiza ao mudar de aba / retornar ao foco
+  useEffect(() => {
+    const onVisible = () => {
+      if (document.visibilityState === 'visible') {
+        refreshChatNaoLidas();
+        refreshNotificacoes();
+      }
+    };
+    document.addEventListener('visibilitychange', onVisible);
+    return () => document.removeEventListener('visibilitychange', onVisible);
+  }, [refreshChatNaoLidas, refreshNotificacoes]);
+
+  // Atualiza ao navegar entre páginas
+  useEffect(() => {
+    refreshChatNaoLidas();
+    refreshNotificacoes();
+  }, [activePage]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  // Escuta pedidos de abertura de chat de outras páginas (ex: StudentsPage)
+  useEffect(() => {
+    return chatBus.listen((alunoId) => {
+      setChatTargetAlunoId(alunoId);
+      setChatOpen(true);
+      setNotifOpen(false);
+      setProfileOpen(false);
+    });
+  }, []);
+
+  // Ao abrir painel de notificações, marca todas como lidas
+  const handleOpenNotif = async () => {
+    setNotifOpen(v => !v);
+    setProfileOpen(false);
+    setChatOpen(false);
+    if (!notifOpen && dest) {
+      try {
+        await notificacaoService.marcarTodasLidas(dest);
+        setNotifNaoLidas(0);
+        setNotifications(prev => prev.map(n => ({ ...n, lida: true })));
+      } catch { /* silencia */ }
+    }
+  };
+
+  const PAGE_LABELS: Record<Page, string> = {
+    dashboard:    t('pages.dashboard'),
+    agenda:       t('pages.agenda'),
+    students:     t('pages.students'),
+    rooms:        t('pages.rooms'),
+    rescheduling: t('pages.rescheduling'),
+    video:        t('pages.video'),
+    lessonAlerts: t('pages.lessonAlerts'),
+    settings:     t('pages.settings'),
+    profile:      t('pages.profile'),
+  };
+
   const initials = `${user.firstName?.[0] ?? ''}${user.lastName?.[0] ?? ''}`.trim().toUpperCase() || user.email.slice(0, 2).toUpperCase();
   const studentAvatarBg = 'linear-gradient(135deg, var(--accent-gradient-from), var(--accent-gradient-to))';
 
   return (
-    <header className="app-surface h-16 flex items-center gap-4 px-6 border-b border-[var(--border)] shrink-0 relative z-20">
+    <header className="app-surface h-16 flex items-center gap-4 px-6 border-b border-(--border) shrink-0 relative z-60">
       {/* Page title */}
       <div className="flex-1">
         <div className="flex items-center gap-2">
-          <h1 className="text-xl font-bold text-[var(--heading)]">{PAGE_LABELS[activePage]}</h1>
-          <span className="hidden sm:flex items-center justify-center w-6 h-6 rounded-full bg-[var(--accent-icon-bg)] text-[var(--accent-icon-fg)]">
+          <h1 className="text-xl font-bold text-(--heading)">{PAGE_LABELS[activePage]}</h1>
+          <span className="hidden sm:flex items-center justify-center w-6 h-6 rounded-full bg-(--accent-icon-bg) text-(--accent-icon-fg)">
             <Music size={13} />
           </span>
         </div>
       </div>
 
-      {/* Search */}
-      <div className="relative">
-        <AnimatePresence initial={false}>
-          {searchOpen ? (
-            <motion.div
-              key="search-expanded"
-              initial={{ width: 40, opacity: 0 }}
-              animate={{ width: 300, opacity: 1 }}
-              exit={{ width: 40, opacity: 0 }}
-              transition={{ type: 'spring', stiffness: 300, damping: 28 }}
-              className="flex items-center gap-2 h-10 bg-[var(--surface-soft)] border border-[var(--input-border)] rounded-xl px-3"
-            >
-              <Search size={16} className="text-(--accent-600) shrink-0" />
-              <input
-                autoFocus
-                value={query}
-                onChange={e => setQuery(e.target.value)}
-                placeholder="Buscar alunos..."
-                className="flex-1 bg-transparent text-sm text-[var(--text)] outline-none placeholder:text-[var(--muted)]"
+      {/* Language toggle */}
+      <div className="flex items-center bg-(--surface-soft) border border-(--border) rounded-xl p-0.5">
+        {(['pt', 'en'] as const).map((l) => (
+          <button
+            key={l}
+            onClick={() => setLang(l)}
+            title={l === 'pt' ? 'Português' : 'English'}
+            className={cn(
+              'relative px-2 h-7 text-xs font-semibold rounded-lg transition-colors flex items-center gap-1.5',
+              lang === l ? 'text-(--heading)' : 'text-(--muted) hover:text-(--text)',
+            )}
+          >
+            {/* Sliding active pill */}
+            {lang === l && (
+              <motion.span
+                layoutId="lang-pill"
+                className="absolute inset-0 rounded-lg bg-(--surface) shadow-sm"
+                transition={{ type: 'spring', stiffness: 420, damping: 32 }}
               />
-              <button onClick={() => { setSearchOpen(false); setQuery(''); }} className="text-[var(--muted)] hover:text-[var(--text)]">
-                <X size={14} />
-              </button>
-            </motion.div>
-          ) : (
-            <motion.button
-              key="search-icon"
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              onClick={() => setSearchOpen(true)}
-              className="w-10 h-10 flex items-center justify-center rounded-xl text-[var(--muted)] hover:bg-[var(--hover-bg)] hover:text-(--accent-600) transition-colors"
+            )}
+            <span className="relative z-10 flex items-center gap-1.5">
+              <span className="overflow-hidden" style={{ display: 'inline-block', width: '1.25rem', textAlign: 'center' }}>
+                <AnimatePresence mode="wait" initial={false}>
+                  <motion.span
+                    key={l}
+                    initial={{ opacity: 0, y: -8, rotateX: 90 }}
+                    animate={{ opacity: 1, y: 0, rotateX: 0 }}
+                    exit={{ opacity: 0, y: 8, rotateX: -90 }}
+                    transition={{ duration: 0.2, type: 'spring', bounce: 0.35 }}
+                    className="leading-none block"
+                    style={{ transformOrigin: 'center', display: 'block' }}
+                  >
+                    <img
+                      src={l === 'pt' ? 'https://flagcdn.com/24x18/br.png' : 'https://flagcdn.com/24x18/us.png'}
+                      width={20}
+                      height={15}
+                      alt={l === 'pt' ? 'Português' : 'English'}
+                      className="rounded-sm object-cover"
+                      style={{ display: 'inline-block' }}
+                    />
+                  </motion.span>
+                </AnimatePresence>
+              </span>
+              <span className="hidden sm:inline">{l === 'pt' ? 'PT' : 'EN'}</span>
+            </span>
+          </button>
+        ))}
+      </div>
+
+      {/* Chat */}
+      <div className="relative">
+        <button
+          aria-label={t('topbar.chat')}
+          aria-expanded={chatOpen}
+          onClick={() => { setChatOpen(v => !v); setNotifOpen(false); setProfileOpen(false); }}
+          className="relative w-10 h-10 flex items-center justify-center rounded-xl text-[var(--muted)] hover:bg-[var(--hover-bg)] hover:text-[var(--accent-600)] transition-colors cursor-pointer"
+        >
+          <MessageSquare size={18} />
+          {chatNaoLidas > 0 && (
+            <span
+              className="absolute top-1.5 right-1.5 min-w-[14px] h-[14px] flex items-center justify-center rounded-full text-[9px] font-bold text-white px-0.5 ring-2 ring-(--surface)"
+              style={{ background: 'linear-gradient(135deg, var(--accent-gradient-from), var(--accent-gradient-to))' }}
             >
-              <Search size={18} />
-            </motion.button>
+              {chatNaoLidas > 99 ? '99+' : chatNaoLidas}
+            </span>
           )}
-        </AnimatePresence>
+        </button>
       </div>
 
       {/* Notifications */}
       <div className="relative">
         <button
-          onClick={() => { setNotifOpen(v => !v); setProfileOpen(false); }}
-          className="relative w-10 h-10 flex items-center justify-center rounded-xl text-[var(--muted)] hover:bg-[var(--hover-bg)] hover:text-(--accent-600) transition-colors"
+          aria-label={t('topbar.notif')}
+          aria-expanded={notifOpen}
+          onClick={handleOpenNotif}
+          className="relative w-10 h-10 flex items-center justify-center rounded-xl text-[var(--muted)] hover:bg-[var(--hover-bg)] hover:text-[var(--accent-600)] transition-colors cursor-pointer"
         >
           <Bell size={18} />
-          {unreadCount > 0 && (
+          {notifNaoLidas > 0 && (
             <span
-              className="absolute top-1.5 right-1.5 w-2.5 h-2.5 rounded-full ring-2 ring-[var(--surface)]"
+              className="absolute top-1.5 right-1.5 min-w-[14px] h-[14px] flex items-center justify-center rounded-full text-[9px] font-bold text-white px-0.5 ring-2 ring-(--surface)"
               style={{ background: 'linear-gradient(135deg, var(--accent-gradient-from), var(--accent-gradient-to))' }}
-            />
+            >
+              {notifNaoLidas > 99 ? '99+' : notifNaoLidas}
+            </span>
           )}
         </button>
 
@@ -127,38 +229,47 @@ export function TopBar({ activePage, user, onLogout }: TopBarProps) {
               animate={{ opacity: 1, y: 0, scale: 1 }}
               exit={{ opacity: 0, y: 8, scale: 0.96 }}
               transition={{ duration: 0.15 }}
-              className="absolute right-0 top-12 w-80 bg-[var(--dropdown-bg)] rounded-2xl shadow-2xl border border-[var(--dropdown-border)] overflow-hidden"
+              className="absolute right-0 top-12 w-80 z-50 bg-(--dropdown-bg) rounded-2xl shadow-2xl border border-(--dropdown-border) overflow-hidden"
             >
-              <div className="px-4 py-3 border-b border-[var(--border)] flex items-center justify-between bg-[var(--surface-soft)]">
-                <span className="text-sm font-bold text-[var(--heading)]">Notificações</span>
-                {unreadCount > 0 && (
+              <div className="px-4 py-3 border-b border-(--border) flex items-center justify-between bg-(--surface-soft)">
+                <span className="text-sm font-bold text-(--heading)">{t('topbar.notif')}</span>
+                {notifNaoLidas > 0 && (
                   <span
                     className="text-xs text-white font-medium px-2.5 py-0.5 rounded-full"
                     style={{ background: 'linear-gradient(135deg, var(--accent-gradient-from), var(--accent-gradient-to))' }}
                   >
-                    {unreadCount} novas
+                    {t('topbar.newNotif').replace('{n}', String(notifNaoLidas))}
                   </span>
                 )}
               </div>
-              <div className="divide-y divide-[var(--border)]">
-                {notifications.map(n => (
-                  <div key={n.id} className={cn('px-4 py-3 hover:bg-[var(--hover-bg)] cursor-pointer transition-colors', n.unread && 'bg-[var(--accent-50)]/30')}>
-                    <div className="flex items-start gap-3">
-                      {n.unread && (
-                        <div
-                          className="w-2 h-2 mt-1.5 shrink-0 rounded-full"
-                          style={{ background: 'linear-gradient(135deg, var(--accent-gradient-from), var(--accent-gradient-to))' }}
-                        />
-                      )}
-                      {!n.unread && <div className="w-2 h-2 mt-1.5 shrink-0 rounded-full bg-transparent" />}
-                      <div>
-                        <p className="text-sm font-medium text-[var(--heading)]">{n.title}</p>
-                        <p className="text-xs text-[var(--muted)] mt-0.5">{n.message}</p>
-                        <p className="text-xs text-[var(--muted)] mt-1 opacity-70">{n.time}</p>
+              <div className="divide-y divide-(--border) max-h-80 overflow-y-auto">
+                {notifications.length === 0 ? (
+                  <div className="px-4 py-6 text-center text-xs" style={{ color: 'var(--muted)' }}>
+                    {lang === 'pt' ? 'Nenhuma notificação ainda.' : 'No notifications yet.'}
+                  </div>
+                ) : (
+                  notifications.slice(0, 20).map(n => (
+                    <div key={n.id} className={cn('px-4 py-3 hover:bg-(--hover-bg) cursor-pointer transition-colors', !n.lida && 'bg-(--accent-50)/30')}>
+                      <div className="flex items-start gap-3">
+                        {!n.lida ? (
+                          <div
+                            className="w-2 h-2 mt-1.5 shrink-0 rounded-full"
+                            style={{ background: 'linear-gradient(135deg, var(--accent-gradient-from), var(--accent-gradient-to))' }}
+                          />
+                        ) : (
+                          <div className="w-2 h-2 mt-1.5 shrink-0 rounded-full bg-transparent" />
+                        )}
+                        <div className="flex-1 min-w-0">
+                          <p className="text-sm font-medium text-(--heading) truncate">{n.titulo}</p>
+                          <p className="text-xs text-(--muted) mt-0.5 leading-relaxed">{n.mensagem}</p>
+                          <p className="text-xs text-(--muted) mt-1 opacity-70">
+                            {new Date(n.criadaEm).toLocaleString(lang === 'pt' ? 'pt-BR' : 'en-US', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' })}
+                          </p>
+                        </div>
                       </div>
                     </div>
-                  </div>
-                ))}
+                  ))
+                )}
               </div>
             </motion.div>
           )}
@@ -168,8 +279,10 @@ export function TopBar({ activePage, user, onLogout }: TopBarProps) {
       {/* Profile */}
       <div className="relative">
         <button
-          onClick={() => { setProfileOpen(v => !v); setNotifOpen(false); }}
-          className="flex items-center gap-2 h-10 px-2 rounded-xl hover:bg-[var(--hover-bg)] transition-colors"
+          aria-label={t('topbar.profile')}
+          aria-expanded={profileOpen}
+          onClick={() => { setProfileOpen(v => !v); setNotifOpen(false); setChatOpen(false); }}
+          className="flex items-center gap-2 h-10 px-2 rounded-xl hover:bg-(--hover-bg) transition-colors"
         >
           <div
             className="w-9 h-9 rounded-xl overflow-hidden shrink-0 shadow-lg ring-2 ring-(--accent-100)"
@@ -184,10 +297,10 @@ export function TopBar({ activePage, user, onLogout }: TopBarProps) {
             )}
           </div>
           <div className="hidden sm:block text-left">
-            <p className="text-sm font-semibold text-[var(--heading)] leading-tight">{user.name || 'Usuario'}</p>
-            <p className="text-xs text-[var(--muted)] leading-tight">{user.role === 'teacher' ? 'Professor' : 'Aluno'}</p>
+            <p className="text-sm font-semibold text-(--heading) leading-tight">{user.name || 'Usuario'}</p>
+            <p className="text-xs text-(--muted) leading-tight">{user.role === 'teacher' ? t('topbar.professor') : t('topbar.student')}</p>
           </div>
-          <ChevronDown size={14} className={cn('text-[var(--muted)] transition-transform', profileOpen && 'rotate-180')} />
+          <ChevronDown size={14} className={cn('text-(--muted) transition-transform', profileOpen && 'rotate-180')} />
         </button>
 
         <AnimatePresence>
@@ -197,32 +310,31 @@ export function TopBar({ activePage, user, onLogout }: TopBarProps) {
               animate={{ opacity: 1, y: 0, scale: 1 }}
               exit={{ opacity: 0, y: 8, scale: 0.96 }}
               transition={{ duration: 0.15 }}
-              className="absolute right-0 top-12 w-56 bg-[var(--dropdown-bg)] rounded-2xl shadow-2xl border border-[var(--dropdown-border)] overflow-hidden"
+              className="absolute right-0 top-12 w-56 z-50 bg-(--dropdown-bg) rounded-2xl shadow-2xl border border-(--dropdown-border) overflow-hidden"
             >
-              <div className="px-4 py-3 border-b border-[var(--border)] bg-[var(--surface-soft)]">
+              <div className="px-4 py-3 border-b border-(--border) bg-(--surface-soft)">
                 <div className="flex items-center gap-2">
-                  <p className="text-sm font-bold text-[var(--heading)]">{user.name || 'Usuario'}</p>
+                  <p className="text-sm font-bold text-(--heading)">{user.name || 'Usuario'}</p>
                   <Music size={12} className="text-(--accent-600)" />
                 </div>
-                <p className="text-xs text-[var(--muted)]">{user.email}</p>
+                <p className="text-xs text-(--muted)">{user.email}</p>
               </div>
               {[
-                { icon: <User size={14} />, label: 'Meu Perfil', color: 'text-[var(--accent-600)]', roles: ['teacher', 'student'] as AuthUser['role'][] },
-                { icon: <Music size={14} />, label: 'Minha Escola', color: 'text-[var(--accent-icon-fg)]', roles: ['teacher'] as AuthUser['role'][] },
-                { icon: <Settings size={14} />, label: 'Configurações', color: 'text-[var(--muted)]', roles: ['teacher'] as AuthUser['role'][] },
+                { icon: <User size={14} />, label: t('topbar.myProfile'), color: 'text-(--accent-600)', roles: ['teacher', 'student'] as AuthUser['role'][], action: () => { sessionStorage.setItem('marcos-music:settings:section', 'profile'); onNavigate('settings'); } },
+                { icon: <Settings size={14} />, label: t('topbar.settings'), color: 'text-(--muted)', roles: ['teacher'] as AuthUser['role'][], action: () => onNavigate('settings') },
               ].filter(item => item.roles.includes(user.role)).map(item => (
-                <button key={item.label} className="flex items-center gap-3 w-full px-4 py-2.5 text-sm text-[var(--text)] hover:bg-[var(--hover-bg)] transition-colors group">
+                <button key={item.label} onClick={() => { setProfileOpen(false); item.action(); }} className="flex items-center gap-3 w-full px-4 py-2.5 text-sm text-(--text) hover:bg-(--hover-bg) transition-colors group">
                   <span className={cn('transition-colors', item.color)}>{item.icon}</span>
                   {item.label}
                 </button>
               ))}
-              <div className="border-t border-[var(--border)]">
+              <div className="border-t border-(--border)">
                 <button
                   onClick={onLogout}
                   className="flex items-center gap-3 w-full px-4 py-2.5 text-sm text-rose-500 hover:bg-rose-50 transition-colors font-medium"
                 >
                   <LogOut size={14} />
-                  Sair
+                  {t('topbar.logout')}
                 </button>
               </div>
             </motion.div>
@@ -237,6 +349,16 @@ export function TopBar({ activePage, user, onLogout }: TopBarProps) {
           onClick={() => { setNotifOpen(false); setProfileOpen(false); }}
         />
       )}
+
+      {/* Chat panel (fora do header, mas abaixo dos modais) */}
+      <ChatPanel
+        isOpen={chatOpen}
+        onClose={() => setChatOpen(false)}
+        currentUser={user}
+        onUnreadChange={refreshChatNaoLidas}
+        defaultChatAlunoId={chatTargetAlunoId}
+        onDefaultChatHandled={() => setChatTargetAlunoId(undefined)}
+      />
     </header>
   );
 }

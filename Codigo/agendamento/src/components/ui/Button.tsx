@@ -10,8 +10,8 @@ interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
 
 const variantClasses = {
   primary: 'text-white shadow-lg hover:brightness-105 active:brightness-95',
-  secondary: 'bg-[var(--surface)] text-[var(--text)] border border-[var(--border)] hover:bg-[var(--hover-bg)] hover:border-[var(--accent-500)]/40 shadow-sm',
-  ghost: 'text-[var(--muted)] hover:bg-[var(--hover-bg)] hover:text-[var(--text)]',
+  secondary: 'bg-(--surface) text-(--text) border border-(--border) hover:bg-(--hover-bg) hover:border-(--accent-500)/40 shadow-sm',
+  ghost: 'text-(--muted) hover:bg-(--hover-bg) hover:text-(--text)',
   danger: 'bg-gradient-to-r from-rose-500 to-pink-600 text-white hover:from-rose-600 hover:to-pink-700 shadow-lg shadow-rose-500/25',
 };
 
@@ -28,15 +28,21 @@ export function Button({
   loading,
   className,
   disabled,
+  type = 'button',
   ...props
-}: ButtonProps) {
+}: ButtonProps & { type?: 'button' | 'submit' | 'reset' }) {
   const style = variant === 'primary'
     ? ({ background: 'linear-gradient(135deg, var(--accent-gradient-from), var(--accent-gradient-to))' } as const)
     : undefined;
 
+  const isDisabled = Boolean(disabled || loading);
+
   return (
     <button
-      disabled={disabled || loading}
+      type={type}
+      disabled={isDisabled}
+      aria-busy={loading ? true : undefined}
+      aria-disabled={isDisabled}
       style={style}
       className={cn(
         'inline-flex items-center justify-center font-semibold transition-all duration-200 disabled:opacity-50 disabled:pointer-events-none',
@@ -47,7 +53,10 @@ export function Button({
       {...props}
     >
       {loading ? (
-        <span className="w-4 h-4 border-2 border-current border-t-transparent rounded-full animate-spin" />
+        <>
+          <span className="w-4 h-4 border-2 border-current border-t-transparent rounded-full animate-spin" aria-hidden="true" />
+          <span className="sr-only">Carregando...</span>
+        </>
       ) : children}
     </button>
   );

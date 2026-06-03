@@ -25,7 +25,7 @@ export function Layout({ children, collapsed, onToggle, activePage, onNavigate, 
         user={user}
       />
       <div className="flex flex-col flex-1 overflow-hidden">
-        <TopBar activePage={activePage} user={user} onLogout={onLogout} />
+        <TopBar activePage={activePage} user={user} onLogout={onLogout} onNavigate={onNavigate} />
         <main className="flex-1 overflow-y-auto">
           {children}
         </main>

@@ -7,6 +7,7 @@ import com.marcos.music.repository.Aula.AulaAlunoRepository;
 
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -39,6 +40,7 @@ public class AlunoService {
         this.aulaAlunoRepository =aulaAlunoRepository;
     }
 
+    @Transactional
     public Aluno criarAluno(AlunoDTO dto) {
         if (dto.getId() != null) {
             Aluno aluno = repository.findById(dto.getId())
@@ -48,6 +50,7 @@ public class AlunoService {
             aluno.setTelefone(dto.getTelefone());
             aluno.setStatus(dto.getStatus() != null ? dto.getStatus() : true);
             aluno.setTermos(dto.getTermos() != null ? dto.getTermos() : false);
+            aluno.setApelido(dto.getApelido());
 
             List<Long> idsDTO = dto.getHorarios() == null ? List.of() :
                     dto.getHorarios().stream()
@@ -55,20 +58,20 @@ public class AlunoService {
                             .filter(Objects::nonNull)
                             .toList();
 
-            if (!idsDTO.isEmpty()) {
-                List<AulaAluno> deletados = aulaService.findDeletedsHorarios(dto.getId(), idsDTO);
-                for (AulaAluno aa : deletados) {
-                    aulaService.deletePorHorario(aa);
-                }
-            }
-
-            if (aluno.getHorarios() == null) {
-                aluno.setHorarios(new ArrayList<>());
-            } else {
-                aluno.getHorarios().clear();
-            }
-
             if (dto.getHorarios() != null) {
+                if (!idsDTO.isEmpty()) {
+                    List<AulaAluno> deletados = aulaService.findDeletedsHorarios(dto.getId(), idsDTO);
+                    for (AulaAluno aa : deletados) {
+                        aulaService.deletePorHorario(aa);
+                    }
+                }
+
+                if (aluno.getHorarios() == null) {
+                    aluno.setHorarios(new ArrayList<>());
+                } else {
+                    aluno.getHorarios().clear();
+                }
+
                 for (AulaAluno h : dto.getHorarios()) {
                     h.setAluno(aluno); // 🔥 ESSENCIAL
                     aluno.getHorarios().add(h);
@@ -97,11 +100,11 @@ public class AlunoService {
         Usuario user = authService.criarUsuario(dto.getEmail(), PASS, Role.USER);
 
         Aluno aluno = new Aluno();
-        aluno.setId(user.getId());
         aluno.setNome(dto.getNome());
         aluno.setTelefone(dto.getTelefone());
         aluno.setTermos(dto.getTermos() != null ? dto.getTermos() : false);
         aluno.setStatus(dto.getStatus() != null ? dto.getStatus() : true);
+        aluno.setApelido(dto.getApelido());
 
         aluno.setUsuario(user); 
 
@@ -160,6 +163,7 @@ public class AlunoService {
 
     public List<AlunoDTO> listarTodos() {
         return repository.findAll().stream()
+                .filter(aluno -> aluno.getUsuario() == null || aluno.getUsuario().getRole() != Role.ADMIN)
                 .map(aluno -> {
                     AlunoDTO dto = new AlunoDTO();
                     dto.setId(aluno.getId());
@@ -171,8 +175,17 @@ public class AlunoService {
                     if (aluno.getUsuario() != null) {
                         dto.setEmail(aluno.getUsuario().getEmail());
                     }
+                    dto.setApelido(aluno.getApelido());
                     return dto;
                 })
                 .collect(Collectors.toList());
+    }
+
+    @Transactional
+    public void deletarAluno(UUID id) {
+        Aluno aluno = repository.findById(id)
+                .orElseThrow(() -> new IllegalArgumentException("Aluno não encontrado"));
+        repository.delete(aluno);          // JPA cascade → AulaAluno; DB cascade → Aula
+        usuarioRepository.deleteById(id); // remove o login
     }
 }

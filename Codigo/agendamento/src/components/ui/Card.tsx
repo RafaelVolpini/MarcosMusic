@@ -14,7 +14,7 @@ export function Card({ children, className, onClick, hoverable }: CardProps) {
       onClick={onClick}
       className={cn(
         'app-surface rounded-2xl border shadow-sm',
-        hoverable && 'cursor-pointer hover:shadow-lg hover:border-[var(--accent-500)]/30 transition-all duration-300',
+        hoverable && 'cursor-pointer hover:shadow-lg hover:border-(--accent-500)/30 transition-all duration-300',
         className,
       )}
     >
@@ -83,8 +83,10 @@ export function StatCard({ title, value, subtitle, icon, trend, color = 'purple'
           <p className="text-3xl font-bold text-white mt-1 tracking-tight">{value}</p>
           {subtitle && <p className="text-xs text-white/60 mt-0.5">{subtitle}</p>}
           {trend && (
-            <p className={cn('text-xs mt-2 font-semibold px-2 py-0.5 rounded-full inline-block', 
-              trend.positive ? 'bg-white/20 text-white' : 'bg-white/20 text-white')}>
+            <p className={cn(
+              'text-xs mt-2 font-semibold px-2 py-0.5 rounded-full inline-block',
+              trend.positive ? 'bg-emerald-400/20 text-emerald-50' : 'bg-rose-400/20 text-rose-50',
+            )}>
               {trend.positive ? '↑' : '↓'} {trend.value}
             </p>
           )}

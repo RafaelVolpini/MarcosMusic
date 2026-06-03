@@ -29,13 +29,13 @@ function isoToTime(isoStr: string): string {
 
 // Mapa de dia Java (1=SEG … 7=DOM) → DayKey do frontend
 const JAVA_DAY_TO_KEY: Record<number, DayKey> = {
-  1: 'mon',
-  2: 'tue',
-  3: 'wed',
-  4: 'thu',
-  5: 'fri',
-  6: 'sat',
-  7: 'sun',
+  1: 'seg',
+  2: 'ter',
+  3: 'qua',
+  4: 'qui',
+  5: 'sex',
+  6: 'sab',
+  7: 'dom',
 };
 
 // ─── toLesson ─────────────────────────────────────────────────────────────────
@@ -55,10 +55,6 @@ export function toLesson(dto: CalendarResponseDTO): Lesson {
     studentId: dto.idAluno ?? '',
     studentName: dto.nomeAluno ?? 'Aluno',
     studentPhone: '',
-    teacherId: '',
-    teacherName: 'Marcos Mello',
-    roomId: '',
-    roomName: 'Sala 1',
     type: 'individual',
     instrument: 'Piano',
     color: '#7c3aed',
@@ -68,8 +64,11 @@ export function toLesson(dto: CalendarResponseDTO): Lesson {
     startTime: isoToTime(dto.dataInicio),
     endTime: isoToTime(dto.dataFim),
 
-    status: dto.flagCancelada ? 'cancelled' : 'scheduled',
+    status: dto.flagRealizada ? 'completed' : dto.flagCancelada ? 'cancelled' : 'scheduled',
     attendanceConfirmed: dto.presencaConfirmada ?? false,
+    recorrente: dto.recorrente ?? false,
+    meetLink: dto.meetLink ?? undefined,
+    isOnline: dto.isOnline ?? false,
   };
 }
 
@@ -81,7 +80,7 @@ export function toLesson(dto: CalendarResponseDTO): Lesson {
  */
 export function toWeeklyAvailability(horarios: AulaAlunoDTO[]): WeeklyAvailability {
   const result: WeeklyAvailability = {
-    mon: [], tue: [], wed: [], thu: [], fri: [], sat: [], sun: [],
+    seg: [], ter: [], qua: [], qui: [], sex: [], sab: [], dom: [],
   };
 
   for (const h of horarios) {
