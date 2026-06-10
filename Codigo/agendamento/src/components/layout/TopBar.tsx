@@ -330,7 +330,7 @@ export function TopBar({ activePage, user, onLogout, onNavigate }: TopBarProps) 
               ))}
               <div className="border-t border-(--border)">
                 <button
-                  onClick={onLogout}
+                  onClick={() => { setProfileOpen(false); onLogout(); }}
                   className="flex items-center gap-3 w-full px-4 py-2.5 text-sm text-rose-500 hover:bg-rose-50 transition-colors font-medium"
                 >
                   <LogOut size={14} />
@@ -345,7 +345,7 @@ export function TopBar({ activePage, user, onLogout, onNavigate }: TopBarProps) 
       {/* Backdrop for dropdowns */}
       {(notifOpen || profileOpen) && (
         <div
-          className="fixed inset-0 z-[-1]"
+          className="fixed inset-0 z-40"
           onClick={() => { setNotifOpen(false); setProfileOpen(false); }}
         />
       )}
