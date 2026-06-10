@@ -178,8 +178,8 @@ export function StudentsPage({ students, currentUser, onReload }: StudentsPagePr
                     className="
                       absolute top-3 right-12 w-7 h-7 rounded-lg
                       flex items-center justify-center
-                      text-(--muted) hover:text-(--accent-600)
-                      hover:bg-(--hover-bg)
+                      text-[var(--muted)] hover:text-[var(--accent-600)]
+                      hover:bg-[var(--hover-bg)]
                       opacity-0 group-hover:opacity-100
                       transition-all duration-150
                     "

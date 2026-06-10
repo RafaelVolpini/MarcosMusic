@@ -51,6 +51,7 @@ public class SecurityConfig {
                 .requestMatchers("/chat/**", "/chat").permitAll()
                 .requestMatchers("/notificacao/**", "/notificacao").permitAll()
                 .requestMatchers("/google/**").permitAll()
+                .requestMatchers("/upload-modulo/**").permitAll()
                 .requestMatchers("/swagger-ui/**", "/v3/api-docs/**", "/swagger-ui.html").permitAll()
                 .anyRequest().authenticated()
             );
