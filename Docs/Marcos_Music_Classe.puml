@@ -1,7 +1,6 @@
 @startuml
+
 !define ABSTRACT abstract
-!define PRIMARY_KEY <color:FF6B6B>PK</color>
-!define FOREIGN_KEY <color:4ECDC4>FK</color>
 
 enum Role {
     USER
@@ -9,9 +8,9 @@ enum Role {
 }
 
 class Usuario {
-    - id: UUID (PK)
-    - email: String (unique, not null)
-    - password: String (not null)
+    - id: UUID 
+    - email: String 
+    - password: String 
     - role: Role
     ---
     + getId(): UUID
@@ -21,15 +20,15 @@ class Usuario {
 }
 
 class TermsHistory {
-    - id: UUID (PK)
-    - timestamp: LocalDateTime (not null)
-    - termosAceito: Boolean (not null)
-    - usuarioId: UUID (FK)
+    - id: UUID 
+    - timestamp: LocalDateTime 
+    - termosAceito: Boolean 
+    - usuarioId: UUID 
 }
 
 class Aluno {
-    - id: UUID (PK, FK)
-    - nome: String (not null)
+    - id: UUID 
+    - nome: String 
     - telefone: String
     - status: Boolean
     - reposicoes: Integer
@@ -43,10 +42,10 @@ class Aluno {
 }
 
 class Aula {
-    - id: Long (PK)
-    - dataInicio: LocalDateTime (not null)
-    - dataFim: LocalDateTime (not null)
-    - idAluno: UUID (FK)
+    - id: Long 
+    - dataInicio: LocalDateTime 
+    - dataFim: LocalDateTime 
+    - idAluno: UUID 
     - flagCancelada: Boolean
     - presencaConfirmada: Boolean
     - recorrente: Boolean
@@ -60,14 +59,14 @@ class Aula {
     + isPresencaConfirmada(): Boolean
 }
 class AulaAluno {
-    - id: Long (PK)
-    - dia: Integer (not null)
-    - horarioInicio: LocalTime (not null)
-    - horarioFim: LocalTime (not null)
-    - idAluno: UUID (FK)
+    - id: Long 
+    - dia: Integer 
+    - horarioInicio: LocalTime 
+    - horarioFim: LocalTime 
+    - idAluno: UUID 
     - dataRegistro: LocalDateTime
     - acao: String
-    - idAula: Long (FK)
+    - idAula: Long 
     ---
     + getId(): Long
     + getDia(): Integer
@@ -76,20 +75,20 @@ class AulaAluno {
 }
 
 class Disponibilidade {
-    - id : Long (PK)
+    - id : Long 
     - diaSemana: String
     - horario: String
     - disponivel: Boolean
     - reposicao: Boolean
 }
 class Reposicao {
-    - id: Long (PK)
-    - status: String (padrão "ABERTA")
+    - id: Long 
+    - status: String 
     - disponibilidade: Disponibilidade
     - aulaId: Aula
     - observação: String
     - dataAula: LocalDate
-    - alunos: List<Aluno>
+
     --
     + getId(): Long 
     + getDataAula(): LocalDate
@@ -97,14 +96,13 @@ class Reposicao {
     + getObservação(): String 
 }
 class Chat{
-    - id: Long (PK)
+    - id: Long 
     - criadoEm: LocalDateTime
-    - aluno: Aluno
     ---
 }
 
 class ChatMensagem{
-    - id: Long (PK)
+    - id: Long 
     - remetente: String
     - remetenteId: UUID
     - conteudo: String
@@ -114,7 +112,7 @@ class ChatMensagem{
 }
 
 class Notificacao {
-    - id: Long (PK)
+    - id: Long 
     - destinatario: String
     - tipo: String
     - titulo: String
@@ -125,16 +123,14 @@ class Notificacao {
 }
 
 class Modulo {
-    - id: Long (PK)
-    - nome: String (not null)
-    - uploads: List<UploadModulo>
+    - id: Long 
+    - nome: String 
 }
 
 class UploadModulo {
-    - id: Long (PK)
-    - nomeArquivo: String (not null)
-    - url: String (not null)
-    - modulos: Modulo (FK)
+    - id: Long 
+    - nomeArquivo: String 
+    - url: String 
 }
 
 
@@ -175,3 +171,7 @@ Notificacao "0..*" --> "0..1" Chat
 Usuario "1" <-- "0..*" Notificacao : destinatario  
 ' Usuario recebe varias notificacoes
 Modulo "1" o-- "0..*" UploadModulo : uploads
+' Usuario pode enviar varios uploads de modulos
+Usuario "1" -- "0..*" UploadModulo : envia
+
+@enduml
