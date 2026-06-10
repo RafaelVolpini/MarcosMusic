@@ -12,6 +12,14 @@ Este documento apresenta a especificação completa e atualizada da interface do
 
 A interface foi projetada utilizando práticas modernas de desenvolvimento front-end com **React, TypeScript, Tailwind CSS e Framer Motion**, garantindo interações fluidas, layouts responsivos e uma experiência extremamente premium (estética de alta fidelidade baseada em glassmorfismo e micro-animações).
 
+> **Nota:** As seções a seguir incluem capturas de tela reais do sistema em funcionamento, capturadas em **10/06/2026** com dados reais do ambiente de produção (banco de dados Azure SQL Server).
+
+### 1.1. Landing Page e Tela de Login
+
+| Landing Page | Tela de Login |
+|:---:|:---:|
+| ![Landing Page](screenshots/01-landing.jpg) | ![Login](screenshots/02-login.jpg) |
+
 ---
 
 ## 2. Design System & Identidade Visual
@@ -40,6 +48,8 @@ Para proporcionar uma experiência premium e contemporânea, o sistema afasta-se
 
 ### 3.1. Dashboard Dinâmico
 
+![Dashboard](screenshots/03-dashboard.jpg)
+
 O painel de controle principal do professor oferece uma visão panorâmica instantânea sobre o status do seu dia de trabalho e de sua base de alunos.
 
 #### Componentes e Elementos Visuais:
@@ -56,6 +66,8 @@ O painel de controle principal do professor oferece uma visão panorâmica insta
 ---
 
 ### 3.2. Agenda do Professor
+
+![Agenda](screenshots/04-agenda.jpg)
 
 O centro de gerenciamento de horários do professor, projetado em formato de calendário altamente visual.
 
@@ -99,6 +111,8 @@ O centro de gerenciamento de horários do professor, projetado em formato de cal
 
 ### 3.3. Gestão de Disponibilidade do Professor
 
+![Disponibilidade](screenshots/05-disponibilidade.jpg)
+
 Esta tela permite que o professor cadastre seus blocos fixos de horários livres em que estará disponível para receber novos agendamentos e solicitações de reposição/reagendamento.
 
 #### Campos de Cadastro:
@@ -120,6 +134,8 @@ Esta tela permite que o professor cadastre seus blocos fixos de horários livres
 
 ### 3.4. Central de Reagendamentos (Reposições)
 
+![Reposições](screenshots/06-reposicoes.jpg)
+
 Modulo inteligente focado no tratamento de faltas e reagendamentos, integrando regras contratuais (**UC-14**).
 
 #### Fluxo e Comportamento da Tela:
@@ -134,6 +150,8 @@ Modulo inteligente focado no tratamento de faltas e reagendamentos, integrando r
 ---
 
 ### 3.5. Biblioteca de Videoaulas
+
+![Videoaulas](screenshots/07-videoaulas.jpg)
 
 Área multimídia onde os alunos cadastrados podem assistir a materiais de apoio, videoaulas gravadas e lições semanais disponibilizadas pelo professor.
 
@@ -158,6 +176,8 @@ Modulo inteligente focado no tratamento de faltas e reagendamentos, integrando r
 
 ### 3.6. Gestão de Alunos
 
+![Alunos](screenshots/08-alunos.jpg)
+
 Painel administrativo para controle e cadastro de alunos, mantendo seus dados de contato e de contrato.
 
 #### Campos de Cadastro do Aluno:
@@ -172,6 +192,8 @@ Painel administrativo para controle e cadastro de alunos, mantendo seus dados de
 ---
 
 ### 3.7. Central de Alertas & Notificações
+
+![Alertas e WhatsApp](screenshots/09-alertas.jpg)
 
 Uma caixa de entrada centralizada que avisa o professor (e os alunos) sobre mudanças cruciais no status das aulas.
 
@@ -278,6 +300,8 @@ O sistema gera dinamicamente uma URL utilizando a API oficial do WhatsApp (`http
 
 ### 3.9. Chat entre Aluno e Professor
 
+![Chat](screenshots/12-chat.jpg)
+
 Canal de comunicação direta integrado à plataforma, acessível pelo ícone de mensagens na barra superior (*TopBar*). O badge exibe o total de mensagens não lidas e é atualizado automaticamente.
 
 ```
@@ -322,6 +346,8 @@ Canal de comunicação direta integrado à plataforma, acessível pelo ícone de
 ---
 
 ### 3.10. Central de Notificações
+
+![Notificações](screenshots/11-notificacoes.jpg)
 
 Sistema de notificações in-app acessível pelo ícone de sino (**Bell**) na barra superior. O badge exibe a contagem de itens não lidos e é atualizado automaticamente a cada 10 segundos (polling), ao mudar de página e ao retornar ao foco da aba.
 
@@ -387,7 +413,13 @@ Três toggles independentes permitem ao usuário habilitar ou desabilitar cada c
 
 ---
 
-## 4. Requisitos Não Funcionais de Interface
+## 4. Tela de Configurações
+
+![Configurações](screenshots/10-configuracoes.jpg)
+
+---
+
+## 5. Requisitos Não Funcionais de Interface
 
 1. **Responsividade Multiplataforma:** A interface deve ser 100% fluida, adaptando-se perfeitamente de telas de smartphones (360px de largura) a monitores desktop de alta resolução (Full HD e superiores).
 2. **Desempenho de Renderização:** O carregamento e renderização da lista de alertas na central deve acontecer em um tempo menor que **1.5 segundos**.
@@ -396,7 +428,7 @@ Três toggles independentes permitem ao usuário habilitar ou desabilitar cada c
 
 ---
 
-## 5. Casos de Erro de Interação e Tratamento Visual
+## 6. Casos de Erro de Interação e Tratamento Visual
 
 | Cenário de Erro                                       | Comportamento Esperado da Interface                                                                      | Feedback para o Usuário                                                                                                 |
 | :----------------------------------------------------- | :------------------------------------------------------------------------------------------------------- | :----------------------------------------------------------------------------------------------------------------------- |
