@@ -103,6 +103,13 @@ public class UploadModuloService {
         uploadModuloRepository.deleteById(id);
     }
 
+    public void editarModulo(Long id, String nome) {
+        Modulo modulo = moduloRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Módulo não encontrado"));
+        modulo.setNome(nome);
+        moduloRepository.save(modulo);
+    }
+
     @Transactional
     public void deletarModulo(Long id) {
         Modulo modulo = moduloRepository.findById(id)

@@ -104,6 +104,16 @@ export async function deletarVideo(id: number): Promise<void> {
   if (!res.ok) throw new Error(`Erro ${res.status} ao deletar vídeo`);
 }
 
+export async function editarModulo(id: number, nome: string): Promise<void> {
+  const res = await fetch(`/upload-modulo/modulo/${id}`, {
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json' },
+    credentials: 'include',
+    body: JSON.stringify({ nome })
+  });
+  if (!res.ok) throw new Error(`Erro ${res.status} ao editar módulo`);
+}
+
 export async function deletarModulo(id: number): Promise<void> {
   const res = await fetch(`/upload-modulo/modulo/${id}`, {
     method: 'DELETE',

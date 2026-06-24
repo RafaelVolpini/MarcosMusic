@@ -63,6 +63,12 @@ public class UploadModuloController {
         return ResponseEntity.ok(modulo);
     }
 
+    @PutMapping("/modulo/{id}")
+    public ResponseEntity<Void> editarModulo(@PathVariable Long id, @RequestBody ModuloDTO dto) {
+        uploadModuloService.editarModulo(id, dto.getNome());
+        return ResponseEntity.noContent().build();
+    }
+
     @DeleteMapping("/modulo/{id}")
     public ResponseEntity<Void> deletarModulo(@PathVariable Long id) {
         uploadModuloService.deletarModulo(id);

@@ -147,9 +147,31 @@ public class ReposicaoService {
 
     @Transactional
     public void deletar(Long id) {
-        if (!repository.existsById(id)) {
-            throw new IllegalArgumentException("Reposição não encontrada");
+        Reposicao r = repository.findByIdWithAlunos(id)
+                .orElseThrow(() -> new IllegalArgumentException("Reposição não encontrada"));
+
+        // Devolve créditos USADO dos alunos inscritos
+        for (Aluno aluno : r.getAlunos()) {
+            UUID alunoId = aluno.getId();
+            creditoReposicaoRepository
+                    .findByReposicaoId(id)
+                    .stream()
+                    .filter(c -> c.getAluno().getId().equals(alunoId)
+                            && CreditoReposicao.STATUS_USADO.equals(c.getStatus()))
+                    .findFirst()
+                    .ifPresent(c -> creditoReposicaoService.devolverCredito(c.getId()));
         }
+
+        // Desvincula créditos desta reposição (evita FK violation em credito_reposicao)
+        creditoReposicaoRepository.findByReposicaoId(id)
+                .forEach(c -> {
+                    c.setReposicao(null);
+                    creditoReposicaoRepository.save(c);
+                });
+
+        // Limpa a tabela join reposicao_aluno (evita FK violation)
+        r.getAlunos().clear();
+        repository.save(r);
         repository.deleteById(id);
     }
 

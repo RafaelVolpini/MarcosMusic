@@ -183,190 +183,271 @@ export function ReschedulingPage({ sessionUser }: ReschedulingPageProps) {
     }
   };
 
+  // Agrupa reposições por data para exibir separadores de dia
+  const reposicoesPorData = reposicoes.reduce<Record<string, ReposicaoDTO[]>>((acc, r) => {
+    if (!acc[r.dataAula]) acc[r.dataAula] = [];
+    acc[r.dataAula].push(r);
+    return acc;
+  }, {});
+  const datasOrdenadas = Object.keys(reposicoesPorData).sort();
+
+  function formatDataLabel(iso: string) {
+    const d = new Date(`${iso}T12:00:00`);
+    const hoje = new Date();
+    const amanha = new Date(hoje);
+    amanha.setDate(hoje.getDate() + 1);
+    const hojeFmt = `${hoje.getFullYear()}-${String(hoje.getMonth()+1).padStart(2,'0')}-${String(hoje.getDate()).padStart(2,'0')}`;
+    const amanhaFmt = `${amanha.getFullYear()}-${String(amanha.getMonth()+1).padStart(2,'0')}-${String(amanha.getDate()).padStart(2,'0')}`;
+    if (iso === hojeFmt) return 'Hoje';
+    if (iso === amanhaFmt) return 'Amanhã';
+    return d.toLocaleDateString('pt-BR', { weekday: 'long', day: 'numeric', month: 'long' });
+  }
+
+  const [selectedData, setSelectedData] = useState<string | null>(null);
+  const datasVisiveis = selectedData ? [selectedData] : datasOrdenadas;
+
   return (
-    <div className="page-padding space-y-7">
+    <div className="page-padding space-y-5">
+
       {/* Header */}
-      <Card className="p-5 border-l-4 border-l-(--accent-500) app-surface">
-        <div className="flex items-start gap-3">
-          <Users size={18} className="text-(--accent-600) shrink-0 mt-0.5" />
-          <div>
-            <h3 className="text-sm font-semibold text-(--heading)">{t('rescheduling.title')}</h3>
-            <p className="text-xs text-(--muted) mt-0.5">
-              {isTeacher
-                ? t('rescheduling.teacherInfo')
-                : t('rescheduling.studentInfo')}
+      <div className="flex items-end justify-between gap-4 pt-2 pb-1 border-b border-(--border)">
+        <div>
+          <p className="text-xs font-medium text-(--muted) uppercase tracking-widest mb-1">Calendário</p>
+          <h1 className="text-2xl font-bold text-(--heading) leading-tight">{t('rescheduling.title')}</h1>
+          {!loading && (
+            <p className="text-sm text-(--muted) mt-0.5">
+              {reposicoes.length} {reposicoes.length === 1 ? 'reposição agendada' : 'reposições agendadas'}
+              {isTeacher && slots.length > 0 && ` · ${slots.length} horário${slots.length !== 1 ? 's' : ''} disponível${slots.length !== 1 ? 'is' : ''}`}
+            </p>
+          )}
+        </div>
+        {isTeacher && slots.length > 0 && (
+          <button
+            type="button"
+            onClick={() => setShowSlotsPicker(true)}
+            className="flex items-center gap-2 px-4 py-2 rounded-xl bg-(--accent-600) text-white text-sm font-medium hover:opacity-90 transition-opacity shrink-0"
+          >
+            <CalendarPlus size={15} />
+            Agendar reposição
+          </button>
+        )}
+      </div>
+
+      {loading ? (
+        <div className="flex flex-col items-center justify-center py-20 gap-3">
+          <div className="w-6 h-6 rounded-full border-2 border-(--accent-500) border-t-transparent animate-spin" />
+          <p className="text-sm text-(--muted)">Carregando reposições...</p>
+        </div>
+      ) : reposicoes.length === 0 ? (
+        <div className="flex flex-col items-center justify-center py-20 gap-4">
+          <div className="w-16 h-16 rounded-2xl bg-(--surface-soft) flex items-center justify-center">
+            {isTeacher && slots.length === 0 ? <CalendarPlus size={28} className="text-(--muted)" /> : <Clock size={28} className="text-(--muted)" />}
+          </div>
+          <div className="text-center">
+            <p className="font-semibold text-(--heading)">
+              {isTeacher && slots.length === 0 ? 'Nenhum horário aberto' : isTeacher ? t('rescheduling.noScheduled') : t('rescheduling.noAvailable')}
+            </p>
+            <p className="text-sm text-(--muted) mt-1">
+              {isTeacher && slots.length === 0
+                ? 'Marque horários de reposição na aba de Disponibilidade.'
+                : !isTeacher ? 'Aguarde o professor liberar horários de reposição.' : ''}
             </p>
           </div>
         </div>
-      </Card>
-
-      {loading ? (
-        <div className="flex justify-center py-16">
-          <div className="w-6 h-6 rounded-full border-2 border-(--accent-500) border-t-transparent animate-spin" />
-        </div>
       ) : (
-        <>
-          {/* Professor: horarios disponiveis como botao compacto */}
-          {isTeacher && (
-            <section>
-              <h2 className="text-xs font-semibold uppercase tracking-widest text-(--muted) mb-3">
-                {t('rescheduling.slotsTitle')} ({slots.length})
-              </h2>
-              {slots.length === 0 ? (
-                <Card className="p-6 app-surface text-center">
-                  <p className="text-sm text-(--muted)">
-                    {t('rescheduling.noSlots')}
-                  </p>
-                </Card>
-              ) : (
-                <button
-                  type="button"
-                  onClick={() => setShowSlotsPicker(true)}
-                  className="w-full text-left"
-                >
-                  <Card className="p-4 app-surface flex items-center gap-4 hover:border-(--accent-400) transition-colors cursor-pointer group">
-                    <div className="w-10 h-10 rounded-xl bg-[color-mix(in_srgb,var(--accent-500)_12%,var(--surface))] flex items-center justify-center shrink-0">
-                      <CalendarPlus size={18} className="text-(--accent-600)" />
+        /* Layout duas colunas: sidebar de datas + lista principal */
+        <div className="flex gap-5 flex-col lg:flex-row items-start">
+
+          {/* Sidebar — navegação de datas */}
+          <div className="lg:w-60 shrink-0 sticky top-4">
+            <p className="text-xs font-semibold text-(--muted) uppercase tracking-wider mb-3 px-1">Datas</p>
+            <div className="space-y-1">
+              <motion.button
+                whileHover={{ x: 2 }}
+                onClick={() => setSelectedData(null)}
+                className={`w-full text-left flex items-center gap-3 px-3 py-2.5 rounded-xl border transition-all text-sm ${
+                  selectedData === null
+                    ? 'bg-(--surface-soft) border-(--accent-400) text-(--heading) font-semibold'
+                    : 'border-transparent text-(--muted) hover:text-(--heading) hover:bg-(--surface-soft)'
+                }`}
+              >
+                <span className="flex-1">Todas</span>
+                <span className="text-xs font-bold text-(--accent-600) bg-[color-mix(in_srgb,var(--accent-500)_12%,var(--surface))] px-2 py-0.5 rounded-full">
+                  {reposicoes.length}
+                </span>
+              </motion.button>
+
+              {datasOrdenadas.map(data => {
+                const d = new Date(`${data}T12:00:00`);
+                const label = formatDataLabel(data);
+                const count = reposicoesPorData[data].length;
+                const isSelected = selectedData === data;
+                return (
+                  <motion.button
+                    key={data}
+                    whileHover={{ x: 2 }}
+                    onClick={() => setSelectedData(isSelected ? null : data)}
+                    className={`w-full text-left flex items-center gap-3 px-3 py-2.5 rounded-xl border transition-all ${
+                      isSelected
+                        ? 'bg-(--surface-soft) border-(--accent-400)'
+                        : 'border-transparent hover:bg-(--surface-soft)'
+                    }`}
+                  >
+                    <div className={`w-9 h-9 rounded-lg flex flex-col items-center justify-center shrink-0 ${
+                      isSelected ? 'bg-(--accent-600)' : 'bg-[color-mix(in_srgb,var(--accent-500)_12%,var(--surface))]'
+                    }`}>
+                      <span className={`text-[9px] font-bold uppercase leading-none ${isSelected ? 'text-white/70' : 'text-(--muted)'}`}>
+                        {d.toLocaleDateString('pt-BR', { month: 'short' }).replace('.', '')}
+                      </span>
+                      <span className={`text-sm font-black leading-tight ${isSelected ? 'text-white' : 'text-(--accent-600)'}`}>
+                        {d.getDate()}
+                      </span>
                     </div>
                     <div className="flex-1 min-w-0">
-                      <p className="text-sm font-semibold text-(--heading)">
-                        {slots.length} {t('rescheduling.slotsCount')}
+                      <p className={`text-sm font-medium truncate capitalize ${isSelected ? 'text-(--heading)' : 'text-(--text)'}`}>
+                        {label}
                       </p>
-                      <p className="text-xs text-(--muted)">
-                        {t('rescheduling.click')}
-                      </p>
+                      <p className="text-[11px] text-(--muted)">{count} {count === 1 ? 'horário' : 'horários'}</p>
                     </div>
-                    <ChevronRight size={16} className="text-(--muted) group-hover:text-(--accent-600) transition-colors shrink-0" />
-                  </Card>
-                </button>
-              )}
-            </section>
-          )}
+                  </motion.button>
+                );
+              })}
+            </div>
+          </div>
 
-          {/* Reposicoes list */}
-          <section>
-            <h2 className="text-xs font-semibold uppercase tracking-widest text-(--muted) mb-3">
-              {isTeacher ? t('rescheduling.scheduledTitle') : t('rescheduling.availableTitle')}{' '}
-              ({reposicoes.length})
-            </h2>
-            {reposicoes.length === 0 ? (
-              <Card className="p-6 app-surface text-center">
-                <p className="text-sm text-(--muted)">
-                  {isTeacher
-                    ? t('rescheduling.noScheduled')
-                    : t('rescheduling.noAvailable')}
-                </p>
-              </Card>
-            ) : (
-              <div className="space-y-3">
-                <AnimatePresence>
-                  {reposicoes.map((r, i) => {
-                    const isEnrolled = !!currentAluno && r.alunos.some(a => a.id === currentAluno.id);
-                    return (
-                      <motion.div
-                        key={r.id}
-                        layout
-                        initial={{ opacity: 0, x: -12 }}
-                        animate={{ opacity: 1, x: 0 }}
-                        exit={{ opacity: 0, scale: 0.95 }}
-                        transition={{ delay: i * 0.04 }}
-                      >
-                        <div
-                          role="button"
-                          tabIndex={0}
-                          className="w-full text-left cursor-pointer"
-                          onClick={() => {
-                            if (!isTeacher && r.status === 'ABERTA') {
-                              const mins = minutesUntilStart(r.dataAula, r.horario);
-                              if (mins < 0) {
-                                toast(t('rescheduling.started'), 'warning');
-                              } else if (mins < 30) {
-                                toast(
-                                  t('rescheduling.closed30').replace('{n}', String(Math.ceil(mins))),
-                                  'warning',
-                                );
-                              }
-                            }
-                            setViewModal(r);
-                          }}
-                          onKeyDown={e => { if (e.key === 'Enter' || e.key === ' ') e.currentTarget.click(); }}
-                        >
-                        <Card
-                          className="p-4 app-surface cursor-pointer hover:border-(--accent-400) transition-colors group"
-                        >
-                          <div className="flex items-start gap-4">
-                            <div className="w-10 shrink-0 flex flex-col items-center pt-0.5">
-                              <span className="text-lg font-black text-(--accent-600) leading-none">
-                                {new Date(`${r.dataAula}T12:00:00`).getDate()}
-                              </span>
-                              <span className="text-[10px] text-(--muted) uppercase tracking-wide">
-                                {new Date(`${r.dataAula}T12:00:00`).toLocaleDateString('pt-BR', { month: 'short' })}
-                              </span>
-                            </div>
+          {/* Conteúdo principal — lista cronológica */}
+          <div className="flex-1 min-w-0 space-y-6">
+            <AnimatePresence mode="wait">
+              <motion.div
+                key={selectedData ?? 'all'}
+                initial={{ opacity: 0, x: 10 }}
+                animate={{ opacity: 1, x: 0 }}
+                exit={{ opacity: 0, x: -10 }}
+                transition={{ duration: 0.18 }}
+                className="space-y-6"
+              >
+                {datasVisiveis.map(data => (
+                  <div key={data}>
+                    {/* Separador de data */}
+                    <div className="flex items-center gap-3 mb-3">
+                      <span className="text-sm font-semibold text-(--heading) capitalize">{formatDataLabel(data)}</span>
+                      <div className="flex-1 h-px bg-(--border)" />
+                      <span className="text-xs text-(--muted)">
+                        {reposicoesPorData[data].length} {reposicoesPorData[data].length === 1 ? 'horário' : 'horários'}
+                      </span>
+                    </div>
 
-                            <div className="flex-1 min-w-0">
-                              <div className="flex items-center gap-2 flex-wrap">
-                                <p className="text-sm font-semibold text-(--heading)">
-                                  {DAY_LABELS[r.diaSemana] ?? r.diaSemana} � {r.horario}
-                                </p>
-                                <span className={`text-[10px] font-medium px-2 py-0.5 rounded-full ${STATUS_COLOR[r.status] ?? ''}`}>
-                                  {STATUS_LABEL[r.status] ?? r.status}
-                                </span>
-                              </div>
-                              {r.observacao && (
-                                <p className="text-xs text-(--muted) mt-0.5">{r.observacao}</p>
-                              )}
-                              <div className="flex items-center gap-2 mt-1.5 flex-wrap">
-                                <span className="text-xs text-(--muted) flex items-center gap-1">
-                                  <Users size={11} />
-                                  {r.alunos.length} {t('rescheduling.inscribed')}
-                                </span>
-                                {!isTeacher && isEnrolled && (
-                                  <span className="inline-flex items-center gap-1 text-[10px] font-medium text-emerald-600 bg-emerald-50 dark:bg-emerald-950/30 px-2 py-0.5 rounded-full">
-                                    <CheckCircle2 size={10} /> {t('rescheduling.enrolled')}
-                                  </span>
-                                )}
-                                {isTeacher && r.alunos.length > 0 && (
-                                  <div className="flex flex-wrap gap-1">
-                                    {r.alunos.map(a => (
-                                      <span
-                                        key={a.id}
-                                        className="text-[10px] bg-[color-mix(in_srgb,var(--accent-500)_10%,var(--surface))] text-(--text) border border-(--border) px-1.5 py-0.5 rounded-full"
-                                      >
-                                        {a.nome.split(' ')[0]}
-                                      </span>
-                                    ))}
-                                  </div>
-                                )}
-                              </div>
-                            </div>
-
-                            {isTeacher && (
-                              <button
-                                type="button"
-                                onClick={e => { e.stopPropagation(); handleDelete(r.id); }}
-                                disabled={deletingId === r.id}
-                                className="p-1.5 rounded-lg text-(--muted) hover:text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-950/30 transition-colors disabled:opacity-40 shrink-0 self-start"
-                                title={t('rescheduling.deleteTitle')}
+                    <div className="space-y-2">
+                      <AnimatePresence>
+                        {reposicoesPorData[data].map((r, i) => {
+                          const isEnrolled = !!currentAluno && r.alunos.some(a => a.id === currentAluno.id);
+                          const mins = minutesUntilStart(r.dataAula, r.horario);
+                          const isHappening = mins >= -60 && mins <= 0;
+                          return (
+                            <motion.div
+                              key={r.id}
+                              layout
+                              initial={{ opacity: 0, y: 8 }}
+                              animate={{ opacity: 1, y: 0 }}
+                              exit={{ opacity: 0, scale: 0.97 }}
+                              transition={{ delay: i * 0.04 }}
+                            >
+                              <div
+                                role="button"
+                                tabIndex={0}
+                                onClick={() => {
+                                  if (!isTeacher && r.status === 'ABERTA') {
+                                    if (mins < 0 && !isHappening) { toast(t('rescheduling.started'), 'warning'); }
+                                    else if (mins < 30 && mins > 0) { toast(t('rescheduling.closed30').replace('{n}', String(Math.ceil(mins))), 'warning'); }
+                                  }
+                                  setViewModal(r);
+                                }}
+                                onKeyDown={e => { if (e.key === 'Enter' || e.key === ' ') e.currentTarget.click(); }}
+                                className="block w-full text-left cursor-pointer"
                               >
-                                {deletingId === r.id ? (
-                                  <div className="w-4 h-4 rounded-full border-2 border-current border-t-transparent animate-spin" />
-                                ) : (
-                                  <Trash2 size={14} />
-                                )}
-                              </button>
-                            )}
-                          </div>
-                        </Card>
-                        </div>
-                      </motion.div>
-                    );
-                  })}
-                </AnimatePresence>
-              </div>
-            )}
-          </section>
-        </>
+                                <Card className={`p-4 app-surface cursor-pointer transition-all group ${
+                                  isHappening
+                                    ? 'border-emerald-400 dark:border-emerald-600 shadow-md shadow-emerald-500/10'
+                                    : 'hover:border-(--accent-400) hover:shadow-sm'
+                                }`}>
+                                  <div className="flex items-center gap-4">
+                                    {/* Horário */}
+                                    <div className={`shrink-0 w-16 text-center px-2 py-2 rounded-xl ${isHappening ? 'bg-emerald-500/15' : 'bg-(--surface-soft)'}`}>
+                                      <p className={`text-xl font-black leading-none ${isHappening ? 'text-emerald-600 dark:text-emerald-400' : 'text-(--accent-600)'}`}>
+                                        {r.horario.slice(0, 5)}
+                                      </p>
+                                      <p className="text-[9px] font-semibold uppercase tracking-wide text-(--muted) mt-0.5">
+                                        {DAY_LABELS[r.diaSemana] ?? r.diaSemana}
+                                      </p>
+                                    </div>
+
+                                    {/* Info */}
+                                    <div className="flex-1 min-w-0">
+                                      <div className="flex items-center gap-2 flex-wrap">
+                                        {isHappening && (
+                                          <span className="inline-flex items-center gap-1 text-[10px] font-bold text-emerald-600 bg-emerald-100 dark:bg-emerald-950/40 px-2 py-0.5 rounded-full">
+                                            <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
+                                            Acontecendo agora
+                                          </span>
+                                        )}
+                                        <span className={`text-[10px] font-medium px-2 py-0.5 rounded-full ${STATUS_COLOR[r.status] ?? ''}`}>
+                                          {STATUS_LABEL[r.status] ?? r.status}
+                                        </span>
+                                        {!isTeacher && isEnrolled && (
+                                          <span className="inline-flex items-center gap-1 text-[10px] font-medium text-emerald-600 bg-emerald-50 dark:bg-emerald-950/30 px-2 py-0.5 rounded-full">
+                                            <CheckCircle2 size={10} /> Inscrito
+                                          </span>
+                                        )}
+                                      </div>
+                                      {r.observacao && <p className="text-xs text-(--muted) mt-1 truncate">{r.observacao}</p>}
+                                      <div className="flex items-center gap-3 mt-1.5 flex-wrap">
+                                        <span className="text-xs text-(--muted) flex items-center gap-1">
+                                          <Users size={11} />
+                                          {r.alunos.length === 0 ? 'Sem inscritos' : `${r.alunos.length} inscrito${r.alunos.length !== 1 ? 's' : ''}`}
+                                        </span>
+                                        {isTeacher && r.alunos.length > 0 && (
+                                          <div className="flex flex-wrap gap-1">
+                                            {r.alunos.map(a => (
+                                              <span key={a.id} className="text-[10px] bg-[color-mix(in_srgb,var(--accent-500)_10%,var(--surface))] text-(--text) border border-(--border) px-1.5 py-0.5 rounded-full">
+                                                {a.nome.split(' ')[0]}
+                                              </span>
+                                            ))}
+                                          </div>
+                                        )}
+                                      </div>
+                                    </div>
+
+                                    {/* Ações */}
+                                    <div className="flex items-center gap-1 shrink-0">
+                                      {isTeacher && (
+                                        <button
+                                          type="button"
+                                          onClick={e => { e.stopPropagation(); handleDelete(r.id); }}
+                                          disabled={deletingId === r.id}
+                                          className="cursor-pointer p-2 rounded-lg text-(--muted) hover:text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-950/30 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+                                          title="Deletar reposição"
+                                        >
+                                          {deletingId === r.id
+                                            ? <div className="w-4 h-4 rounded-full border-2 border-current border-t-transparent animate-spin" />
+                                            : <Trash2 size={15} />}
+                                        </button>
+                                      )}
+                                      <ChevronRight size={15} className="text-(--muted) group-hover:text-(--accent-600) transition-colors" />
+                                    </div>
+                                  </div>
+                                </Card>
+                              </div>
+                            </motion.div>
+                          );
+                        })}
+                      </AnimatePresence>
+                    </div>
+                  </div>
+                ))}
+              </motion.div>
+            </AnimatePresence>
+          </div>
+        </div>
       )}
 
       {/* Slots picker modal */}

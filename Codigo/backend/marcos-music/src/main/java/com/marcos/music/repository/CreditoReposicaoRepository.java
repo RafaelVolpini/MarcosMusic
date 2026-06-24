@@ -69,4 +69,9 @@ public interface CreditoReposicaoRepository extends JpaRepository<CreditoReposic
      * Retorna crédito gerado por uma aula (se houver)
      */
     CreditoReposicao findByAulaId(Long aulaId);
+
+    /**
+     * Retorna todos os créditos vinculados a uma reposição
+     */
+    List<CreditoReposicao> findByReposicaoId(Long reposicaoId);
 }

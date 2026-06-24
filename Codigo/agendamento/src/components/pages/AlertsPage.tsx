@@ -13,6 +13,7 @@ import { formatTime, formatPhoneGlobal, phoneToWhatsApp, getNowInTimezone } from
 import { useAppSettings } from '../../context/AppSettingsContext';
 import { buscarAulas } from '../../services/aulaService';
 import { listarAlunos } from '../../services/alunoService';
+import { listarReposicoes, type ReposicaoDTO } from '../../services/reposicaoService';
 import { toLesson } from '../../adapters/aulaAdapter';
 
 // ─── tipos ────────────────────────────────────────────────────────────────────
@@ -113,6 +114,27 @@ function isFutureLesson(lesson: Lesson, nowDate: string, nowTime: string) {
   if (lesson.date > nowDate) return true;
   if (lesson.date === nowDate && lesson.startTime > nowTime) return true;
   return false;
+}
+
+function reposicaoToLessons(r: ReposicaoDTO): Lesson[] {
+  return r.alunos.map(a => ({
+    id: `repo-${r.id}-${a.id}`,
+    studentId: a.id,
+    studentName: a.nome,
+    studentPhone: '',
+    type: 'individual' as const,
+    instrument: 'Reposição',
+    color: '#0891b2',
+    notes: r.observacao ?? '',
+    date: r.dataAula,
+    startTime: r.horario,
+    endTime: r.horario,
+    status: 'rescheduled' as const,
+    attendanceConfirmed: false,
+    recorrente: false,
+    meetLink: undefined,
+    isOnline: false,
+  }));
 }
 
 // ─── StudentCombobox (com portal para evitar clip por overflow-hidden) ────────
@@ -454,9 +476,15 @@ export function LessonAlertsPage() {
     Promise.all([
       buscarAulas(`${fmt(today)}T00:00:00`, `${fmt(week)}T23:59:59`),
       listarAlunos(),
+      listarReposicoes(),
     ])
-      .then(([dtos, alunos]) => {
-        setLessons(dtos.map(toLesson));
+      .then(([dtos, alunos, repos]) => {
+        const todayISO = fmt(today);
+        const aulaLessons = dtos.map(toLesson);
+        const repoLessons = repos
+          .filter(r => r.dataAula >= todayISO && r.status === 'ABERTA' && r.alunos.length > 0)
+          .flatMap(reposicaoToLessons);
+        setLessons([...aulaLessons, ...repoLessons]);
         setStudents(alunos);
       })
       .catch(() => {})
