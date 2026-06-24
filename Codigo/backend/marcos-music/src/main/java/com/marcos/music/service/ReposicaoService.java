@@ -4,10 +4,12 @@ import com.marcos.music.dto.Reposicao.CriarReposicaoDTO;
 import com.marcos.music.dto.Reposicao.ReposicaoResponseDTO;
 import com.marcos.music.entity.Aluno;
 import com.marcos.music.entity.Aula;
+import com.marcos.music.entity.CreditoReposicao;
 import com.marcos.music.entity.Disponibilidade;
 import com.marcos.music.entity.Reposicao;
 import com.marcos.music.repository.AlunoRepository;
 import com.marcos.music.repository.Aula.AulaRepository;
+import com.marcos.music.repository.CreditoReposicaoRepository;
 import com.marcos.music.repository.DisponibilidadeRepository;
 import com.marcos.music.repository.ReposicaoRepository;
 import org.springframework.stereotype.Service;
@@ -25,18 +27,24 @@ public class ReposicaoService {
     private final AlunoRepository alunoRepository;
     private final AulaRepository aulaRepository;
     private final NotificacaoService notificacaoService;
+    private final CreditoReposicaoService creditoReposicaoService;
+    private final CreditoReposicaoRepository creditoReposicaoRepository;
 
     public ReposicaoService(
             ReposicaoRepository repository,
             DisponibilidadeRepository disponibilidadeRepository,
             AlunoRepository alunoRepository,
             AulaRepository aulaRepository,
-            NotificacaoService notificacaoService) {
+            NotificacaoService notificacaoService,
+            CreditoReposicaoService creditoReposicaoService,
+            CreditoReposicaoRepository creditoReposicaoRepository) {
         this.repository = repository;
         this.disponibilidadeRepository = disponibilidadeRepository;
         this.alunoRepository = alunoRepository;
         this.aulaRepository = aulaRepository;
         this.notificacaoService = notificacaoService;
+        this.creditoReposicaoService = creditoReposicaoService;
+        this.creditoReposicaoRepository = creditoReposicaoRepository;
     }
 
     public List<ReposicaoResponseDTO> listar() {
@@ -82,15 +90,28 @@ public class ReposicaoService {
 
         boolean jaAdicionado = r.getAlunos().stream().anyMatch(a -> a.getId().equals(alunoId));
         if (!jaAdicionado) {
-            int atual = aluno.getReposicoes() != null ? aluno.getReposicoes() : 0;
-            if (atual <= 0) {
+            // Verifica se aluno tem créditos disponíveis
+            int creditosDisponiveis = creditoReposicaoService.contarCreditosDisponiveis(alunoId);
+            if (creditosDisponiveis <= 0) {
                 throw new IllegalArgumentException("Créditos de reposição insuficientes");
             }
+
+            // Consome um crédito
+            CreditoReposicao creditoUsado = creditoReposicaoService.consumirCredito(alunoId, id);
+
             r.getAlunos().add(aluno);
-            aluno.setReposicoes(atual - 1);
-            alunoRepository.save(aluno);
+            repository.save(r);
+
             notificacaoService.reposicaoAgendada(alunoId, r.getId(), r.getDataAula(),
                     r.getDisponibilidade().getHorario());
+
+            // Notifica professor que aluno marcou reposição
+            notificacaoService.criarParaProfessor(
+                    "REPOSICAO_AGENDADA",
+                    "Nova reposição marcada",
+                    aluno.getNome() + " marcou reposição para " + r.getDataAula() + " às " + r.getDisponibilidade().getHorario(),
+                    r.getId()
+            );
         }
         return toDTO(repository.save(r));
     }
@@ -103,13 +124,21 @@ public class ReposicaoService {
         boolean eraInscrito = r.getAlunos().stream().anyMatch(a -> a.getId().equals(alunoId));
         r.getAlunos().removeIf(a -> a.getId().equals(alunoId));
 
-        // Devolve o crédito se o aluno estava inscrito e a reposição ainda não aconteceu
+        // Devolve o crédito se o aluno estava inscrito e a reposição ainda está ABERTA
         if (eraInscrito && "ABERTA".equals(r.getStatus())) {
-            alunoRepository.findById(alunoId).ifPresent(aluno -> {
-                int atual = aluno.getReposicoes() != null ? aluno.getReposicoes() : 0;
-                aluno.setReposicoes(atual + 1);
-                alunoRepository.save(aluno);
-            });
+            // Encontra o crédito USADO para esta reposição
+            CreditoReposicao creditoUsado = creditoReposicaoRepository
+                    .findByAlunoIdOrderByDataCriacaoDesc(alunoId)
+                    .stream()
+                    .filter(c -> c.getReposicao() != null && c.getReposicao().getId().equals(id))
+                    .filter(c -> CreditoReposicao.STATUS_USADO.equals(c.getStatus()))
+                    .findFirst()
+                    .orElse(null);
+
+            if (creditoUsado != null) {
+                creditoReposicaoService.devolverCredito(creditoUsado.getId());
+            }
+
             notificacaoService.reposicaoRemovida(alunoId, r.getId(), r.getDataAula(),
                     r.getDisponibilidade().getHorario());
         }

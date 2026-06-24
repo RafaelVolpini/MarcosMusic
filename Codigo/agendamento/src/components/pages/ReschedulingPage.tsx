@@ -20,7 +20,7 @@ import { AgendarReposicaoModal } from '../modals/AgendarReposicaoModal';
 import { useLanguage } from '../../context/LanguageContext';
 import {
   DAY_LABELS, STATUS_COLOR, STATUS_LABEL,
-  getThisWeek, thisWeekDate, normalizeName,
+  thisWeekDate, normalizeName,
 } from '../../utils/reposicaoHelpers';
 
 // --- Page ---
@@ -29,7 +29,7 @@ interface ReschedulingPageProps {
   sessionUser: AuthUser;
 }
 
-// Returns minutes until the reposição starts (negative if already started)
+// Returns minutes until the reposiï¿½ï¿½o starts (negative if already started)
 function minutesUntilStart(dataAula: string, horario: string): number {
   const start = new Date(`${dataAula}T${horario}:00`);
   return (start.getTime() - Date.now()) / 60_000;
@@ -69,18 +69,20 @@ export function ReschedulingPage({ sessionUser }: ReschedulingPageProps) {
         listarReposicoes(),
       ]);
       setAlunos(alunosList);
-      const { weekStart, weekEnd } = getThisWeek();
       const todayISO = new Date().toISOString().slice(0, 10);
       const nowMins = new Date().getHours() * 60 + new Date().getMinutes();
+
+      // Slots disponÃ­veis: qualquer slot de reposiÃ§Ã£o desta semana em diante
+      // que ainda nÃ£o tenha uma reposiÃ§Ã£o criada para aquela data
       setSlots(
         disp
           .filter(d => {
             if (!d.reposicao) return false;
             const date = thisWeekDate(d.diaSemana);
             if (!date) return false;
-            // Não mostra slots que já têm reposição criada para essa semana
+            // Oculta slot se jÃ¡ existe reposiÃ§Ã£o criada para esse dia+slot
             if (repos.some(r => r.disponibilidadeId === d.id && r.dataAula === date)) return false;
-            // Se é hoje, só mostra horários que ainda não passaram
+            // Se Ã© hoje, sÃ³ mostra horÃ¡rios que ainda nÃ£o passaram
             if (date === todayISO) {
               const [h, m] = d.horario.split(':').map(Number);
               return h * 60 + m > nowMins;
@@ -94,10 +96,15 @@ export function ReschedulingPage({ sessionUser }: ReschedulingPageProps) {
             return a.horario.localeCompare(b.horario);
           }),
       );
+
+      // ReposiÃ§Ãµes: todas a partir de hoje, em ordem cronolÃ³gica (data + horÃ¡rio)
       setReposicoes(
         repos
-          .filter(r => r.dataAula >= weekStart && r.dataAula <= weekEnd)
-          .sort((a, b) => a.dataAula.localeCompare(b.dataAula)),
+          .filter(r => r.dataAula >= todayISO)
+          .sort((a, b) => {
+            const cmp = a.dataAula.localeCompare(b.dataAula);
+            return cmp !== 0 ? cmp : a.horario.localeCompare(b.horario);
+          }),
       );
     } catch {
     } finally {
@@ -108,8 +115,13 @@ export function ReschedulingPage({ sessionUser }: ReschedulingPageProps) {
   useEffect(() => { load(); }, [load]);
 
   const handleCreated = (r: ReposicaoDTO) => {
-    setReposicoes(prev => [...prev, r].sort((a, b) => a.dataAula.localeCompare(b.dataAula)));
-    // Remove o slot da lista de disponíveis, já que a reposição foi criada para ele
+    setReposicoes(prev =>
+      [...prev, r].sort((a, b) => {
+        const cmp = a.dataAula.localeCompare(b.dataAula);
+        return cmp !== 0 ? cmp : a.horario.localeCompare(b.horario);
+      }),
+    );
+    // Remove o slot da lista de disponï¿½veis, jï¿½ que a reposiï¿½ï¿½o foi criada para ele
     setSlots(prev => prev.filter(s => !(s.id === r.disponibilidadeId && thisWeekDate(s.diaSemana) === r.dataAula)));
     setAgendarSlot(null);
     toast(t('rescheduling.created'), 'success');
@@ -295,7 +307,7 @@ export function ReschedulingPage({ sessionUser }: ReschedulingPageProps) {
                             <div className="flex-1 min-w-0">
                               <div className="flex items-center gap-2 flex-wrap">
                                 <p className="text-sm font-semibold text-(--heading)">
-                                  {DAY_LABELS[r.diaSemana] ?? r.diaSemana} · {r.horario}
+                                  {DAY_LABELS[r.diaSemana] ?? r.diaSemana} ï¿½ {r.horario}
                                 </p>
                                 <span className={`text-[10px] font-medium px-2 py-0.5 rounded-full ${STATUS_COLOR[r.status] ?? ''}`}>
                                   {STATUS_LABEL[r.status] ?? r.status}
@@ -475,7 +487,7 @@ function SlotsPickerModal({ slots, onClose, onSelect }: SlotsPickerModalProps) {
                   </div>
                   <div className="flex-1 min-w-0">
                     <p className="text-sm font-semibold text-(--heading)">
-                       {DAY_LABELS[slot.diaSemana] ?? slot.diaSemana} · {slot.horario}
+                       {DAY_LABELS[slot.diaSemana] ?? slot.diaSemana} ï¿½ {slot.horario}
                     </p>
                     <p className="text-xs text-(--muted)">{dateLabel}</p>
                   </div>

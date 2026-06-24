@@ -13,8 +13,8 @@ public interface ReposicaoRepository extends JpaRepository<Reposicao, Long> {
 
     @Query("SELECT DISTINCT r FROM Reposicao r " +
            "LEFT JOIN FETCH r.alunos " +
-           "LEFT JOIN FETCH r.disponibilidade " +
-           "ORDER BY r.dataAula ASC")
+           "LEFT JOIN FETCH r.disponibilidade d " +
+           "ORDER BY r.dataAula ASC, d.horario ASC")
     List<Reposicao> findAllWithAlunos();
 
     @Query("SELECT r FROM Reposicao r " +

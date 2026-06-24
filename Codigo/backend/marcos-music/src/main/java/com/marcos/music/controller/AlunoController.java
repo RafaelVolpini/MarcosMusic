@@ -49,6 +49,16 @@ public class AlunoController {
         return service.swapStatus(id);
     }
 
+    @PostMapping("/dev/reset-termos/{alunoId}")
+    public ResponseEntity<?> resetTermos(@PathVariable UUID alunoId) {
+        try {
+            Aluno aluno = service.resetarTermos(alunoId);
+            return ResponseEntity.ok("✅ Termos resetados para: " + aluno.getNome());
+        } catch (Exception e) {
+            return ResponseEntity.status(404).body("❌ Erro: " + e.getMessage());
+        }
+    }
+
     @PostMapping("validar-horario")
     public Boolean validarHorario(@RequestBody HorarioValidatorDTO dto){
         return aService.validarHorarioSemana(dto);

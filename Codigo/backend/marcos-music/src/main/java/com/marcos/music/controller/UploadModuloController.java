@@ -2,6 +2,7 @@ package com.marcos.music.controller;
 
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -9,6 +10,8 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.marcos.music.dto.UploadModulo.ModuloDTO;
 import com.marcos.music.dto.UploadModulo.UploadModuloDTO;
 import com.marcos.music.service.UploadModuloService;
+
+import java.util.List;
 
 
 @RestController
@@ -48,6 +51,24 @@ public class UploadModuloController {
         uploadModuloService.upload(file, dto);
     }
 
+    @GetMapping("/modulos")
+    public ResponseEntity<List<ModuloDTO>> listarModulos() {
+        List<ModuloDTO> modulos = uploadModuloService.listarModulos();
+        return ResponseEntity.ok(modulos);
+    }
+
+    @GetMapping("/modulo/{id}")
+    public ResponseEntity<ModuloDTO> obterModulo(@PathVariable Long id) {
+        ModuloDTO modulo = uploadModuloService.obterModulo(id);
+        return ResponseEntity.ok(modulo);
+    }
+
+    @DeleteMapping("/modulo/{id}")
+    public ResponseEntity<Void> deletarModulo(@PathVariable Long id) {
+        uploadModuloService.deletarModulo(id);
+        return ResponseEntity.noContent().build();
+    }
+
     @PutMapping(
             value = "/{id}",
             consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
@@ -57,5 +78,11 @@ public class UploadModuloController {
             @RequestPart("file") MultipartFile file) throws Exception {
 
         uploadModuloService.atualizarUpload(id, file);
+    }
+
+    @DeleteMapping("/{id}")
+    public ResponseEntity<Void> deletarUpload(@PathVariable Long id) {
+        uploadModuloService.deletarUpload(id);
+        return ResponseEntity.noContent().build();
     }
 }

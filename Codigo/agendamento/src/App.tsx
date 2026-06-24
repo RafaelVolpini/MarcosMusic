@@ -93,6 +93,15 @@ function App() {
     }
   };
 
+  const loadAlunos = async () => {
+    try {
+      const data = await listarAlunos();
+      setAlunos(data);
+    } catch {
+      // fallback: mantém vazio
+    }
+  };
+
   // Tenta restaurar a sessão ao carregar a página
   useEffect(() => {
     const savedUser = getUser();
@@ -101,6 +110,7 @@ function App() {
       setAppState('app');
       loadAvailability();
       loadLessons();
+      loadAlunos();
       // Se for professor, já aceitou contrato. Se for aluno, verifica o campo termos.
       if (savedUser.role === 'teacher' || savedUser.termos === true) {
         setContractAccepted(true);
@@ -149,6 +159,7 @@ function App() {
     setAppState('app');
     loadAvailability();
     loadLessons();
+    loadAlunos();
     // Teachers (ADMIN) never need to accept student contract
     if (user.role === 'teacher') {
       setContractAccepted(true);
@@ -255,10 +266,6 @@ function App() {
     return () => window.clearInterval(timer);
   }, [visibleLessons]);
 
-  useEffect(() => {
-    listarAlunos().then(setAlunos).catch(() => {});
-  }, []);
-
   const renderPage = () => {
     switch (safeActivePage) {
       case 'dashboard':
@@ -287,7 +294,7 @@ function App() {
           <StudentsPage
             students={alunos}
             currentUser={sessionUser ?? undefined}
-            onReload={() => listarAlunos().then(setAlunos).catch(() => {})}
+            onReload={loadAlunos}
           />
         );
       case 'rooms':
@@ -302,7 +309,7 @@ function App() {
       case 'rescheduling':
         return <ReschedulingPage sessionUser={sessionUser!} />;
       case 'video':
-        return <VideoPage videos={mockVideos} />;
+        return <VideoPage user={sessionUser} />;
       case 'lessonAlerts':
         return <LessonAlertsPage />;
       case 'settings':

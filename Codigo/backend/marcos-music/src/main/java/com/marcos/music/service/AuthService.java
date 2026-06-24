@@ -10,8 +10,10 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.UUID;
+import java.time.YearMonth;
 
 @Service
 public class AuthService {
@@ -21,15 +23,18 @@ public class AuthService {
     private final TermsHistoryRepository loginHistoryRepository;
     private final PasswordEncoder encoder;
     private final JwtService jwtService;
+    private final NotificacaoService notificacaoService;
 
     public AuthService(UsuarioRepository repository, PasswordEncoder encoder,
                        JwtService jwtService, AlunoRepository alunoRepository,
-                       TermsHistoryRepository loginHistoryRepository) {
+                       TermsHistoryRepository loginHistoryRepository,
+                       NotificacaoService notificacaoService) {
         this.repository = repository;
         this.encoder = encoder;
         this.jwtService = jwtService;
         this.alunoRepository = alunoRepository;
         this.loginHistoryRepository = loginHistoryRepository;
+        this.notificacaoService = notificacaoService;
     }
 
     public String register(String email, String password, Role role, String nome, String telefone) {
@@ -71,10 +76,37 @@ public class AuthService {
         String telefone = aluno != null ? aluno.getTelefone() : null;
 
         LocalDateTime agora = LocalDateTime.now();
+        LocalDate hoje = LocalDate.now();
 
         // Registra o login na tabela login_history
         TermsHistory history = new TermsHistory(user, agora, termos != null && termos);
         loginHistoryRepository.save(history);
+
+        // Notificação de mensalidade: envia apenas uma vez no primeiro login do mês
+        if (aluno != null && aluno.getMensalidadeNotificacao() == null) {
+            // Primeira vez que aluno loga neste sistema
+            notificacaoService.criarParaAluno(user.getId(),
+                    "PAGAMENTO_MENSALIDADE",
+                    "Lembrete: pague sua mensalidade",
+                    "Olá " + nome + "! Lembre-se de pagar sua mensalidade no início de cada mês para continuar suas aulas.",
+                    null);
+            aluno.setMensalidadeNotificacao(hoje);
+            alunoRepository.save(aluno);
+        } else if (aluno != null && aluno.getMensalidadeNotificacao() != null) {
+            // Verifica se já passou para um novo mês
+            YearMonth ultimoMes = YearMonth.from(aluno.getMensalidadeNotificacao());
+            YearMonth mesAtual = YearMonth.from(hoje);
+            if (!ultimoMes.equals(mesAtual)) {
+                // Novo mês: envia notificação novamente
+                notificacaoService.criarParaAluno(user.getId(),
+                        "PAGAMENTO_MENSALIDADE",
+                        "Lembrete: pague sua mensalidade",
+                        "Olá " + nome + "! Lembre-se de pagar sua mensalidade no início de cada mês para continuar suas aulas.",
+                        null);
+                aluno.setMensalidadeNotificacao(hoje);
+                alunoRepository.save(aluno);
+            }
+        }
 
         LoginResponse resp = new LoginResponse(jwt, termos, agora);
         resp.setNome(nome);

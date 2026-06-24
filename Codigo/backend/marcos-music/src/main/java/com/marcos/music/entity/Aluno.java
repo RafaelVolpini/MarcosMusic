@@ -6,6 +6,7 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 
+import java.time.LocalDate;
 import java.util.List;
 import java.util.UUID;
 
@@ -48,6 +49,8 @@ public class Aluno {
     @Column(name = "apelido", length = 100)
     private String apelido;
 
+    @Column(name = "mensalidade_notificacao")
+    private LocalDate mensalidadeNotificacao;
 
     @OneToMany(mappedBy = "aluno", cascade = CascadeType.ALL, orphanRemoval = true)
     @JsonIgnore

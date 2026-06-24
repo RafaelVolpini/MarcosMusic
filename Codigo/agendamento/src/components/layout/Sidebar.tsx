@@ -4,11 +4,12 @@ import {
   Users,
   CalendarClock,
   RefreshCw,
-  Music,
+  PlayCircle,
   MessageCircle,
   Settings,
   ChevronLeft,
   LayoutDashboard,
+  Music2,
 } from 'lucide-react';
 import type { ReactNode } from 'react';
 import type { Page } from '../../types';
@@ -32,7 +33,7 @@ function getNavItems(t: (k: string) => string): NavItem[] {
     { id: 'agenda',       label: t('nav.agenda'),       icon: <CalendarDays size={20} />,    color: 'var(--accent-500)', roles: ['teacher', 'student'] },
     { id: 'rooms',        label: t('nav.rooms'),        icon: <CalendarClock size={20} />,   color: 'var(--accent-500)', roles: ['teacher'] },
     { id: 'rescheduling', label: t('nav.rescheduling'), icon: <RefreshCw size={20} />,       color: 'var(--accent-500)', roles: ['teacher', 'student'] },
-    { id: 'video',        label: t('nav.video'),        icon: <Music size={20} />,           color: 'var(--accent-500)', roles: ['teacher', 'student'] },
+    { id: 'video',        label: t('nav.video'),        icon: <PlayCircle size={20} />,      color: 'var(--accent-500)', roles: ['teacher', 'student'] },
     { id: 'lessonAlerts', label: t('nav.lessonAlerts'), icon: <MessageCircle size={20} />,   color: 'var(--accent-500)', roles: ['teacher'] },
     { id: 'students',     label: t('nav.students'),     icon: <Users size={20} />,           color: 'var(--accent-500)', roles: ['teacher'] },
     { id: 'settings',     label: t('nav.settings'),     icon: <Settings size={20} />,        color: 'var(--accent-500)', roles: ['teacher', 'student'] },
@@ -129,7 +130,7 @@ export function Sidebar({ collapsed, onToggle, activePage, onNavigate, user }: S
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-1.5">
                     <p className="text-sm font-medium text-(--heading) truncate">{user.name || 'Usuario'}</p>
-                    <Music size={11} style={{ color: 'var(--accent-600)' }} className="shrink-0" />
+                    <Music2 size={11} style={{ color: 'var(--accent-600)' }} className="shrink-0" />
                   </div>
                   <p className="text-xs text-(--muted) truncate">{user.role === 'teacher' ? 'Professor' : 'Aluno'}</p>
                 </div>

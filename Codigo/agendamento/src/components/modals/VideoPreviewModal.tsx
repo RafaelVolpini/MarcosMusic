@@ -1,16 +1,14 @@
 import { AnimatePresence, motion } from 'framer-motion';
 import { X } from 'lucide-react';
-import type { VideoRecording } from '../../types';
+import type { UploadModuloDTO } from '../../services/moduloService';
 
 export interface VideoPreviewModalProps {
-  activeVideo: string | null;
-  videos: VideoRecording[];
+  video: UploadModuloDTO | null;
   onClose: () => void;
 }
 
-export function VideoPreviewModal({ activeVideo, videos, onClose }: VideoPreviewModalProps) {
-  const current = videos.find(v => v.id === activeVideo);
-  const url = current?.url ?? '';
+export function VideoPreviewModal({ video, onClose }: VideoPreviewModalProps) {
+  const url = video?.url ?? '';
   const isYouTube = /(?:youtube\.com|youtu\.be)/i.test(url);
 
   const getYouTubeEmbed = (rawUrl: string) => {
@@ -25,7 +23,7 @@ export function VideoPreviewModal({ activeVideo, videos, onClose }: VideoPreview
 
   return (
     <AnimatePresence>
-      {activeVideo && (
+      {video && (
         <>
           <motion.div
             initial={{ opacity: 0 }}
@@ -42,33 +40,28 @@ export function VideoPreviewModal({ activeVideo, videos, onClose }: VideoPreview
           >
             <div className="bg-black rounded-2xl overflow-hidden w-full max-w-3xl pointer-events-auto">
               <div className="flex items-center justify-between px-4 py-3 bg-gray-900">
-                <p className="text-sm text-white font-medium">{current?.title}</p>
+                <p className="text-sm text-white font-medium">{video.nome}</p>
                 <button onClick={onClose} className="text-gray-400 hover:text-white">
                   <X size={18} />
                 </button>
               </div>
 
               <div className="aspect-video bg-black flex items-center justify-center">
-                {current ? (
-                  isYouTube && embedUrl ? (
-                    <iframe
-                      className="w-full h-full"
-                      src={embedUrl}
-                      title={current.title}
-                      allow="autoplay; encrypted-media; picture-in-picture"
-                      allowFullScreen
-                    />
-                  ) : (
-                    <video
-                      className="w-full h-full"
-                      src={url}
-                      controls
-                      poster={current.thumbnailUrl}
-                      playsInline
-                    />
-                  )
+                {isYouTube && embedUrl ? (
+                  <iframe
+                    className="w-full h-full"
+                    src={embedUrl}
+                    title={video.nome}
+                    allow="autoplay; encrypted-media; picture-in-picture"
+                    allowFullScreen
+                  />
                 ) : (
-                  <div className="text-center text-gray-400">Video nao encontrado.</div>
+                  <video
+                    className="w-full h-full"
+                    src={url}
+                    controls
+                    playsInline
+                  />
                 )}
               </div>
             </div>

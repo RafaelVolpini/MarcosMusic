@@ -38,6 +38,7 @@ public class AulaService {
     private final ReposicaoRepository reposicaoRepository;
     private final NotificacaoService notificacaoService;
     private final GoogleCalendarService googleCalendarService;
+    private final CreditoReposicaoService creditoReposicaoService;
 
 
     public AulaService(
@@ -49,7 +50,8 @@ public class AulaService {
         AlunoRepository alunoRepository,
         ReposicaoRepository reposicaoRepository,
         NotificacaoService notificacaoService,
-        @Lazy GoogleCalendarService googleCalendarService
+        @Lazy GoogleCalendarService googleCalendarService,
+        CreditoReposicaoService creditoReposicaoService
     ){
         this.repository = repository;
         this.aulaAlunoRepository = aulaAlunoRepository;
@@ -60,6 +62,7 @@ public class AulaService {
         this.reposicaoRepository = reposicaoRepository;
         this.notificacaoService = notificacaoService;
         this.googleCalendarService = googleCalendarService;
+        this.creditoReposicaoService = creditoReposicaoService;
     }
 
     public Aula salvar(Aula a) throws RuntimeException{
@@ -192,22 +195,39 @@ public class AulaService {
                     .orElseThrow(() -> new RuntimeException("Aula não encontrado"));
 
             LocalDateTime agora = LocalDateTime.now();
+            LocalDateTime inicioAula = a.getDataInicio();
 
-            boolean dentroDaJanela = 
-                    !agora.isBefore(a.getDataInicio().minusHours(1)) &&
-                    !agora.isAfter(a.getDataInicio());
+            // Validação: até 23:00 do dia anterior
+            LocalDateTime dataLimiteCancelamento = inicioAula.minusDays(1)
+                    .withHour(23).withMinute(0).withSecond(0);
 
-            if(dentroDaJanela){
-                throw  new RuntimeException("Você não pode cancelar a aula até 1h antes");
+            if (agora.isAfter(dataLimiteCancelamento)) {
+                throw new RuntimeException("Você não pode cancelar a aula após 23:00 do dia anterior. " +
+                        "Limite: " + dataLimiteCancelamento.format(
+                                java.time.format.DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm")));
             }
 
             a.setFlagCancelada(true);
+            a.setDataSolicitacaoCancelamento(agora);
 
-            alunoService.adicionarReposicao(a.getAluno());
+            // Tenta gerar crédito (só gera se dentro do prazo)
+            boolean creditoGerado = creditoReposicaoService.gerarCreditoSeCancelamentoValido(a, agora);
 
             repository.save(a);
             logAula(a, "CANCELADO");
-            notificacaoService.alunoCancelou(a.getAluno().getNome(), a.getId(), a.getDataInicio());
+
+            if (creditoGerado) {
+                notificacaoService.alunoCancelou(a.getAluno().getNome(), a.getId(), a.getDataInicio());
+            } else {
+                notificacaoService.criarParaAluno(
+                        a.getAluno().getId(),
+                        "CANCELAMENTO_FORA_PRAZO",
+                        "Cancelamento fora do prazo",
+                        "Você cancelou a aula, mas fora do prazo (limite: até 23:00 do dia anterior). " +
+                                "Você não ganhou crédito de reposição.",
+                        a.getId()
+                );
+            }
 
             return a;
         } catch (RuntimeException e){

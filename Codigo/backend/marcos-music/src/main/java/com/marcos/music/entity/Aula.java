@@ -50,6 +50,12 @@ public class Aula {
     @Column(name = "google_event_id", length = 255)
     private String googleEventId;
 
+    @Column(name = "data_solicitacao_cancelamento")
+    private LocalDateTime dataSolicitacaoCancelamento;
+
+    @Column(name = "cancelamento_gera_credito")
+    private Boolean cancelamentoGeraCredito = false;
+
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "id_aluno", nullable = false)
     private Aluno aluno;

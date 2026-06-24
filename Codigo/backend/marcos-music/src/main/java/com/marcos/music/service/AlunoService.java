@@ -143,6 +143,14 @@ public class AlunoService {
         return repository.save(aluno);
     }
 
+    @Transactional
+    public Aluno resetarTermos(UUID alunoId) {
+        Aluno aluno = repository.findById(alunoId)
+                .orElseThrow(() -> new RuntimeException("Aluno não encontrado"));
+        aluno.setTermos(false);
+        return repository.save(aluno);
+    }
+
     public boolean jaAceitouTermos(UUID userId) {
         return repository.findById(userId)
                 .map(Aluno::getTermos)

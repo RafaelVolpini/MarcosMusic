@@ -19,6 +19,7 @@ import { useAppSettings } from '../../context/AppSettingsContext';
 import type { AuthUser } from '../../lib/auth';
 import { useToast } from '../ui/Toast';
 import { useLanguage } from '../../context/LanguageContext';
+import { SaldoCreditosCard } from '../creditos/SaldoCreditosCard';
 
 const TIMEZONES: { label: string; value: string }[] = [
   { label: 'America/Sao_Paulo UTC-3 (Brasília, SP, RJ)', value: 'America/Sao_Paulo' },
@@ -472,6 +473,13 @@ export function SettingsPage({ user, onProfileUpdate, initialSection }: Settings
                     {profileLoading ? t('profileSetup.saving') : t('profileSetup.save')}
                   </Button>
                 </form>
+
+                {/* Créditos de Reposição */}
+                {user.role === 'student' && user.id && (
+                  <div className="mt-6 pt-6 border-t border-(--border)">
+                    <SaldoCreditosCard alunoId={user.id} isTeacher={false} />
+                  </div>
+                )}
               </Card>
             )}
 
