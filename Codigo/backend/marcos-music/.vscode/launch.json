@@ -1,0 +1,14 @@
+{
+    "configurations": [
+        {
+            "type": "java",
+            "name": "Spring Boot-MarcosMusicApplication<marcos-music>",
+            "request": "launch",
+            "cwd": "${workspaceFolder}",
+            "mainClass": "com.marcos.music.MarcosMusicApplication",
+            "projectName": "marcos-music",
+            "args": "",
+            "envFile": "${workspaceFolder}/.env"
+        }
+    ]
+}

@@ -1,0 +1,177 @@
+@startuml
+
+!define ABSTRACT abstract
+
+enum Role {
+    USER
+    ADMIN
+}
+
+class Usuario {
+    - id: UUID 
+    - email: String 
+    - password: String 
+    - role: Role
+    ---
+    + getId(): UUID
+    + getEmail(): String
+    + getPassword(): String
+    + getRole(): Role
+}
+
+class TermsHistory {
+    - id: UUID 
+    - timestamp: LocalDateTime 
+    - termosAceito: Boolean 
+    - usuarioId: UUID 
+}
+
+class Aluno {
+    - id: UUID 
+    - nome: String 
+    - telefone: String
+    - status: Boolean
+    - reposicoes: Integer
+    - termos: Boolean
+    ---
+    + getNome(): String
+    + getTelefone(): String
+    + getStatus(): Boolean
+    + getReposicoes(): Integer
+    + getTermos(): Boolean
+}
+
+class Aula {
+    - id: Long 
+    - dataInicio: LocalDateTime 
+    - dataFim: LocalDateTime 
+    - idAluno: UUID 
+    - flagCancelada: Boolean
+    - presencaConfirmada: Boolean
+    - recorrente: Boolean
+    - isReposicao: Boolean
+    - flagRealizada: Boolean
+    ---
+    + getId(): Long
+    + getDataInicio(): LocalDateTime
+    + getDataFim(): LocalDateTime
+    + isCancelada(): Boolean
+    + isPresencaConfirmada(): Boolean
+}
+class AulaAluno {
+    - id: Long 
+    - dia: Integer 
+    - horarioInicio: LocalTime 
+    - horarioFim: LocalTime 
+    - idAluno: UUID 
+    - dataRegistro: LocalDateTime
+    - acao: String
+    - idAula: Long 
+    ---
+    + getId(): Long
+    + getDia(): Integer
+    + getHorarioInicio(): LocalTime
+    + getHorarioFim(): LocalTime
+}
+
+class Disponibilidade {
+    - id : Long 
+    - diaSemana: String
+    - horario: String
+    - disponivel: Boolean
+    - reposicao: Boolean
+}
+class Reposicao {
+    - id: Long 
+    - status: String 
+    - disponibilidade: Disponibilidade
+    - aulaId: Aula
+    - observação: String
+    - dataAula: LocalDate
+
+    --
+    + getId(): Long 
+    + getDataAula(): LocalDate
+    + getStatus(): String
+    + getObservação(): String 
+}
+class Chat{
+    - id: Long 
+    - criadoEm: LocalDateTime
+    ---
+}
+
+class ChatMensagem{
+    - id: Long 
+    - remetente: String
+    - remetenteId: UUID
+    - conteudo: String
+    - tipo: String
+    - lida: Boolean
+    - criadaEm: LocalDateTime
+}
+
+class Notificacao {
+    - id: Long 
+    - destinatario: String
+    - tipo: String
+    - titulo: String
+    - mensagem: String
+    - lida: Boolean
+    - criadaEm: LocalDateTime
+    - refId: Long
+}
+
+class Modulo {
+    - id: Long 
+    - nome: String 
+}
+
+class UploadModulo {
+    - id: Long 
+    - nomeArquivo: String 
+    - url: String 
+}
+
+
+' Herança
+Usuario <|-- Aluno  
+' Aluno herda os atributos básicos de Usuario
+
+Usuario "1" *-- "0..*" TermsHistory : termos  
+' Um Usuario compõe varios registros de aceite
+Role -- Usuario : define papel 
+ ' Usuario tem um Role (papel/perfil)
+
+Aluno "1" o-- "0..*" Aula : agendadas  
+' Um Aluno pode ter varias Aulas agendadas
+Aluno "1" *-- "0..*" AulaAluno : horários recorrentes  
+' Registros de horario pertencem ao Aluno
+Aula "0..1" o-- "0..*" AulaAluno : log  
+' Uma Aula pode ter varios logs (opcional)
+
+Reposicao "0..*" o-- "1" Disponibilidade : disponibilidade  
+' Cada Reposicao usa 1 Disponibilidade
+Reposicao "0..*" -- "0..1" Aula : aula  
+' Reposicao pode referenciar uma Aula (opcional)
+Reposicao "0..*" -- "0..*" Aluno : alunos  
+' Relacao muitos-para-muitos
+
+Chat "1" o-- "0..*" ChatMensagem  
+' Chat agrega varias mensagens
+Aluno "1" o-- "0..*" Chat  
+' Aluno pode ter varios chats
+
+Notificacao "0..*" --> "0..1" Aula  
+' Notificacao pode apontar uma Aula
+Notificacao "0..*" --> "0..1" Reposicao  
+' Notificacao pode apontar uma Reposicao
+Notificacao "0..*" --> "0..1" Chat  
+' Notificacao pode apontar um Chat
+Usuario "1" <-- "0..*" Notificacao : destinatario  
+' Usuario recebe varias notificacoes
+Modulo "1" o-- "0..*" UploadModulo : uploads
+' Usuario pode enviar varios uploads de modulos
+Usuario "1" -- "0..*" UploadModulo : envia
+
+@enduml

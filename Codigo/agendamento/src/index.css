@@ -1,0 +1,165 @@
+@import "tailwindcss";
+
+@custom-variant dark (&:where([data-theme=dark], [data-theme=dark] *));
+
+@theme {
+  /* Vibrant primary - Electric Indigo */
+  --color-primary-50: #eef2ff;
+  --color-primary-100: #e0e7ff;
+  --color-primary-200: #c7d2fe;
+  --color-primary-300: #a5b4fc;
+  --color-primary-400: #818cf8;
+  --color-primary-500: #6366f1;
+  --color-primary-600: #4f46e5;
+  --color-primary-700: #4338ca;
+  --color-primary-800: #3730a3;
+  --color-primary-900: #312e81;
+  
+  /* Accent Teal */
+  --color-accent-50: #f0fdfa;
+  --color-accent-100: #ccfbf1;
+  --color-accent-200: #99f6e4;
+  --color-accent-300: #5eead4;
+  --color-accent-400: #2dd4bf;
+  --color-accent-500: #14b8a6;
+  --color-accent-600: #0d9488;
+  --color-accent-700: #0f766e;
+  
+  /* Coral */
+  --color-coral-400: #fb7185;
+  --color-coral-500: #f43f5e;
+  --color-coral-600: #e11d48;
+  
+  /* Amber */
+  --color-amber-400: #fbbf24;
+  --color-amber-500: #f59e0b;
+  --color-amber-600: #d97706;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+:root {
+  --bg: #e8eaf3;
+  --text: #0f172a;
+  --surface: #f4f5fb;
+  --surface-soft: #dfe2ef;
+  --border: #c5cce6;
+  --muted: #64748b;
+  --heading: #0f172a;
+  --hover-bg: #d8dcee;
+  --input-bg: #f4f5fb;
+  --input-border: #c5cce6;
+  --input-text: #1e293b;
+  --dropdown-bg: #f4f5fb;
+  --dropdown-border: #d8dcee;
+  --radius: 16px;
+  --page-padding: 24px;
+  --accent-50: #eef2ff;
+  --accent-100: #e0e7ff;
+  --accent-500: #6366f1;
+  --accent-600: #4f46e5;
+  --accent-700: #4338ca;
+  --accent-gradient-from: #6366f1;
+  --accent-gradient-to: #9333ea;
+  /* Icon bg tints auto-adapt to accent palette + surface color */
+  --accent-icon-bg: color-mix(in srgb, var(--accent-500) 12%, var(--surface));
+  --accent-icon-bg-active: color-mix(in srgb, var(--accent-500) 20%, var(--surface));
+  --accent-icon-fg: var(--accent-600);
+}
+
+:root[data-theme='dark'] {
+  --bg: #020617;
+  --text: #e2e8f0;
+  --surface: #0f172a;
+  --surface-soft: #111827;
+  --border: #1f2937;
+  --muted: #94a3b8;
+  --heading: #f1f5f9;
+  --hover-bg: #1e293b;
+  --input-bg: #1e293b;
+  --input-border: #334155;
+  --input-text: #e2e8f0;
+  --dropdown-bg: #1e293b;
+  --dropdown-border: #334155;
+}
+
+:root[data-density='compact'] {
+  --page-padding: 16px;
+}
+
+:root[data-radius='md'] {
+  --radius: 12px;
+}
+
+:root[data-radius='lg'] {
+  --radius: 16px;
+}
+
+:root[data-radius='xl'] {
+  --radius: 22px;
+}
+
+body {
+  margin: 0;
+  padding: 0;
+  background-color: var(--bg);
+  color: var(--text);
+  font-family: Inter, ui-sans-serif, system-ui, sans-serif;
+  -webkit-font-smoothing: antialiased;
+}
+
+#root {
+  width: 100%;
+  height: 100vh;
+}
+
+/* App shell (authenticated area) keeps overflow locked to enable the sidebar layout */
+.app-shell-locked {
+  height: 100vh;
+  overflow: hidden;
+}
+
+::-webkit-scrollbar {
+  width: 5px;
+  height: 5px;
+}
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 9999px; }
+::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
+
+.app-shell {
+  background-color: var(--bg);
+  color: var(--text);
+}
+
+.app-surface {
+  background-color: var(--surface);
+  border-color: var(--border);
+  border-radius: var(--radius);
+}
+
+.app-soft {
+  background-color: var(--surface-soft);
+}
+
+:root[data-surface='glass'] .app-surface {
+  background-color: color-mix(in srgb, var(--surface) 82%, transparent);
+  backdrop-filter: blur(14px);
+}
+
+.page-padding {
+  padding: var(--page-padding);
+}
+
+/* Calendar picker icon primary indigo color */
+input[type="date"]::-webkit-calendar-picker-indicator {
+  cursor: pointer;
+  opacity: 1;
+  filter: invert(37%) sepia(82%) saturate(703%) hue-rotate(220deg) brightness(105%) contrast(93%);
+}
+
+:root[data-theme='dark'] input[type="date"]::-webkit-calendar-picker-indicator {
+  filter: invert(62%) sepia(72%) saturate(480%) hue-rotate(218deg) brightness(108%) contrast(88%);
+}

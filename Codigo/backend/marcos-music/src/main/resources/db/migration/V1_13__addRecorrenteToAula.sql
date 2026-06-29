@@ -1,0 +1,1 @@
+ALTER TABLE aula ADD recorrente BIT NOT NULL DEFAULT 0;
