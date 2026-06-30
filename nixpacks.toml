@@ -1,0 +1,15 @@
+[phases.install]
+cmds = [
+  "cd Codigo/agendamento && npm install"
+]
+
+[phases.build]
+cmds = [
+  "cd Codigo/agendamento && npm run build",
+  "mkdir -p Codigo/backend/marcos-music/src/main/resources/static",
+  "cp -r Codigo/agendamento/dist/. Codigo/backend/marcos-music/src/main/resources/static/",
+  "cd Codigo/backend/marcos-music && ./mvnw package -DskipTests"
+]
+
+[start]
+cmd = "java -jar Codigo/backend/marcos-music/target/marcos-music-0.0.1-SNAPSHOT.jar"

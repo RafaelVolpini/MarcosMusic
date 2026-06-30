@@ -46,6 +46,8 @@ public class SecurityConfig {
             .addFilterBefore(jwtCookieAuthFilter, UsernamePasswordAuthenticationFilter.class)
             .authorizeHttpRequests(auth -> auth
                 .requestMatchers("/error", "/error/**").permitAll()
+                .requestMatchers("/", "/index.html", "/assets/**", "/*.js", "/*.css", "/*.ico", "/*.png", "/*.svg").permitAll()
+                .requestMatchers("/login", "/registro", "/agenda", "/alunos", "/modulos", "/perfil", "/recuperar-senha", "/chat", "/configuracoes").permitAll()
                 .requestMatchers("/auth/**", "/auth").permitAll()
                 .requestMatchers("/aluno/**", "/aluno").permitAll()
                 .requestMatchers("/aula/**", "/aula").permitAll()
