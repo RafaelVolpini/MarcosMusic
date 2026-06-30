@@ -14,7 +14,6 @@ import { ForgotPasswordPage } from './components/auth/ForgotPasswordPage';
 import { ContractGate } from './components/auth/ContractGate';
 import { LandingPage } from './components/pages/LandingPage';
 import type { Page, Lesson, WeeklyAvailability, Aluno } from './types';
-import { mockVideos } from './data/mockData';
 import {
   logout,
   getUser,
@@ -310,7 +309,7 @@ function App() {
       case 'rescheduling':
         return <ReschedulingPage sessionUser={sessionUser!} />;
       case 'video':
-        return <VideoPage user={sessionUser} />;
+        return <VideoPage user={sessionUser ?? undefined} />;
       case 'lessonAlerts':
         return <LessonAlertsPage />;
       case 'settings':

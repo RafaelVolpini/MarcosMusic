@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { Gift, AlertCircle, CheckCircle2, Clock } from 'lucide-react';
+import { Gift, AlertCircle, Clock } from 'lucide-react';
 import { getSaldoCreditos, type SaldoCreditosDTO } from '../../services/creditoReposicaoService';
 import { useLanguage } from '../../context/LanguageContext';
 
@@ -9,7 +9,7 @@ interface SaldoCreditosCardProps {
 }
 
 export function SaldoCreditosCard({ alunoId, isTeacher = false }: SaldoCreditosCardProps) {
-  const { t } = useLanguage();
+  useLanguage();
   const [saldo, setSaldo] = useState<SaldoCreditosDTO | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
