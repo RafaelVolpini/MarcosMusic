@@ -14,7 +14,7 @@ import {
 import type { ReactNode } from 'react';
 import type { Page } from '../../types';
 import { cn } from '../../utils';
-import marcosPhoto from '../../assets/image.png';
+import marcosPhoto from '../../assets/image.jpg';
 import type { AuthUser } from '../../lib/auth';
 import { MarcosLogoMark } from '../ui/MarcosLogo';
 import { useLanguage } from '../../context/LanguageContext';

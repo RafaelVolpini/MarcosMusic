@@ -7,7 +7,7 @@ import type { Aluno } from '../../types';
 import { ChatConversationView } from './ChatConversationView';
 import type { AuthUser } from '../../lib/auth';
 import { useLanguage } from '../../context/LanguageContext';
-import professorPhoto from '../../assets/image.png';
+import professorPhoto from '../../assets/image.jpg';
 
 interface ChatPanelProps {
   isOpen: boolean;

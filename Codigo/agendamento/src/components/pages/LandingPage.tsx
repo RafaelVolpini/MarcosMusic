@@ -6,7 +6,7 @@ import {
   Mail, Phone, ArrowRight, CheckCircle2, Disc3, Play,
   Zap, Shield, Clock, Music, Globe,
 } from 'lucide-react';
-import marcosPhoto from '../../assets/image.png';
+import marcosPhoto from '../../assets/image.jpg';
 import { MarcosLogoMark } from '../ui/MarcosLogo';
 
 interface LandingPageProps {

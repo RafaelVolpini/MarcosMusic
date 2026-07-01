@@ -1,6 +1,6 @@
 import { motion } from 'framer-motion';
 import { Gamepad2, Trophy, Headphones, Swords, Star, Music2 } from 'lucide-react';
-import marcosPhoto from '../../assets/image.png';
+import marcosPhoto from '../../assets/image.jpg';
 
 const SKILLS = [
   { label: 'Didatica', level: 95, color: '#22d3ee' },
