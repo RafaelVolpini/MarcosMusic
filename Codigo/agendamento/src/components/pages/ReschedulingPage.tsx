@@ -72,17 +72,17 @@ export function ReschedulingPage({ sessionUser }: ReschedulingPageProps) {
       const todayISO = new Date().toISOString().slice(0, 10);
       const nowMins = new Date().getHours() * 60 + new Date().getMinutes();
 
-      // Slots disponÃ­veis: qualquer slot de reposiÃ§Ã£o desta semana em diante
-      // que ainda nÃ£o tenha uma reposiÃ§Ã£o criada para aquela data
+      // Slots disponíveis: qualquer slot de reposição desta semana em diante
+      // que ainda não tenha uma reposição criada para aquela data
       setSlots(
         disp
           .filter(d => {
             if (!d.reposicao) return false;
             const date = thisWeekDate(d.diaSemana);
             if (!date) return false;
-            // Oculta slot se jÃ¡ existe reposiÃ§Ã£o criada para esse dia+slot
+            // Oculta slot se já existe reposição criada para esse dia+slot
             if (repos.some(r => r.disponibilidadeId === d.id && r.dataAula === date)) return false;
-            // Se Ã© hoje, sÃ³ mostra horÃ¡rios que ainda nÃ£o passaram
+            // Se é hoje, só mostra horários que ainda não passaram
             if (date === todayISO) {
               const [h, m] = d.horario.split(':').map(Number);
               return h * 60 + m > nowMins;
@@ -97,7 +97,7 @@ export function ReschedulingPage({ sessionUser }: ReschedulingPageProps) {
           }),
       );
 
-      // ReposiÃ§Ãµes: todas a partir de hoje, em ordem cronolÃ³gica (data + horÃ¡rio)
+      // Reposições: todas a partir de hoje, em ordem cronológica (data + horário)
       setReposicoes(
         repos
           .filter(r => r.dataAula >= todayISO)
@@ -183,7 +183,7 @@ export function ReschedulingPage({ sessionUser }: ReschedulingPageProps) {
     }
   };
 
-  // Agrupa reposiÃ§Ãµes por data para exibir separadores de dia
+  // Agrupa reposições por data para exibir separadores de dia
   const reposicoesPorData = reposicoes.reduce<Record<string, ReposicaoDTO[]>>((acc, r) => {
     if (!acc[r.dataAula]) acc[r.dataAula] = [];
     acc[r.dataAula].push(r);
@@ -199,7 +199,7 @@ export function ReschedulingPage({ sessionUser }: ReschedulingPageProps) {
     const hojeFmt = `${hoje.getFullYear()}-${String(hoje.getMonth()+1).padStart(2,'0')}-${String(hoje.getDate()).padStart(2,'0')}`;
     const amanhaFmt = `${amanha.getFullYear()}-${String(amanha.getMonth()+1).padStart(2,'0')}-${String(amanha.getDate()).padStart(2,'0')}`;
     if (iso === hojeFmt) return 'Hoje';
-    if (iso === amanhaFmt) return 'AmanhÃ£';
+    if (iso === amanhaFmt) return 'Amanhã';
     return d.toLocaleDateString('pt-BR', { weekday: 'long', day: 'numeric', month: 'long' });
   }
 
@@ -212,12 +212,12 @@ export function ReschedulingPage({ sessionUser }: ReschedulingPageProps) {
       {/* Header */}
       <div className="flex items-end justify-between gap-4 pt-2 pb-1 border-b border-(--border)">
         <div>
-          <p className="text-xs font-medium text-(--muted) uppercase tracking-widest mb-1">CalendÃ¡rio</p>
+          <p className="text-xs font-medium text-(--muted) uppercase tracking-widest mb-1">Calendário</p>
           <h1 className="text-2xl font-bold text-(--heading) leading-tight">{t('rescheduling.title')}</h1>
           {!loading && (
             <p className="text-sm text-(--muted) mt-0.5">
-              {reposicoes.length} {reposicoes.length === 1 ? 'reposiÃ§Ã£o agendada' : 'reposiÃ§Ãµes agendadas'}
-              {isTeacher && slots.length > 0 && ` Â· ${slots.length} horÃ¡rio${slots.length !== 1 ? 's' : ''} disponÃ­vel${slots.length !== 1 ? 'is' : ''}`}
+              {reposicoes.length} {reposicoes.length === 1 ? 'reposição agendada' : 'reposições agendadas'}
+              {isTeacher && slots.length > 0 && ` Â· ${slots.length} horário${slots.length !== 1 ? 's' : ''} disponível${slots.length !== 1 ? 'is' : ''}`}
             </p>
           )}
         </div>
@@ -228,7 +228,7 @@ export function ReschedulingPage({ sessionUser }: ReschedulingPageProps) {
             className="flex items-center gap-2 px-4 py-2 rounded-xl bg-(--accent-600) text-white text-sm font-medium hover:opacity-90 transition-opacity shrink-0"
           >
             <CalendarPlus size={15} />
-            Agendar reposiÃ§Ã£o
+            Agendar reposição
           </button>
         )}
       </div>
@@ -236,7 +236,7 @@ export function ReschedulingPage({ sessionUser }: ReschedulingPageProps) {
       {loading ? (
         <div className="flex flex-col items-center justify-center py-20 gap-3">
           <div className="w-6 h-6 rounded-full border-2 border-(--accent-500) border-t-transparent animate-spin" />
-          <p className="text-sm text-(--muted)">Carregando reposiÃ§Ãµes...</p>
+          <p className="text-sm text-(--muted)">Carregando reposições...</p>
         </div>
       ) : reposicoes.length === 0 ? (
         <div className="flex flex-col items-center justify-center py-20 gap-4">
@@ -245,12 +245,12 @@ export function ReschedulingPage({ sessionUser }: ReschedulingPageProps) {
           </div>
           <div className="text-center">
             <p className="font-semibold text-(--heading)">
-              {isTeacher && slots.length === 0 ? 'Nenhum horÃ¡rio aberto' : isTeacher ? t('rescheduling.noScheduled') : t('rescheduling.noAvailable')}
+              {isTeacher && slots.length === 0 ? 'Nenhum horário aberto' : isTeacher ? t('rescheduling.noScheduled') : t('rescheduling.noAvailable')}
             </p>
             <p className="text-sm text-(--muted) mt-1">
               {isTeacher && slots.length === 0
-                ? 'Marque horÃ¡rios de reposiÃ§Ã£o na aba de Disponibilidade.'
-                : !isTeacher ? 'Aguarde o professor liberar horÃ¡rios de reposiÃ§Ã£o.' : ''}
+                ? 'Marque horários de reposição na aba de Disponibilidade.'
+                : !isTeacher ? 'Aguarde o professor liberar horários de reposição.' : ''}
             </p>
           </div>
         </div>
@@ -258,7 +258,7 @@ export function ReschedulingPage({ sessionUser }: ReschedulingPageProps) {
         /* Layout duas colunas: sidebar de datas + lista principal */
         <div className="flex gap-5 flex-col lg:flex-row items-start">
 
-          {/* Sidebar â navegaÃ§Ã£o de datas */}
+          {/* Sidebar â navegação de datas */}
           <div className="lg:w-60 shrink-0 sticky top-4">
             <p className="text-xs font-semibold text-(--muted) uppercase tracking-wider mb-3 px-1">Datas</p>
             <div className="space-y-1">
@@ -313,7 +313,7 @@ export function ReschedulingPage({ sessionUser }: ReschedulingPageProps) {
             </div>
           </div>
 
-          {/* ConteÃºdo principal â lista cronolÃ³gica */}
+          {/* Conteúdo principal â lista cronológica */}
           <div className="flex-1 min-w-0 space-y-6">
             <AnimatePresence mode="wait">
               <motion.div
@@ -366,7 +366,7 @@ export function ReschedulingPage({ sessionUser }: ReschedulingPageProps) {
                                     : 'hover:border-(--accent-400) hover:shadow-sm'
                                 }`}>
                                   <div className="flex items-center gap-4">
-                                    {/* HorÃ¡rio */}
+                                    {/* Horário */}
                                     <div className={`shrink-0 w-16 text-center px-2 py-2 rounded-xl ${isHappening ? 'bg-emerald-500/15' : 'bg-(--surface-soft)'}`}>
                                       <p className={`text-xl font-black leading-none ${isHappening ? 'text-emerald-600 dark:text-emerald-400' : 'text-(--accent-600)'}`}>
                                         {r.horario.slice(0, 5)}
@@ -412,7 +412,7 @@ export function ReschedulingPage({ sessionUser }: ReschedulingPageProps) {
                                       </div>
                                     </div>
 
-                                    {/* AÃ§Ãµes */}
+                                    {/* Ações */}
                                     <div className="flex items-center gap-1 shrink-0">
                                       {isTeacher && (
                                         <button
@@ -420,7 +420,7 @@ export function ReschedulingPage({ sessionUser }: ReschedulingPageProps) {
                                           onClick={e => { e.stopPropagation(); handleDelete(r.id); }}
                                           disabled={deletingId === r.id}
                                           className="cursor-pointer p-2 rounded-lg text-(--muted) hover:text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-950/30 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
-                                          title="Deletar reposiÃ§Ã£o"
+                                          title="Deletar reposição"
                                         >
                                           {deletingId === r.id
                                             ? <div className="w-4 h-4 rounded-full border-2 border-current border-t-transparent animate-spin" />

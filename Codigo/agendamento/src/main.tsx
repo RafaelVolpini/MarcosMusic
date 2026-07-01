@@ -8,17 +8,19 @@ import { AppSettingsProvider } from './context/AppSettingsContext.tsx'
 import { LanguageProvider } from './context/LanguageContext.tsx'
 
 // Intercepta todas as requisições HTTP para direcionar ao backend do Railway em produção
-const BACKEND_URL = import.meta.env.PROD 
-  ? 'https://marcosmusic-production.up.railway.app' 
-  : '';
+const BACKEND_URL = import.meta.env.VITE_BACKEND_URL?.replace(/\/$/, '')
+  || (import.meta.env.PROD ? 'https://marcosmusic-production.up.railway.app' : '');
 
 const originalFetch = window.fetch;
 window.fetch = function (input, init) {
   let url = typeof input === 'string' ? input : (input instanceof URL ? input.href : input.url);
+  const oldUrl = url;
   
   if (url.startsWith('/') && !url.startsWith('//')) {
     url = `${BACKEND_URL}${url}`;
   }
+  
+  console.log(`[Fetch Interceptor] Intercepted: ${oldUrl} -> ${url}`);
   
   if (typeof input === 'string') {
     return originalFetch(url, init);
@@ -29,6 +31,7 @@ window.fetch = function (input, init) {
     return originalFetch(newRequest, init);
   }
 };
+
 
 
 createRoot(document.getElementById('root')!).render(

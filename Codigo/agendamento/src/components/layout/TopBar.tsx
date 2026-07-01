@@ -123,7 +123,7 @@ export function TopBar({ activePage, user, onLogout, onNavigate }: TopBarProps) 
   const studentAvatarBg = 'linear-gradient(135deg, var(--accent-gradient-from), var(--accent-gradient-to))';
 
   return (
-    <header className="app-surface h-16 flex items-center gap-4 px-6 border-b border-(--border) shrink-0 relative z-60">
+    <header className="app-surface h-16 flex items-center gap-4 px-6 border-b border-(--border) shrink-0 relative z-10">
       {/* Page title */}
       <div className="flex-1">
         <div className="flex items-center gap-2">
