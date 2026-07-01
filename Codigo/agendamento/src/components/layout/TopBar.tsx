@@ -311,7 +311,7 @@ export function TopBar({ activePage, user, onLogout, onNavigate }: TopBarProps) 
               animate={{ opacity: 1, y: 0, scale: 1 }}
               exit={{ opacity: 0, y: 8, scale: 0.96 }}
               transition={{ duration: 0.15 }}
-              className="absolute right-0 top-12 w-56 z-50 bg-(--dropdown-bg) rounded-2xl shadow-2xl border border-(--dropdown-border) overflow-hidden"
+              className="absolute right-0 top-12 w-56 z-20 bg-(--dropdown-bg) rounded-2xl shadow-2xl border border-(--dropdown-border) overflow-hidden"
             >
               <div className="px-4 py-3 border-b border-(--border) bg-(--surface-soft)">
                 <div className="flex items-center gap-2">
@@ -346,7 +346,7 @@ export function TopBar({ activePage, user, onLogout, onNavigate }: TopBarProps) 
       {/* Backdrop for dropdowns */}
       {(notifOpen || profileOpen) && (
         <div
-          className="fixed inset-0 z-40"
+          className="fixed inset-0 z-10"
           onClick={() => { setNotifOpen(false); setProfileOpen(false); }}
         />
       )}
