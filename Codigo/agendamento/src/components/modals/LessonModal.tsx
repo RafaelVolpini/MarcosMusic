@@ -195,7 +195,7 @@ export function LessonModal({
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="fixed inset-0 bg-black/40 backdrop-blur-sm z-80"
+            className="fixed inset-0 bg-black/40 backdrop-blur-sm z-[999]"
             onClick={onClose}
           />
 
@@ -205,7 +205,7 @@ export function LessonModal({
             animate={{ opacity: 1, scale: 1, y: 0 }}
             exit={{ opacity: 0, scale: 0.95, y: 20 }}
             transition={{ type: "spring", stiffness: 340, damping: 28 }}
-            className="fixed inset-0 z-90 flex items-center justify-center pointer-events-none px-4"
+            className="fixed inset-0 z-[999] flex items-center justify-center pointer-events-none px-4"
           >
             <div className="app-surface rounded-3xl shadow-2xl w-full max-w-lg pointer-events-auto overflow-hidden">
               {/* Header with color accent */}
