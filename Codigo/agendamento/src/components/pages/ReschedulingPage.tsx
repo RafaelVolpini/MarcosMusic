@@ -307,7 +307,6 @@ export function ReschedulingPage({ sessionUser }: ReschedulingPageProps) {
                       <p className={`text-sm font-medium truncate capitalize ${isSelected ? 'text-(--heading)' : 'text-(--text)'}`}>
                         {label}
                       </p>
-                      <p className="text-[11px] text-(--muted)">{count} {count === 1 ? 'horário' : 'horários'}</p>
                     </div>
                   </motion.button>
                 );
@@ -332,9 +331,6 @@ export function ReschedulingPage({ sessionUser }: ReschedulingPageProps) {
                     <div className="flex items-center gap-3 mb-3">
                       <span className="text-sm font-semibold text-(--heading) capitalize">{formatDataLabel(data)}</span>
                       <div className="flex-1 h-px bg-(--border)" />
-                      <span className="text-xs text-(--muted)">
-                        {reposicoesPorData[data].length} {reposicoesPorData[data].length === 1 ? 'horário' : 'horários'}
-                      </span>
                     </div>
 
                     <div className="space-y-2">
@@ -519,7 +515,7 @@ function SlotsPickerModal({ slots, onClose, onSelect }: SlotsPickerModalProps) {
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         exit={{ opacity: 0 }}
-        className="fixed inset-0 bg-black/40 backdrop-blur-sm z-40"
+        className="fixed inset-0 bg-black/40 backdrop-blur-sm z-70"
         onClick={onClose}
       />
       <motion.div
@@ -528,7 +524,7 @@ function SlotsPickerModal({ slots, onClose, onSelect }: SlotsPickerModalProps) {
         animate={{ opacity: 1, scale: 1, y: 0 }}
         exit={{ opacity: 0, scale: 0.96, y: 10 }}
         transition={{ type: 'spring', stiffness: 380, damping: 28 }}
-        className="fixed inset-0 z-50 flex items-center justify-center pointer-events-none px-4"
+        className="fixed inset-0 z-80 flex items-center justify-center pointer-events-none px-4"
       >
         <div
           className="w-full max-w-md bg-(--surface) rounded-2xl shadow-2xl border border-(--border) overflow-hidden pointer-events-auto flex flex-col max-h-[80vh]"
@@ -568,7 +564,7 @@ function SlotsPickerModal({ slots, onClose, onSelect }: SlotsPickerModalProps) {
                   </div>
                   <div className="flex-1 min-w-0">
                     <p className="text-sm font-semibold text-(--heading)">
-                       {DAY_LABELS[slot.diaSemana] ?? slot.diaSemana} � {slot.horario}
+                      {DAY_LABELS[slot.diaSemana] ?? slot.diaSemana} &middot; {slot.horario}
                     </p>
                     <p className="text-xs text-(--muted)">{dateLabel}</p>
                   </div>

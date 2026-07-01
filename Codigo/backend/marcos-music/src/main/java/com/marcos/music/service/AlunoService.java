@@ -186,6 +186,7 @@ public class AlunoService {
                         dto.setEmail(aluno.getUsuario().getEmail());
                     }
                     dto.setApelido(aluno.getApelido());
+                    dto.setPlanoAulasMes(aluno.getPlanoAulasMes());
                     return dto;
                 })
                 .collect(Collectors.toList());
