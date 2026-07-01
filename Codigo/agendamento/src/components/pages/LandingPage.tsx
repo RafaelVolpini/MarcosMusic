@@ -122,7 +122,13 @@ export function LandingPage({ onEnterLogin }: LandingPageProps) {
 
             <motion.div {...fadeUp(0.1)} className="relative overflow-hidden rounded-[32px] border p-4 shadow-xl" style={{ ...themeStyles.surface, ...themeStyles.border }}>
               <div className="absolute inset-0 pointer-events-none" style={{ background: 'radial-gradient(circle at top right, rgba(145,77,0,0.16), transparent 35%)' }} />
-              <img src={marcosPhoto} alt="Interface Marcos Music Agenda" className="h-full w-full rounded-[28px] object-cover" />
+              <img
+                src={marcosPhoto}
+                alt="Interface Marcos Music Agenda"
+                className="h-full w-full rounded-[28px] object-cover"
+                loading="lazy"
+                decoding="async"
+              />
             </motion.div>
           </div>
         </section>
