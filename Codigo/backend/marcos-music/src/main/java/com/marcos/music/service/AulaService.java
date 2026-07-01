@@ -189,7 +189,7 @@ public class AulaService {
     }
 
     @Transactional
-    public Aula cancelar(Long id) throws RuntimeException{
+    public Aula cancelar(Long id, Usuario usuarioAtual) throws RuntimeException{
         try{
             Aula a = repository.findById(id)
                     .orElseThrow(() -> new RuntimeException("Aula não encontrado"));
@@ -197,14 +197,16 @@ public class AulaService {
             LocalDateTime agora = LocalDateTime.now();
             LocalDateTime inicioAula = a.getDataInicio();
 
-            // Validação: até 23:00 do dia anterior
-            LocalDateTime dataLimiteCancelamento = inicioAula.minusDays(1)
-                    .withHour(23).withMinute(0).withSecond(0);
+            // Validação: até 23:00 do dia anterior (apenas para alunos, não para professores/admin)
+            if (usuarioAtual != null && usuarioAtual.getRole() != Role.ADMIN) {
+                LocalDateTime dataLimiteCancelamento = inicioAula.minusDays(1)
+                        .withHour(23).withMinute(0).withSecond(0);
 
-            if (agora.isAfter(dataLimiteCancelamento)) {
-                throw new RuntimeException("Você não pode cancelar a aula após 23:00 do dia anterior. " +
-                        "Limite: " + dataLimiteCancelamento.format(
-                                java.time.format.DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm")));
+                if (agora.isAfter(dataLimiteCancelamento)) {
+                    throw new RuntimeException("Você não pode cancelar a aula após 23:00 do dia anterior. " +
+                            "Limite: " + dataLimiteCancelamento.format(
+                                    java.time.format.DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm")));
+                }
             }
 
             a.setFlagCancelada(true);
@@ -241,20 +243,26 @@ public class AulaService {
     }
 
     @Transactional
-    public Aula reagendar(Long id, LocalDateTime novaDataInicio, LocalDateTime novaDataFim) {
+    public Aula reagendar(Long id, LocalDateTime novaDataInicio, LocalDateTime novaDataFim, Usuario usuarioAtual) {
         Aula a = repository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Aula n\u00e3o encontrada"));
         if (Boolean.TRUE.equals(a.getFlagCancelada())) {
             throw new RuntimeException("N\u00e3o \u00e9 poss\u00edvel reagendar uma aula cancelada");
         }
-        LocalDateTime agora = LocalDateTime.now();
-        LocalDateTime dataLimiteReagendamento = a.getDataInicio().minusDays(1)
-                .withHour(23).withMinute(0).withSecond(0);
-        if (agora.isAfter(dataLimiteReagendamento)) {
-            throw new RuntimeException("N\u00e3o \u00e9 poss\u00edvel reagendar a aula ap\u00f3s 23:00 do dia anterior. " +
-                    "Limite: " + dataLimiteReagendamento.format(
-                            java.time.format.DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm")));
+
+        // Valida\u00e7\u00e3o: at\u00e9 23:00 do dia anterior (apenas para alunos, n\u00e3o para professores/admin)
+        if (usuarioAtual != null && usuarioAtual.getRole() != Role.ADMIN) {
+            LocalDateTime agora = LocalDateTime.now();
+            LocalDateTime dataLimiteReagendamento = a.getDataInicio().minusDays(1)
+                    .withHour(23).withMinute(0).withSecond(0);
+            if (agora.isAfter(dataLimiteReagendamento)) {
+                throw new RuntimeException("N\u00e3o \u00e9 poss\u00edvel reagendar a aula ap\u00f3s 23:00 do dia anterior. " +
+                        "Limite: " + dataLimiteReagendamento.format(
+                                java.time.format.DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm")));
+            }
         }
+
+        LocalDateTime agora = LocalDateTime.now();
         a.setDataInicio(novaDataInicio);
         a.setDataFim(novaDataFim);
         Aula salva = repository.save(a);

@@ -5,6 +5,8 @@ import com.marcos.music.dto.Aula.CalendarResponseDTO;
 import com.marcos.music.dto.Aula.CriarAulaDTO;
 import com.marcos.music.dto.Aula.RemarcarAulaDTO;
 import com.marcos.music.entity.Aula;
+import com.marcos.music.entity.Usuario;
+import com.marcos.music.repository.UsuarioRepository;
 import com.marcos.music.service.AulaService;
 
 import java.util.List;
@@ -17,9 +19,11 @@ import org.springframework.web.bind.annotation.*;
 @RequestMapping("/aula")
 public class AulaController {
     private final AulaService service;
+    private final UsuarioRepository usuarioRepository;
 
-    public AulaController(AulaService service) {
+    public AulaController(AulaService service, UsuarioRepository usuarioRepository) {
         this.service = service;
+        this.usuarioRepository = usuarioRepository;
     }
 
     private CalendarResponseDTO toDTO(Aula aula) {
@@ -38,10 +42,19 @@ public class AulaController {
         );
     }
 
+    private Usuario getUsuarioAutenticado() {
+        var auth = SecurityContextHolder.getContext().getAuthentication();
+        if (auth != null && auth.isAuthenticated() && !"anonymousUser".equals(auth.getName())) {
+            return usuarioRepository.findByEmail(auth.getName()).orElse(null);
+        }
+        return null;
+    }
+
     @GetMapping("/cancelar/{id}")
     public ResponseEntity<?> cancelar(@PathVariable Long id) {
         try {
-            return ResponseEntity.ok(toDTO(service.cancelar(id)));
+            Usuario usuarioAtual = getUsuarioAutenticado();
+            return ResponseEntity.ok(toDTO(service.cancelar(id, usuarioAtual)));
         } catch (RuntimeException e) {
             return ResponseEntity.badRequest().body(e.getMessage());
         }
@@ -50,7 +63,8 @@ public class AulaController {
     @PutMapping("/reagendar/{id}")
     public ResponseEntity<?> reagendar(@PathVariable Long id, @RequestBody RemarcarAulaDTO dto) {
         try {
-            return ResponseEntity.ok(toDTO(service.reagendar(id, dto.getDataInicio(), dto.getDataFim())));
+            Usuario usuarioAtual = getUsuarioAutenticado();
+            return ResponseEntity.ok(toDTO(service.reagendar(id, dto.getDataInicio(), dto.getDataFim(), usuarioAtual)));
         } catch (RuntimeException e) {
             return ResponseEntity.badRequest().body(e.getMessage());
         }
