@@ -17,6 +17,6 @@ public class AlunoDTO {
     private Integer reposicoes;
     private Boolean termos;
     private String apelido;
-    private Integer planoAulasMes;
+    private Integer planoAulasSem;
     private List<AulaAluno> horarios;
 }

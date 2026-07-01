@@ -52,8 +52,8 @@ public class Aluno {
     @Column(name = "mensalidade_notificacao")
     private LocalDate mensalidadeNotificacao;
 
-    @Column(name = "plano_aulas_mes")
-    private Integer planoAulasMes;
+    @Column(name = "plano_aulas_sem")
+    private Integer planoAulasSem;
 
     @OneToMany(mappedBy = "aluno", cascade = CascadeType.ALL, orphanRemoval = true)
     @JsonIgnore

@@ -223,10 +223,10 @@ export function StudentsPage({ students, currentUser, onReload }: StudentsPagePr
                       </a>
                     </div>
                   )}
-                  {aluno.planoAulasMes != null && (
+                  {aluno.planoAulasSem != null && (
                     <div className="flex items-center gap-2 text-xs text-(--muted)">
                       <Calendar size={12} className="text-(--accent-500) shrink-0" />
-                      <span>{aluno.planoAulasMes} aulas/mês</span>
+                      <span>{aluno.planoAulasSem} aula{aluno.planoAulasSem !== 1 ? 's' : ''}/semana</span>
                     </div>
                   )}
                 </div>

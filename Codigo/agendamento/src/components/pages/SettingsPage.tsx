@@ -19,7 +19,6 @@ import { useAppSettings } from '../../context/AppSettingsContext';
 import type { AuthUser } from '../../lib/auth';
 import { useToast } from '../ui/Toast';
 import { useLanguage } from '../../context/LanguageContext';
-import { SaldoCreditosCard } from '../creditos/SaldoCreditosCard';
 import { CreditsPage } from './CreditsPage';
 
 const TIMEZONES: { label: string; value: string }[] = [
@@ -476,12 +475,6 @@ export function SettingsPage({ user, onProfileUpdate, initialSection }: Settings
                   </Button>
                 </form>
 
-                {/* Créditos de Reposição */}
-                {user.role === 'student' && user.id && (
-                  <div className="mt-6 pt-6 border-t border-(--border)">
-                    <SaldoCreditosCard alunoId={user.id} isTeacher={false} />
-                  </div>
-                )}
               </Card>
             )}
 

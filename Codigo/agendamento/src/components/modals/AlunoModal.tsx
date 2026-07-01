@@ -46,10 +46,9 @@ function formatPhone(raw: string): string {
 }
 
 const PLAN_OPTIONS = [
-  { value: null, label: 'Sem plano' },
-  { value: 2, label: '2 aulas/mês' },
-  { value: 3, label: '3 aulas/mês' },
-  { value: 4, label: '4 aulas/mês' },
+  { value: 1, label: '1 aula/semana' },
+  { value: 2, label: '2 aulas/semana' },
+  { value: 3, label: '3 aulas/semana' },
 ];
 
 const EMPTY: AlunoFormData = {
@@ -58,7 +57,7 @@ const EMPTY: AlunoFormData = {
   telefone: '',
   apelido: '',
   ativo: true,
-  planoAulasMes: null,
+  planoAulasSem: null,
 };
 
 function toFormData(a: Aluno): AlunoFormData {
@@ -68,7 +67,7 @@ function toFormData(a: Aluno): AlunoFormData {
     telefone: a.telefone ? formatPhoneGlobal(a.telefone) : '',
     apelido: a.apelido ?? '',
     ativo: a.ativo,
-    planoAulasMes: a.planoAulasMes ?? null,
+    planoAulasSem: a.planoAulasSem ?? null,
   };
 }
 
@@ -402,10 +401,10 @@ export function AlunoModal({ aluno, open, onClose, onSave }: AlunoModalProps) {
                         <button
                           key={String(opt.value)}
                           type="button"
-                          onClick={() => set('planoAulasMes', opt.value)}
+                          onClick={() => set('planoAulasSem', opt.value)}
                           className={`
                             h-8 px-3 rounded-lg text-xs font-medium transition-colors border
-                            ${(form.planoAulasMes ?? null) === opt.value
+                            ${(form.planoAulasSem ?? null) === opt.value
                               ? 'bg-(--accent-500) text-white border-(--accent-500)'
                               : 'bg-(--input-bg) text-(--muted) border-(--input-border) hover:border-(--accent-500) hover:text-(--accent-500)'
                             }

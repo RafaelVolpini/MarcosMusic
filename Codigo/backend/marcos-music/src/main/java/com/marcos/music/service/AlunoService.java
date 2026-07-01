@@ -51,7 +51,7 @@ public class AlunoService {
             aluno.setStatus(dto.getStatus() != null ? dto.getStatus() : true);
             aluno.setTermos(dto.getTermos() != null ? dto.getTermos() : false);
             aluno.setApelido(dto.getApelido());
-            aluno.setPlanoAulasMes(dto.getPlanoAulasMes());
+            aluno.setPlanoAulasSem(dto.getPlanoAulasSem());
 
             List<Long> idsDTO = dto.getHorarios() == null ? List.of() :
                     dto.getHorarios().stream()
@@ -106,7 +106,7 @@ public class AlunoService {
         aluno.setTermos(dto.getTermos() != null ? dto.getTermos() : false);
         aluno.setStatus(dto.getStatus() != null ? dto.getStatus() : true);
         aluno.setApelido(dto.getApelido());
-        aluno.setPlanoAulasMes(dto.getPlanoAulasMes());
+        aluno.setPlanoAulasSem(dto.getPlanoAulasSem());
 
         aluno.setUsuario(user); 
 
@@ -186,7 +186,7 @@ public class AlunoService {
                         dto.setEmail(aluno.getUsuario().getEmail());
                     }
                     dto.setApelido(aluno.getApelido());
-                    dto.setPlanoAulasMes(aluno.getPlanoAulasMes());
+                    dto.setPlanoAulasSem(aluno.getPlanoAulasSem());
                     return dto;
                 })
                 .collect(Collectors.toList());
