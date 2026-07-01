@@ -8,7 +8,7 @@ import { chatBus } from '../../lib/chatBus';
 import type { Page } from '../../types';
 import { cn } from '../../utils';
 import type { AuthUser } from '../../lib/auth'; 
-import marcosPhoto from '../../assets/image.png';
+import marcosPhoto from '../../assets/image.jpg';
 import { useLanguage } from '../../context/LanguageContext';
 
 interface TopBarProps {
@@ -55,13 +55,13 @@ export function TopBar({ activePage, user, onLogout, onNavigate }: TopBarProps) 
   // Polling inicial + periódico
   useEffect(() => {
     refreshChatNaoLidas();
-    const id1 = setInterval(refreshChatNaoLidas, 10000);
+    const id1 = setInterval(refreshChatNaoLidas, 30000);
     return () => clearInterval(id1);
   }, [refreshChatNaoLidas]);
 
   useEffect(() => {
     refreshNotificacoes();
-    const id2 = setInterval(refreshNotificacoes, 10000);
+    const id2 = setInterval(refreshNotificacoes, 30000);
     return () => clearInterval(id2);
   }, [refreshNotificacoes]);
 
@@ -123,7 +123,7 @@ export function TopBar({ activePage, user, onLogout, onNavigate }: TopBarProps) 
   const studentAvatarBg = 'linear-gradient(135deg, var(--accent-gradient-from), var(--accent-gradient-to))';
 
   return (
-    <header className="app-surface h-16 flex items-center gap-4 px-6 border-b border-(--border) shrink-0 relative z-100">
+    <header className="app-surface h-16 flex items-center gap-4 px-6 border-b border-(--border) shrink-0 relative z-10">
       {/* Page title */}
       <div className="flex-1">
         <div className="flex items-center gap-2">
