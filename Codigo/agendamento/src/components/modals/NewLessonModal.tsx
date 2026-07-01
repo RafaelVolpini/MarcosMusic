@@ -155,7 +155,7 @@ export function NewLessonModal({
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="fixed inset-0 bg-black/40 backdrop-blur-sm z-80"
+            className="fixed inset-0 bg-black/40 backdrop-blur-sm z-998"
             onClick={onClose}
           />
           <motion.div
@@ -163,7 +163,7 @@ export function NewLessonModal({
             animate={{ opacity: 1, scale: 1, y: 0 }}
             exit={{ opacity: 0, scale: 0.96, y: 16 }}
             transition={{ type: 'spring', stiffness: 360, damping: 30 }}
-            className="fixed inset-0 z-90 flex items-center justify-center pointer-events-none px-4"
+            className="fixed inset-0 z-999 flex items-center justify-center pointer-events-none px-4"
           >
             <div className="app-surface rounded-3xl shadow-2xl w-full max-w-md pointer-events-auto overflow-hidden">
               {/* Header */}

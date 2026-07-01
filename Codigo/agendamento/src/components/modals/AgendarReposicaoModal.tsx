@@ -54,7 +54,7 @@ export function AgendarReposicaoModal({ slot, defaultDate, alunos, onClose, onCr
   const activeAlunos = alunos.filter(a => a.ativo);
 
   return (
-    <div className="fixed inset-0 z-90 flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm">
+    <div className="fixed inset-0 z-999 flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm">
       <motion.div
         initial={{ opacity: 0, scale: 0.95, y: 10 }}
         animate={{ opacity: 1, scale: 1, y: 0 }}

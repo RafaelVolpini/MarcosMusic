@@ -93,7 +93,7 @@ export function ReposicaoCalendarModal({
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         exit={{ opacity: 0 }}
-        className="fixed inset-0 bg-black/40 backdrop-blur-sm z-80"
+        className="fixed inset-0 bg-black/40 backdrop-blur-sm z-998"
         onClick={onClose}
       />
 
@@ -103,7 +103,7 @@ export function ReposicaoCalendarModal({
         animate={{ opacity: 1, scale: 1, y: 0 }}
         exit={{ opacity: 0, scale: 0.95, y: 10 }}
         transition={{ type: 'spring', stiffness: 400, damping: 30 }}
-        className="fixed inset-0 z-90 flex items-center justify-center pointer-events-none px-4"
+        className="fixed inset-0 z-999 flex items-center justify-center pointer-events-none px-4"
       >
         <div
           className="w-full max-w-sm bg-(--surface) rounded-2xl shadow-2xl border border-(--border) overflow-hidden pointer-events-auto"

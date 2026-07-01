@@ -258,7 +258,7 @@ export function AlunoModal({ aluno, open, onClose, onSave }: AlunoModalProps) {
         <>
           {/* Backdrop */}
           <motion.div
-            className="fixed inset-0 bg-black/30 backdrop-blur-[2px] z-80"
+            className="fixed inset-0 bg-black/30 backdrop-blur-[2px] z-998"
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
@@ -267,7 +267,7 @@ export function AlunoModal({ aluno, open, onClose, onSave }: AlunoModalProps) {
 
           {/* Modal */}
           <motion.div
-            className="fixed inset-0 z-90 flex items-center justify-center p-4"
+            className="fixed inset-0 z-999 flex items-center justify-center p-4"
             initial={{ opacity: 0, scale: 0.96, y: 12 }}
             animate={{ opacity: 1, scale: 1, y: 0 }}
             exit={{ opacity: 0, scale: 0.96, y: 12 }}

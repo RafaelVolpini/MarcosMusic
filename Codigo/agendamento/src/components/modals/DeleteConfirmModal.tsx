@@ -18,7 +18,7 @@ export function DeleteConfirmModal({ aluno, onConfirm, onCancel, loading }: Dele
         <>
           {/* Backdrop */}
           <motion.div
-            className="fixed inset-0 bg-black/40 backdrop-blur-[2px] z-80"
+            className="fixed inset-0 bg-black/40 backdrop-blur-[2px] z-998"
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
@@ -27,7 +27,7 @@ export function DeleteConfirmModal({ aluno, onConfirm, onCancel, loading }: Dele
 
           {/* Modal */}
           <motion.div
-            className="fixed inset-0 z-90 flex items-center justify-center p-4"
+            className="fixed inset-0 z-999 flex items-center justify-center p-4"
             initial={{ opacity: 0, scale: 0.92, y: 16 }}
             animate={{ opacity: 1, scale: 1, y: 0 }}
             exit={{ opacity: 0, scale: 0.92, y: 16 }}
