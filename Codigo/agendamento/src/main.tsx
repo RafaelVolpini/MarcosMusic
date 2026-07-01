@@ -7,6 +7,26 @@ import { ToastProvider } from './components/ui/Toast.tsx'
 import { AppSettingsProvider } from './context/AppSettingsContext.tsx'
 import { LanguageProvider } from './context/LanguageContext.tsx'
 
+// Intercepta todas as requisições HTTP relativas e direciona ao backend em produção.
+// URL fixa de propósito: env var errada no Railway já quebrou o login (405 no host estático).
+const BACKEND_URL = import.meta.env.PROD ? 'https://marcosmusic-production.up.railway.app' : '';
+
+if (BACKEND_URL) {
+  const originalFetch = window.fetch;
+  window.fetch = function (input, init) {
+    let url = typeof input === 'string' ? input : (input instanceof URL ? input.href : input.url);
+
+    if (url.startsWith('/') && !url.startsWith('//')) {
+      url = `${BACKEND_URL}${url}`;
+    }
+
+    if (typeof input === 'string' || input instanceof URL) {
+      return originalFetch(url, init);
+    }
+    return originalFetch(new Request(url, input), init);
+  };
+}
+
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
     <AppSettingsProvider>
