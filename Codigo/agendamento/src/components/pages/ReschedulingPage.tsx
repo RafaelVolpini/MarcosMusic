@@ -29,7 +29,7 @@ interface ReschedulingPageProps {
   sessionUser: AuthUser;
 }
 
-// Returns minutes until the reposiï¿½ï¿½o starts (negative if already started)
+// Returns minutes until the reposição starts (negative if already started)
 function minutesUntilStart(dataAula: string, horario: string): number {
   const start = new Date(`${dataAula}T${horario}:00`);
   return (start.getTime() - Date.now()) / 60_000;
@@ -121,7 +121,7 @@ export function ReschedulingPage({ sessionUser }: ReschedulingPageProps) {
         return cmp !== 0 ? cmp : a.horario.localeCompare(b.horario);
       }),
     );
-    // Remove o slot da lista de disponï¿½veis, jï¿½ que a reposiï¿½ï¿½o foi criada para ele
+    // Remove o slot da lista de disponíveis, já que a reposição foi criada para ele
     setSlots(prev => prev.filter(s => !(s.id === r.disponibilidadeId && thisWeekDate(s.diaSemana) === r.dataAula)));
     setAgendarSlot(null);
     toast(t('rescheduling.created'), 'success');
@@ -217,7 +217,7 @@ export function ReschedulingPage({ sessionUser }: ReschedulingPageProps) {
           {!loading && (
             <p className="text-sm text-(--muted) mt-0.5">
               {reposicoes.length} {reposicoes.length === 1 ? 'reposição agendada' : 'reposições agendadas'}
-              {isTeacher && slots.length > 0 && ` Â· ${slots.length} horário${slots.length !== 1 ? 's' : ''} disponível${slots.length !== 1 ? 'is' : ''}`}
+              {isTeacher && slots.length > 0 && ` · ${slots.length} horário${slots.length !== 1 ? 's' : ''} disponível${slots.length !== 1 ? 's' : ''}`}
             </p>
           )}
         </div>
@@ -258,7 +258,7 @@ export function ReschedulingPage({ sessionUser }: ReschedulingPageProps) {
         /* Layout duas colunas: sidebar de datas + lista principal */
         <div className="flex gap-5 flex-col lg:flex-row items-start">
 
-          {/* Sidebar â navegação de datas */}
+          {/* Sidebar — navegação de datas */}
           <div className="lg:w-60 shrink-0 sticky top-4">
             <p className="text-xs font-semibold text-(--muted) uppercase tracking-wider mb-3 px-1">Datas</p>
             <div className="space-y-1">
@@ -313,7 +313,7 @@ export function ReschedulingPage({ sessionUser }: ReschedulingPageProps) {
             </div>
           </div>
 
-          {/* Conteúdo principal â lista cronológica */}
+          {/* Conteúdo principal — lista cronológica */}
           <div className="flex-1 min-w-0 space-y-6">
             <AnimatePresence mode="wait">
               <motion.div
