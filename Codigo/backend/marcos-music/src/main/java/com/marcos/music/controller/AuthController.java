@@ -95,27 +95,35 @@ public class AuthController {
     }
 
     @PostMapping("/forgot-password")
-    public ResponseEntity<Void> forgotPassword(
+    public ResponseEntity<?> forgotPassword(
             @RequestBody SolicitarResetSenhaRequest request) {
-
-        service.solicitarRecuperacaoSenha(
-                request.getEmail()
-        );
-
-        return ResponseEntity.ok().build();
+        try {
+            service.solicitarRecuperacaoSenha(
+                    request.getEmail()
+            );
+            return ResponseEntity.ok().build();
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.status(404).body(e.getMessage());
+        } catch (Exception e) {
+            return ResponseEntity.status(500).body("Erro ao processar solicitação de recuperação de senha");
+        }
     }
 
     @PostMapping("/reset-password")
-    public ResponseEntity<Void> resetPassword(
+    public ResponseEntity<?> resetPassword(
             @RequestBody ResetPasswordRequestDTO request) {
-
-        service.resetarSenha(
-                request.getEmail(),
-                request.getVerificationCode(),
-                request.getNewPassword()
-        );
-
-        return ResponseEntity.ok().build();
+        try {
+            service.resetarSenha(
+                    request.getEmail(),
+                    request.getVerificationCode(),
+                    request.getNewPassword()
+            );
+            return ResponseEntity.ok().build();
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.status(400).body(e.getMessage());
+        } catch (Exception e) {
+            return ResponseEntity.status(500).body("Erro ao resetar senha");
+        }
     }
 
     // ─── Helpers ─────────────────────────────────────────────────────────────
