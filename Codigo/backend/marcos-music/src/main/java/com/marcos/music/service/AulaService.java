@@ -199,7 +199,7 @@ public class AulaService {
             LocalDateTime inicioAula = a.getDataInicio();
 
             // Validação: até 24h antes do início da aula (apenas para alunos, não para professores/admin)
-            if (usuarioAtual != null && usuarioAtual.getRole() != Role.ADMIN) {
+            if (usuarioAtual == null || usuarioAtual.getRole() != Role.ADMIN) {
                 LocalDateTime dataLimiteCancelamento = inicioAula.minusHours(24);
 
                 if (agora.isAfter(dataLimiteCancelamento)) {
@@ -251,7 +251,7 @@ public class AulaService {
         }
 
         // Valida\u00e7\u00e3o: at\u00e9 24h antes do in\u00edcio da aula (apenas para alunos, n\u00e3o para professores/admin)
-        if (usuarioAtual != null && usuarioAtual.getRole() != Role.ADMIN) {
+        if (usuarioAtual == null || usuarioAtual.getRole() != Role.ADMIN) {
             LocalDateTime agora = LocalDateTime.now();
             LocalDateTime dataLimiteReagendamento = a.getDataInicio().minusHours(24);
             if (agora.isAfter(dataLimiteReagendamento)) {
@@ -261,7 +261,6 @@ public class AulaService {
             }
         }
 
-        LocalDateTime agora = LocalDateTime.now();
         a.setDataInicio(novaDataInicio);
         a.setDataFim(novaDataFim);
         Aula salva = repository.save(a);

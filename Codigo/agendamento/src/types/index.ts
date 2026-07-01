@@ -14,7 +14,6 @@ export interface Aluno {
   ativo: boolean;
   apelido?: string;
   reposicoes?: number;
-  planoAulasSem?: number;
 }
 
 export interface Lesson {
@@ -72,5 +71,4 @@ export type Page =
   | 'video'
   | 'lessonAlerts'
   | 'settings'
-  | 'profile'
-  | 'credits';
+  | 'profile';

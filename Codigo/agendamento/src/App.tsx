@@ -9,7 +9,6 @@ import { ReschedulingPage } from './components/pages/ReschedulingPage';
 import { VideoPage } from './components/pages/VideoPage';
 import { LessonAlertsPage } from './components/pages/AlertsPage';
 import { SettingsPage } from './components/pages/SettingsPage';
-import { CreditsPage } from './components/pages/CreditsPage';
 import { LoginPage } from './components/auth/LoginPage';
 import { ForgotPasswordPage } from './components/auth/ForgotPasswordPage';
 import { ContractGate } from './components/auth/ContractGate';
@@ -317,8 +316,6 @@ function App() {
         return <SettingsPage user={sessionUser!} onProfileUpdate={handleProfileUpdate} />;
       case 'profile':
         return <SettingsPage user={sessionUser!} onProfileUpdate={handleProfileUpdate} initialSection="profile" />;
-      case 'credits':
-        return <CreditsPage />;
     }
   };
 

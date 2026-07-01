@@ -145,9 +145,11 @@ export function CalendarView({
 
   // Drag handlers
   const handleDragStart = useCallback((lesson: Lesson, e: React.DragEvent) => {
-    // Block students from dragging attendance-confirmed or non-owned lessons
+    // Block students from dragging attendance-confirmed, non-owned or <24h lessons
     if (currentUser && currentUser.role !== 'teacher') {
-      if (lesson.attendanceConfirmed || !isOwnLesson(lesson, currentUser)) {
+      const startDt = new Date(`${lesson.date}T${lesson.startTime}:00`);
+      const within24h = new Date() >= new Date(startDt.getTime() - 24 * 60 * 60 * 1000);
+      if (lesson.attendanceConfirmed || !isOwnLesson(lesson, currentUser) || within24h) {
         e.preventDefault();
         return;
       }
@@ -185,7 +187,7 @@ export function CalendarView({
   return (
     <div className="flex flex-col h-full">
       {/* Toolbar */}
-      <div className="flex items-center gap-3 px-6 py-4 border-b border-(--border) bg-(--surface) shrink-0 sticky top-0 z-50">
+      <div className="flex items-center gap-3 px-6 py-4 border-b border-(--border) bg-(--surface) shrink-0 sticky top-0 z-40">
         <div className="flex items-center gap-1">
           <button
             onClick={() => navigate(-1)}
@@ -271,13 +273,13 @@ export function CalendarView({
       <div className="flex-1 overflow-auto bg-(--surface) isolate">
         <div className="grid h-full" style={{ gridTemplateColumns: `56px repeat(${displayDays.length}, 1fr)` }}>
           {/* Day headers */}
-          <div className="border-b border-(--border) sticky top-0 z-45 bg-(--surface)" />
+          <div className="border-b border-(--border) sticky top-0 z-35 bg-(--surface)" />
           {displayDays.map((day, i) => {
             const today = isToday(day);
             return (
               <div
                 key={i}
-                className="border-b border-l border-(--border) sticky top-0 z-45 bg-(--surface) px-2 py-2 text-center"
+                className="border-b border-l border-(--border) sticky top-0 z-35 bg-(--surface) px-2 py-2 text-center"
               >
                 <p className={cn('text-xs font-semibold', today ? 'text-(--accent-600)' : 'text-(--muted)')}>
                   {DAY_LABELS[day.getDay()]}

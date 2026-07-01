@@ -27,6 +27,14 @@ public class AulaController {
         this.usuarioRepository = usuarioRepository;
     }
 
+    private Usuario getUsuarioAutenticado() {
+        var auth = SecurityContextHolder.getContext().getAuthentication();
+        if (auth == null || !auth.isAuthenticated() || "anonymousUser".equals(auth.getPrincipal())) {
+            return null;
+        }
+        return usuarioRepository.findByEmailIgnoreCase(auth.getName()).orElse(null);
+    }
+
     private CalendarResponseDTO toDTO(Aula aula) {
         return new CalendarResponseDTO(
                 aula.getId(),
@@ -43,19 +51,10 @@ public class AulaController {
         );
     }
 
-    private Usuario getUsuarioAutenticado() {
-        var auth = SecurityContextHolder.getContext().getAuthentication();
-        if (auth != null && auth.isAuthenticated() && !"anonymousUser".equals(auth.getName())) {
-            return usuarioRepository.findByEmail(auth.getName()).orElse(null);
-        }
-        return null;
-    }
-
     @GetMapping("/cancelar/{id}")
     public ResponseEntity<?> cancelar(@PathVariable Long id) {
         try {
-            Usuario usuarioAtual = getUsuarioAutenticado();
-            return ResponseEntity.ok(toDTO(service.cancelar(id, usuarioAtual)));
+            return ResponseEntity.ok(toDTO(service.cancelar(id, getUsuarioAutenticado())));
         } catch (RuntimeException e) {
             return ResponseEntity.badRequest().body(e.getMessage());
         }
@@ -64,8 +63,7 @@ public class AulaController {
     @PutMapping("/reagendar/{id}")
     public ResponseEntity<?> reagendar(@PathVariable Long id, @RequestBody RemarcarAulaDTO dto) {
         try {
-            Usuario usuarioAtual = getUsuarioAutenticado();
-            return ResponseEntity.ok(toDTO(service.reagendar(id, dto.getDataInicio(), dto.getDataFim(), usuarioAtual)));
+            return ResponseEntity.ok(toDTO(service.reagendar(id, dto.getDataInicio(), dto.getDataFim(), getUsuarioAutenticado())));
         } catch (RuntimeException e) {
             return ResponseEntity.badRequest().body(e.getMessage());
         }

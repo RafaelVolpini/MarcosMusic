@@ -137,16 +137,6 @@ function reposicaoToLessons(r: ReposicaoDTO): Lesson[] {
   }));
 }
 
-function dedupeLessonsById(lessons: Lesson[]): Lesson[] {
-  const map = new Map<string, Lesson>();
-  for (const lesson of lessons) {
-    if (!map.has(lesson.id)) {
-      map.set(lesson.id, lesson);
-    }
-  }
-  return Array.from(map.values());
-}
-
 // ─── StudentCombobox (com portal para evitar clip por overflow-hidden) ────────
 
 interface ComboboxProps {
@@ -494,7 +484,7 @@ export function LessonAlertsPage() {
         const repoLessons = repos
           .filter(r => r.dataAula >= todayISO && r.status === 'ABERTA' && r.alunos.length > 0)
           .flatMap(reposicaoToLessons);
-        setLessons(dedupeLessonsById([...aulaLessons, ...repoLessons]));
+        setLessons([...aulaLessons, ...repoLessons]);
         setStudents(alunos);
       })
       .catch(() => {})

@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { Gift, Calendar, Check, AlertCircle, TrendingDown, Clock, BookOpen } from 'lucide-react';
+import { buscarAulas } from '../../services/aulaService';
 import type { Lesson } from '../../types';
 
 interface CreditoReposicao {
@@ -66,25 +67,20 @@ export function CreditsPage() {
       const hoje = new Date();
       const proximos30 = new Date(hoje);
       proximos30.setDate(hoje.getDate() + 30);
-      const fmt = (d: Date) => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
-      const res = await fetch(`/aula/buscar?dataInicio=${fmt(hoje)}T00:00:00&dataFim=${fmt(proximos30)}T23:59:59`, {
-        credentials: 'include'
-      });
-      if (res.ok) {
-        const dtos = await res.json();
-        setAulas(dtos.map((dto: any) => ({
-          id: dto.id,
-          studentId: dto.alunoId,
-          studentName: dto.studentName || 'Aluno',
-          date: dto.dataInicio?.split('T')[0] || '',
-          startTime: dto.dataInicio?.split('T')[1]?.slice(0, 5) || '',
-          endTime: dto.dataFim?.split('T')[1]?.slice(0, 5) || '',
-          type: 'individual',
-          status: 'scheduled',
-          instrument: dto.instrument || '',
-          color: '#8B5CF6',
-        })));
-      }
+      const formatIso = (d: Date) => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}T${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}:00`;
+      const dtos = await buscarAulas(formatIso(hoje), formatIso(proximos30));
+      setAulas(dtos.map((dto: any) => ({
+        id: String(dto.id),
+        studentId: dto.idAluno ?? '',
+        studentName: dto.nomeAluno || 'Aluno',
+        date: dto.dataInicio?.split('T')[0] || '',
+        startTime: dto.dataInicio?.split('T')[1]?.slice(0, 5) || '',
+        endTime: dto.dataFim?.split('T')[1]?.slice(0, 5) || '',
+        type: 'individual',
+        status: 'scheduled',
+        instrument: dto.instrument || '',
+        color: '#8B5CF6',
+      })));
     } catch (err) {
       console.error('Erro ao buscar aulas:', err);
     }

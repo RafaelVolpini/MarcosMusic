@@ -28,10 +28,7 @@ public class SecurityConfig {
         CorsConfiguration config = new CorsConfiguration();
         config.setAllowedOrigins(List.of(
             "http://localhost:5173", "http://localhost:5174", "http://localhost:5175", "http://localhost:5176",
-            "https://marcosmusic-production.up.railway.app",
-            "https://marcosmusic-plataform.up.railway.app",
-            "https://plataform.marcosmusic.com.br",
-            "https://production.marcosmusic.com.br"
+            "https://playmarcosmusic.netlify.app"
         ));
         config.setAllowedMethods(List.of("GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"));
         config.setAllowedHeaders(List.of("*"));
@@ -49,7 +46,6 @@ public class SecurityConfig {
             .addFilterBefore(jwtCookieAuthFilter, UsernamePasswordAuthenticationFilter.class)
             .authorizeHttpRequests(auth -> auth
                 .requestMatchers("/error", "/error/**").permitAll()
-                .requestMatchers("/", "/index.html", "/assets/**", "/*.js", "/*.css", "/*.ico", "/*.png", "/*.svg").permitAll()
                 .requestMatchers("/auth/**", "/auth").permitAll()
                 .requestMatchers("/aluno/**", "/aluno").permitAll()
                 .requestMatchers("/aula/**", "/aula").permitAll()

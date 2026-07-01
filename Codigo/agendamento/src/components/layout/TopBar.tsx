@@ -117,7 +117,6 @@ export function TopBar({ activePage, user, onLogout, onNavigate }: TopBarProps) 
     lessonAlerts: t('pages.lessonAlerts'),
     settings:     t('pages.settings'),
     profile:      t('pages.profile'),
-    credits:      'Créditos',
   };
 
   const initials = `${user.firstName?.[0] ?? ''}${user.lastName?.[0] ?? ''}`.trim().toUpperCase() || user.email.slice(0, 2).toUpperCase();
@@ -346,7 +345,7 @@ export function TopBar({ activePage, user, onLogout, onNavigate }: TopBarProps) 
       {/* Backdrop for dropdowns */}
       {(notifOpen || profileOpen) && (
         <div
-          className="fixed inset-0 z-10"
+          className="fixed inset-0 z-40"
           onClick={() => { setNotifOpen(false); setProfileOpen(false); }}
         />
       )}

@@ -178,7 +178,7 @@ export function ChatPanel({ isOpen, onClose, currentUser, onUnreadChange, defaul
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             transition={{ duration: 0.2 }}
-            className="fixed inset-0 z-65"
+            className="fixed inset-0 z-150"
             onClick={onClose}
             style={{ background: 'transparent' }}
           />
@@ -190,7 +190,7 @@ export function ChatPanel({ isOpen, onClose, currentUser, onUnreadChange, defaul
             animate={{ x: 0, opacity: 1 }}
             exit={{ x: '100%', opacity: 0 }}
             transition={{ type: 'spring', stiffness: 300, damping: 30 }}
-            className="fixed top-0 right-0 h-full w-80 z-66 flex flex-col shadow-2xl"
+            className="fixed top-0 right-0 h-full w-80 z-151 flex flex-col shadow-2xl"
             style={{ backgroundColor: 'var(--surface)', borderLeft: '1px solid var(--border)' }}
           >
             {/* Header */}

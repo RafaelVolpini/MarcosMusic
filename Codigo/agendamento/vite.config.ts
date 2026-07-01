@@ -7,7 +7,6 @@ export default defineConfig({
   plugins: [react(), tailwindcss()],
   server: {
     hmr: { clientPort: 5173 },
-    allowedHosts: ['localhost', 'marcosmusic-plataform.up.railway.app'],
     // Proxy para evitar CORS: todas as rotas do backend são redirecionadas ao Spring Boot
     proxy: {
       '/aula':             { target: 'http://localhost:8080', changeOrigin: true },
@@ -21,8 +20,5 @@ export default defineConfig({
       '/chat':             { target: 'http://localhost:8080', changeOrigin: true },
       '/notificacao':      { target: 'http://localhost:8080', changeOrigin: true },
     },
-  },
-  preview: {
-    allowedHosts: ['localhost', 'marcosmusic-plataform.up.railway.app'],
   },
 })

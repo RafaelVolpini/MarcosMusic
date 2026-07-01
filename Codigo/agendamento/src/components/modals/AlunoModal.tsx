@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { X, User, Mail, Phone, Tag, Save, UserPlus, Info, Lock, CheckCircle2, AlertCircle, Calendar } from 'lucide-react';
+import { X, User, Mail, Phone, Tag, Save, UserPlus, Info, Lock, CheckCircle2, AlertCircle } from 'lucide-react';
 import type { Aluno } from '../../types';
 import type { AlunoFormData } from '../../services/alunoService';
 import { formatPhoneGlobal } from '../../utils';
@@ -45,19 +45,12 @@ function formatPhone(raw: string): string {
   return `+55 ${d.slice(0, 2)} ${d.slice(2, 7)}-${d.slice(7)}`;
 }
 
-const PLAN_OPTIONS = [
-  { value: 1, label: '1 aula/semana' },
-  { value: 2, label: '2 aulas/semana' },
-  { value: 3, label: '3 aulas/semana' },
-];
-
 const EMPTY: AlunoFormData = {
   nome: '',
   email: '',
   telefone: '',
   apelido: '',
   ativo: true,
-  planoAulasSem: null,
 };
 
 function toFormData(a: Aluno): AlunoFormData {
@@ -67,7 +60,6 @@ function toFormData(a: Aluno): AlunoFormData {
     telefone: a.telefone ? formatPhoneGlobal(a.telefone) : '',
     apelido: a.apelido ?? '',
     ativo: a.ativo,
-    planoAulasSem: a.planoAulasSem ?? null,
   };
 }
 
@@ -195,17 +187,14 @@ export function AlunoModal({ aluno, open, onClose, onSave }: AlunoModalProps) {
   const [errors, setErrors] = useState<Partial<Record<keyof AlunoFormData, string>>>({});
   const [apiError, setApiError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
-  const [showApelido, setShowApelido] = useState(false);
   const firstInputRef = useRef<HTMLInputElement>(null);
 
   // Sincroniza form quando abre
   useEffect(() => {
     if (open) {
-      const data = aluno ? toFormData(aluno) : EMPTY;
-      setForm(data);
+      setForm(aluno ? toFormData(aluno) : EMPTY);
       setErrors({});
       setApiError(null);
-      setShowApelido(!!(aluno?.apelido));
       setTimeout(() => firstInputRef.current?.focus(), 80);
     }
   }, [open, aluno]);
@@ -278,7 +267,7 @@ export function AlunoModal({ aluno, open, onClose, onSave }: AlunoModalProps) {
 
           {/* Modal */}
           <motion.div
-            className="fixed inset-0 z-90 flex items-center justify-center p-3 sm:p-4"
+            className="fixed inset-0 z-90 flex items-center justify-center p-4"
             initial={{ opacity: 0, scale: 0.96, y: 12 }}
             animate={{ opacity: 1, scale: 1, y: 0 }}
             exit={{ opacity: 0, scale: 0.96, y: 12 }}
@@ -287,7 +276,7 @@ export function AlunoModal({ aluno, open, onClose, onSave }: AlunoModalProps) {
             <div
               className="
                 w-full max-w-md bg-(--surface) rounded-2xl shadow-2xl
-                border border-(--border) flex flex-col max-h-[92dvh]
+                border border-(--border) overflow-hidden
               "
               onClick={e => e.stopPropagation()}
             >
@@ -328,10 +317,10 @@ export function AlunoModal({ aluno, open, onClose, onSave }: AlunoModalProps) {
               </div>
 
               {/* Form */}
-              <form onSubmit={handleSubmit} noValidate className="flex flex-col flex-1 min-h-0">
-                <div className="px-5 py-4 flex flex-col gap-3 overflow-y-auto flex-1">
+              <form onSubmit={handleSubmit} noValidate>
+                <div className="px-6 py-5 flex flex-col gap-4">
 
-                  {/* Nome */}
+                  {/* Campos obrigatórios */}
                   <Field label={t('modals.student.nameLabel')} icon={User} error={errors.nome} required>
                     <TextInput
                       value={form.nome}
@@ -342,7 +331,6 @@ export function AlunoModal({ aluno, open, onClose, onSave }: AlunoModalProps) {
                     />
                   </Field>
 
-                  {/* Email */}
                   <Field
                     label={t('modals.student.emailLabel')}
                     icon={Mail}
@@ -365,13 +353,13 @@ export function AlunoModal({ aluno, open, onClose, onSave }: AlunoModalProps) {
                   {/* Senha padrão somente no cadastro */}
                   {!isEdit && (
                     <div
-                      className="flex items-start gap-2 px-3 py-2 rounded-xl border"
+                      className="flex items-start gap-2 px-3 py-2.5 rounded-xl border"
                       style={{
                         backgroundColor: 'color-mix(in srgb, var(--accent-500) 10%, var(--surface))',
                         borderColor: 'color-mix(in srgb, var(--accent-500) 30%, transparent)',
                       }}
                     >
-                      <Info size={12} className="text-(--accent-500) mt-0.5 shrink-0" />
+                      <Info size={13} className="text-(--accent-500) mt-0.5 shrink-0" />
                       <p className="text-xs text-(--muted) leading-relaxed">
                         {t('modals.student.passwordHintPre')}{' '}
                         <span className="font-bold text-(--text)">123456</span>.
@@ -380,7 +368,13 @@ export function AlunoModal({ aluno, open, onClose, onSave }: AlunoModalProps) {
                     </div>
                   )}
 
-                  {/* Telefone */}
+                  {/* Divisor campos opcionais */}
+                  <div className="flex items-center gap-2 pt-1">
+                    <div className="flex-1 h-px bg-(--border)" />
+                    <span className="text-[10px] font-semibold uppercase tracking-widest text-(--muted)">{t('common.optional')}</span>
+                    <div className="flex-1 h-px bg-(--border)" />
+                  </div>
+
                   <Field label={t('modals.student.phoneLabel')} icon={Phone} error={errors.telefone}
                     hint={!errors.telefone ? t('modals.student.phoneFormat') : undefined}
                   >
@@ -394,50 +388,20 @@ export function AlunoModal({ aluno, open, onClose, onSave }: AlunoModalProps) {
                     />
                   </Field>
 
-                  {/* Plano */}
-                  <Field label="Plano de aulas" icon={Calendar}>
-                    <div className="flex gap-1.5 flex-wrap">
-                      {PLAN_OPTIONS.map(opt => (
-                        <button
-                          key={String(opt.value)}
-                          type="button"
-                          onClick={() => set('planoAulasSem', opt.value)}
-                          className={`
-                            h-8 px-3 rounded-lg text-xs font-medium transition-colors border
-                            ${(form.planoAulasSem ?? null) === opt.value
-                              ? 'bg-(--accent-500) text-white border-(--accent-500)'
-                              : 'bg-(--input-bg) text-(--muted) border-(--input-border) hover:border-(--accent-500) hover:text-(--accent-500)'
-                            }
-                          `}
-                        >
-                          {opt.label}
-                        </button>
-                      ))}
-                    </div>
+                  <Field
+                    label={t('modals.student.nicknameLabel')}
+                    icon={Tag}
+                    hint={t('modals.student.nicknameHint')}
+                  >
+                    <TextInput
+                      value={form.apelido ?? ''}
+                      onChange={v => set('apelido', v)}
+                      placeholder={t('modals.student.nicknamePH')}
+                    />
                   </Field>
 
-                  {/* Apelido — expandível */}
-                  {showApelido ? (
-                    <Field label={t('modals.student.nicknameLabel')} icon={Tag} hint={t('modals.student.nicknameHint')}>
-                      <TextInput
-                        value={form.apelido ?? ''}
-                        onChange={v => set('apelido', v)}
-                        placeholder={t('modals.student.nicknamePH')}
-                      />
-                    </Field>
-                  ) : (
-                    <button
-                      type="button"
-                      onClick={() => setShowApelido(true)}
-                      className="flex items-center gap-1.5 text-xs text-(--muted) hover:text-(--accent-500) transition-colors self-start"
-                    >
-                      <Tag size={11} />
-                      + Adicionar apelido
-                    </button>
-                  )}
-
                   {/* Toggle ativo */}
-                  <div className="flex items-center justify-between pt-0.5">
+                  <div className="flex items-center justify-between py-1">
                     <div>
                       <span className="text-sm text-(--text) font-medium">{t('modals.student.statusLabel')}</span>
                       <p className="text-[11px] text-(--muted) mt-0.5">
@@ -455,7 +419,7 @@ export function AlunoModal({ aluno, open, onClose, onSave }: AlunoModalProps) {
                       </span>
                       <div
                         className={`
-                          relative w-10 h-5 rounded-full transition-colors duration-200
+                          relative w-10 h-5 rounded-full transition-colors duration-200 focus:outline-none
                           ${form.ativo ? 'bg-emerald-500' : 'bg-(--input-border)'}
                         `}
                       >
@@ -474,7 +438,7 @@ export function AlunoModal({ aluno, open, onClose, onSave }: AlunoModalProps) {
 
                 {/* Erro da API */}
                 {apiError && (
-                  <div className="mx-5 mb-3 flex items-start gap-2 px-3 py-2 rounded-xl border border-red-300 bg-red-50 dark:bg-red-950/40 dark:border-red-900/50">
+                  <div className="mx-6 mb-4 flex items-start gap-2 px-3 py-2.5 rounded-xl border border-red-300 bg-red-50 dark:bg-red-950/40 dark:border-red-900/50">
                     <span className="text-red-500 mt-0.5 shrink-0 text-sm font-bold">!</span>
                     <p className="text-xs text-red-600 dark:text-red-400 leading-relaxed">{apiError}</p>
                   </div>

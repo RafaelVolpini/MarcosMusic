@@ -34,14 +34,6 @@
   --color-amber-400: #fbbf24;
   --color-amber-500: #f59e0b;
   --color-amber-600: #d97706;
-
-  /* Surface and text tokens for theme-aware landing page styles */
-  --color-surface: var(--surface);
-  --color-surface-soft: var(--surface-soft);
-  --color-surface-container-low: var(--surface-soft);
-  --color-on-surface: var(--text);
-  --color-on-surface-variant: var(--muted);
-  --color-border: var(--border);
 }
 
 * {
@@ -75,7 +67,6 @@
   --accent-icon-bg: color-mix(in srgb, var(--accent-500) 12%, var(--surface));
   --accent-icon-bg-active: color-mix(in srgb, var(--accent-500) 20%, var(--surface));
   --accent-icon-fg: var(--accent-600);
-  --app-surface: #f4f5fb;
 }
 
 :root[data-theme='dark'] {
@@ -92,7 +83,6 @@
   --input-text: #e2e8f0;
   --dropdown-bg: #1e293b;
   --dropdown-border: #334155;
-  --app-surface: #0f172a;
 }
 
 :root[data-density='compact'] {
