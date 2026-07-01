@@ -98,7 +98,12 @@ export function AgendaPage({
   }, [fetchAulas]);
 
   const handleSyncGoogle = useCallback(async () => {
-    if (!getGoogleConnectedFlag() || syncingGoogle) return;
+    if (syncingGoogle) return;
+    if (!getGoogleConnectedFlag()) {
+      sessionStorage.setItem('marcos-music:settings:section', 'integrations');
+      onNavigate?.('settings');
+      return;
+    }
     setSyncingGoogle(true);
     try {
       const now = new Date();
@@ -228,7 +233,7 @@ export function AgendaPage({
         onLessonMove={handleMoveLesson}
         onWeekChange={handleWeekChange}
         onReposicaoClick={(r) => setSelectedReposicao(r)}
-        onSyncCalendar={getGoogleConnectedFlag() ? handleSyncGoogle : undefined}
+        onSyncCalendar={currentUser.role === 'teacher' ? handleSyncGoogle : undefined}
         syncingCalendar={syncingGoogle}
       />
 

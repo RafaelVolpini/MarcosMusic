@@ -66,7 +66,7 @@ export function DisponibilidadePage({
       const dtos = await buscarDisponibilidade();
       applyDTOs(dtos);
     } catch {
-      // fallback: mantém estado atual
+      // fallback: mantÃ©m estado atual
     } finally {
       setLoadingDb(false);
     }
@@ -84,7 +84,7 @@ export function DisponibilidadePage({
     [availabilityReposicao],
   );
 
-  // Ciclo 3 estados: indisponível ? disponível ? reposição ? indisponível
+  // Ciclo 3 estados: indisponÃ­vel ? disponÃ­vel ? reposiÃ§Ã£o ? indisponÃ­vel
   const toggleSlot = (day: DayKey, time: string) => {
     const isAvail = availability[day].includes(time);
     const isReposicao = availabilityReposicao[day].includes(time);
@@ -93,14 +93,14 @@ export function DisponibilidadePage({
     setSaveStatus('idle');
 
     if (!isAvail && !isReposicao) {
-      // indisponível ? disponível
+      // indisponÃ­vel ? disponÃ­vel
       onChangeAvailability({ ...availability, [day]: [...availability[day], time].sort((a, b) => timeToMinutes(a) - timeToMinutes(b)) });
     } else if (isAvail) {
-      // disponível ? reposição
+      // disponÃ­vel ? reposiÃ§Ã£o
       onChangeAvailability({ ...availability, [day]: availability[day].filter(s => s !== time) });
       onChangeAvailabilityReposicao({ ...availabilityReposicao, [day]: [...availabilityReposicao[day], time].sort((a, b) => timeToMinutes(a) - timeToMinutes(b)) });
     } else {
-      // reposição ? indisponível
+      // reposiÃ§Ã£o ? indisponÃ­vel
       onChangeAvailabilityReposicao({ ...availabilityReposicao, [day]: availabilityReposicao[day].filter(s => s !== time) });
     }
   };
@@ -152,7 +152,7 @@ export function DisponibilidadePage({
               className="inline-block w-4 h-4 rounded"
               style={{ background: 'linear-gradient(135deg, var(--accent-gradient-from), var(--accent-gradient-to))' }}
             />
-            Disponível
+            DisponÃ­vel
           </span>
           <span className="flex items-start gap-1.5">
             <span className="inline-flex items-center justify-center w-5 h-5 rounded bg-violet-500 border-2 border-violet-600">
