@@ -103,7 +103,7 @@ export function LandingPage({ onEnterLogin }: LandingPageProps) {
               </span>
               <div className="max-w-2xl space-y-6">
                 <h1 className="text-4xl font-black tracking-tight sm:text-5xl md:text-6xl" style={themeStyles.text}>
-                  Sua agenda musical em <span className="text-transparent bg-clip-text" style={{ background: 'linear-gradient(135deg, var(--accent-gradient-from), var(--accent-gradient-to))' }}>harmonia</span>
+                  Sua agenda musical em <span className="text-cyan-400">harmonia</span>
                 </h1>
                 <p className="max-w-xl text-lg leading-8" style={themeStyles.muted}>
                   A ferramenta completa para professores e escolas de música gerenciarem alunos, aulas e pagamentos. Diga adeus às planilhas confusas e olá para mais tempo ensinando.
