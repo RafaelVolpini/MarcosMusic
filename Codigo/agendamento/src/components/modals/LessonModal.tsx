@@ -121,6 +121,11 @@ export function LessonModal({
   const isPastLesson = lesson.date < todayStr || (lesson.date === todayStr && lesson.endTime <= nowTimeStr);
   const isReadOnly = isPastLesson || isOngoing;
 
+  // Regra das 24h: aluno não pode cancelar/reagendar se faltam menos de 24h para o início
+  const lessonStartDt = new Date(`${lesson.date}T${lesson.startTime}:00`);
+  const deadlineDt = new Date(lessonStartDt.getTime() - 24 * 60 * 60 * 1000);
+  const isWithin24h = currentUser.role !== "teacher" && nowDt >= deadlineDt;
+
   const ALL_HOURS = Array.from(
     { length: 17 },
     (_, i) => `${String(i + 7).padStart(2, "0")}:00`,
@@ -458,7 +463,7 @@ export function LessonModal({
                             {t('modals.lesson.edit')}
                           </Button>
                         )}
-                        {lesson.status !== "cancelled" && canModify && !isLockedByAttendance && (
+                        {lesson.status !== "cancelled" && canModify && !isLockedByAttendance && !isWithin24h && (
                           <Button variant="ghost" size="sm" onClick={() => setRescheduling(true)}>
                             <RefreshCw size={13} />
                             {t('modals.lesson.reschedule')}
@@ -478,6 +483,11 @@ export function LessonModal({
                             <CheckCircle size={12} /> {t('modals.lesson.presenceConfirmed')}
                           </span>
                         )}
+                        {isWithin24h && !isLockedByAttendance && canModify && (
+                          <span className="text-xs text-(--muted) italic ml-auto">
+                            Cancelamento bloqueado — menos de 24h para a aula
+                          </span>
+                        )}
                         {isLockedByAttendance && (
                           <span className="text-xs text-(--muted) italic ml-auto">
                             {t('modals.lesson.lockedByAttendance')}
@@ -488,7 +498,7 @@ export function LessonModal({
                             {t('modals.lesson.readOnly')}
                           </span>
                         )}
-                        {canModify && !isLockedByAttendance &&
+                        {canModify && !isLockedByAttendance && !isWithin24h &&
                           (!confirmDelete ? (
                             <Button
                               variant="ghost"

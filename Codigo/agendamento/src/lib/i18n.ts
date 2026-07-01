@@ -107,6 +107,7 @@ export const translations = {
         notifications: 'Notificações',
         appearance:    'Aparência',
         integrations:  'Sincronizações',
+        credits:       'Créditos',
       },
       profile: {
         title:          'Meu Perfil',
@@ -529,6 +530,7 @@ export const translations = {
         notifications: 'Notifications',
         appearance:    'Appearance',
         integrations:  'Integrations',
+        credits:       'Credits',
       },
       profile: {
         title:          'My Profile',

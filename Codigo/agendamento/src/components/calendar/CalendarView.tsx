@@ -145,11 +145,18 @@ export function CalendarView({
 
   // Drag handlers
   const handleDragStart = useCallback((lesson: Lesson, e: React.DragEvent) => {
+    // Block students from dragging attendance-confirmed or non-owned lessons
+    if (currentUser && currentUser.role !== 'teacher') {
+      if (lesson.attendanceConfirmed || !isOwnLesson(lesson, currentUser)) {
+        e.preventDefault();
+        return;
+      }
+    }
     const startMins = timeToMinutes(lesson.startTime);
     const clickMins = HOUR_START * 60;
     setDragging({ lesson, offsetMinutes: startMins - clickMins });
     e.dataTransfer.effectAllowed = 'move';
-  }, []);
+  }, [currentUser]);
 
   const handleDragOver = useCallback((date: string, hour: number, e: React.DragEvent) => {
     e.preventDefault();
@@ -431,6 +438,12 @@ export function CalendarView({
                         lessonStartMins <= nowMins &&
                         lessonEndMins > nowMins;
                       const effectivePast = isPast || isLessonInProgress;
+                      const isStudent = !!currentUser && currentUser.role !== 'teacher';
+                      const attendanceLocked = isStudent && !!lesson.attendanceConfirmed;
+                      const notOwn = isStudent && !isOwnLesson(lesson, currentUser);
+                      const lessonStartDt = new Date(`${dateStr}T${lesson.startTime}:00`);
+                      const within24h = isStudent && new Date() >= new Date(lessonStartDt.getTime() - 24 * 60 * 60 * 1000);
+                      const canDrag = !effectivePast && !attendanceLocked && !notOwn && !within24h;
                       return (
                         <LessonBlock
                           key={lesson.id}
@@ -438,7 +451,8 @@ export function CalendarView({
                           hourStart={hour}
                           isPast={effectivePast}
                           isInProgress={isLessonInProgress}
-                          blurContent={effectivePast && !!currentUser && currentUser.role !== 'teacher'}
+                          blurContent={effectivePast && isStudent}
+                          isDraggable={canDrag}
                           isUnavailable={!isAvailable(dateStr, lesson.startTime)}
                           lang={lang}
                           onClick={(e) => { e.stopPropagation(); onLessonClick(lesson); }}
@@ -516,12 +530,13 @@ interface LessonBlockProps {
   isPast?: boolean;
   isInProgress?: boolean;
   blurContent?: boolean;
+  isDraggable?: boolean;
   lang: string;
   onClick: (e: React.MouseEvent) => void;
   onDragStart: (e: React.DragEvent) => void;
 }
 
-function LessonBlock({ lesson, hourStart, isUnavailable, isPast, isInProgress, blurContent, lang, onClick, onDragStart }: LessonBlockProps) {
+function LessonBlock({ lesson, hourStart, isUnavailable, isInProgress, blurContent, isDraggable, lang, onClick, onDragStart }: LessonBlockProps) {
   const { t } = useLanguage();
   const startMins = timeToMinutes(lesson.startTime);
   const endMins = timeToMinutes(lesson.endTime);
@@ -537,8 +552,8 @@ function LessonBlock({ lesson, hourStart, isUnavailable, isPast, isInProgress, b
 
   return (
     <div
-      draggable={!isPast}
-      onDragStart={isPast ? undefined : onDragStart}
+      draggable={isDraggable}
+      onDragStart={isDraggable ? onDragStart : undefined}
       onClick={onClick}
       className={cn(
         'absolute left-1 right-1 rounded-lg px-2 py-1.5 overflow-hidden select-none',

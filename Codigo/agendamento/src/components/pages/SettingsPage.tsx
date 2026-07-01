@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   Settings, Bell, Palette, Globe, Check, RotateCcw, Sliders, CheckCircle2,
-  User, Phone, Mail, AlertCircle,
+  User, Phone, Mail, AlertCircle, Gift,
 } from 'lucide-react';
 import { Card } from '../ui/Card';
 import { Button } from '../ui/Button';
@@ -20,6 +20,7 @@ import type { AuthUser } from '../../lib/auth';
 import { useToast } from '../ui/Toast';
 import { useLanguage } from '../../context/LanguageContext';
 import { SaldoCreditosCard } from '../creditos/SaldoCreditosCard';
+import { CreditsPage } from './CreditsPage';
 
 const TIMEZONES: { label: string; value: string }[] = [
   { label: 'America/Sao_Paulo UTC-3 (Brasília, SP, RJ)', value: 'America/Sao_Paulo' },
@@ -73,11 +74,12 @@ const TIMEZONES: { label: string; value: string }[] = [
 ];
 
 const SECTIONS = [
-  { id: 'profile',       labelKey: 'settings.sections.profile',       icon: <User size={15} /> },
-  { id: 'general',       labelKey: 'settings.sections.general',       icon: <Settings size={15} /> },
-  { id: 'notifications', labelKey: 'settings.sections.notifications', icon: <Bell size={15} /> },
-  { id: 'appearance',    labelKey: 'settings.sections.appearance',    icon: <Palette size={15} /> },
-  { id: 'integrations',  labelKey: 'settings.sections.integrations',  icon: <Globe size={15} /> },
+  { id: 'profile',       labelKey: 'settings.sections.profile',       icon: <User size={15} />,     studentOnly: false },
+  { id: 'general',       labelKey: 'settings.sections.general',       icon: <Settings size={15} />, studentOnly: false },
+  { id: 'notifications', labelKey: 'settings.sections.notifications', icon: <Bell size={15} />,     studentOnly: false },
+  { id: 'appearance',    labelKey: 'settings.sections.appearance',    icon: <Palette size={15} />,  studentOnly: false },
+  { id: 'integrations',  labelKey: 'settings.sections.integrations',  icon: <Globe size={15} />,    studentOnly: false },
+  { id: 'credits',       labelKey: 'settings.sections.credits',       icon: <Gift size={15} />,     studentOnly: true  },
 ];
 
 // ─── helpers de perfil ────────────────────────────────────────────────────────
@@ -303,7 +305,7 @@ export function SettingsPage({ user, onProfileUpdate, initialSection }: Settings
         {/* Sidebar nav */}
         <div className="w-48 shrink-0">
           <Card className="p-2 app-surface">
-            {SECTIONS.map(s => (
+            {SECTIONS.filter(s => !s.studentOnly || user?.role === 'student').map(s => (
               <button
                 key={s.id}
                 onClick={() => setActiveSection(s.id)}
@@ -848,6 +850,10 @@ export function SettingsPage({ user, onProfileUpdate, initialSection }: Settings
                   ))}
                 </div>
               </Card>
+            )}
+
+            {activeSection === 'credits' && user?.role === 'student' && (
+              <CreditsPage />
             )}
           </motion.div>
         </div>

@@ -3,9 +3,12 @@ package com.marcos.music.controller;
 import com.marcos.music.dto.Credito.CreditoReposicaoDTO;
 import com.marcos.music.dto.Credito.SaldoCreditosDTO;
 import com.marcos.music.entity.CreditoReposicao;
+import com.marcos.music.entity.Usuario;
+import com.marcos.music.repository.UsuarioRepository;
 import com.marcos.music.service.CreditoReposicaoService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -18,6 +21,7 @@ import java.util.stream.Collectors;
 public class CreditoReposicaoController {
 
     private final CreditoReposicaoService service;
+    private final UsuarioRepository usuarioRepository;
 
     /**
      * Retorna o saldo de créditos do aluno (para perfil)
@@ -71,5 +75,30 @@ public class CreditoReposicaoController {
     @GetMapping("/aluno/{alunoId}/total")
     public ResponseEntity<Integer> getTotalCreditosDisponivel(@PathVariable UUID alunoId) {
         return ResponseEntity.ok(service.contarCreditosDisponiveis(alunoId));
+    }
+
+    /**
+     * Retorna saldo de créditos do aluno autenticado
+     */
+    @GetMapping("/meus-creditos")
+    public ResponseEntity<?> meusCreditosReposicao() {
+        try {
+            var auth = SecurityContextHolder.getContext().getAuthentication();
+            if (auth == null || !auth.isAuthenticated() || "anonymousUser".equals(auth.getName())) {
+                return ResponseEntity.status(401).body("Não autenticado");
+            }
+
+            Usuario usuario = usuarioRepository.findByEmail(auth.getName())
+                    .orElseThrow(() -> new RuntimeException("Usuário não encontrado"));
+
+            // Se é professor, não tem créditos de aluno
+            if (usuario.getRole().name().equals("ADMIN")) {
+                return ResponseEntity.ok(new SaldoCreditosDTO());
+            }
+
+            return getSaldoCreditos(usuario.getId());
+        } catch (Exception e) {
+            return ResponseEntity.status(500).body("Erro ao buscar créditos: " + e.getMessage());
+        }
     }
 }

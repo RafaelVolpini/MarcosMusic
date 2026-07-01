@@ -85,28 +85,6 @@ function FloatingNote({ note, left, delay }: { note: string; left: string; delay
   );
 }
 
-/* ─── Marquee ──────────────────────────────────────────────── */
-const MARQUEE_ITEMS = [
-  'Piano', 'Violao', 'Guitarra', 'Producao Musical',
-  'Aulas Online', 'Presencial', 'Iniciantes', 'Avancados',
-  'Metodologia por Fases', 'Marcos Music Agenda',
-];
-function Marquee() {
-  return (
-    <div className="overflow-hidden border-y py-3.5" style={{ borderColor: 'var(--border)', backgroundColor: 'var(--surface-soft)' }}>
-      <motion.div className="flex gap-12 whitespace-nowrap"
-        animate={{ x: ['0%', '-50%'] }}
-        transition={{ duration: 28, repeat: Infinity, ease: 'linear' }}
-      >
-        {[...MARQUEE_ITEMS, ...MARQUEE_ITEMS].map((item, i) => (
-          <span key={i} className="text-xs font-bold uppercase tracking-widest" style={{ color: 'var(--accent-600)' }}>
-            {item}
-          </span>
-        ))}
-      </motion.div>
-    </div>
-  );
-}
 
 /* ─── Section label ─────────────────────────────────────────── */
 function SectionLabel({ children }: { children: React.ReactNode }) {
@@ -351,12 +329,10 @@ export function LandingPage({ onEnterLogin }: LandingPageProps) {
             className="flex items-center gap-2 rounded-2xl px-7 py-3.5 text-sm font-bold text-white shadow-2xl"
             style={{ background: 'linear-gradient(135deg, var(--accent-gradient-from), var(--accent-gradient-to))' }}
           >
-            Ver Planos <ArrowRight size={15} />
+            Ver Planos <Calendar size={15} />
           </motion.button>
         </motion.div>
       </section>
-
-      <Marquee />
 
       {/* ══════════════════════════════════════════════
           STATS
@@ -704,7 +680,7 @@ export function LandingPage({ onEnterLogin }: LandingPageProps) {
 
             <h2 className="text-4xl font-black sm:text-5xl" style={{ color: 'var(--heading)' }}>Pronto para comecar?</h2>
             <p className="mx-auto mt-3 max-w-md text-sm" style={{ color: 'var(--muted)' }}>
-              Agende uma aula experimental gratuita ou acesse a plataforma se ja for aluno.
+              Agende uma aula experimental gratuita ou entre em contato para conhecer a plataforma.
             </p>
 
             <div className="mt-8 flex flex-wrap items-center justify-center gap-3">
@@ -714,11 +690,11 @@ export function LandingPage({ onEnterLogin }: LandingPageProps) {
                 style={{ borderColor: 'var(--border)', color: 'var(--text)', backgroundColor: 'var(--surface)' }}>
                 <Mail size={15} /> Entrar em Contato
               </motion.button>
-              <motion.button onClick={onEnterLogin}
+              <motion.button onClick={handleWhatsApp}
                 whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.97 }}
                 className="flex items-center gap-2 rounded-2xl px-7 py-3.5 text-sm font-bold text-white shadow-2xl"
                 style={{ background: 'linear-gradient(135deg, var(--accent-gradient-from), var(--accent-gradient-to))' }}>
-                Acessar a Plataforma <ArrowRight size={15} />
+                Contato via WhatsApp <ArrowRight size={15} />
               </motion.button>
             </div>
           </motion.div>

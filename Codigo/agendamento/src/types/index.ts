@@ -72,4 +72,5 @@ export type Page =
   | 'video'
   | 'lessonAlerts'
   | 'settings'
-  | 'profile';
+  | 'profile'
+  | 'credits';

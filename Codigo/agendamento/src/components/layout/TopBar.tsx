@@ -117,6 +117,7 @@ export function TopBar({ activePage, user, onLogout, onNavigate }: TopBarProps) 
     lessonAlerts: t('pages.lessonAlerts'),
     settings:     t('pages.settings'),
     profile:      t('pages.profile'),
+    credits:      'Créditos',
   };
 
   const initials = `${user.firstName?.[0] ?? ''}${user.lastName?.[0] ?? ''}`.trim().toUpperCase() || user.email.slice(0, 2).toUpperCase();

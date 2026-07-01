@@ -198,13 +198,12 @@ public class AulaService {
             LocalDateTime agora = LocalDateTime.now();
             LocalDateTime inicioAula = a.getDataInicio();
 
-            // Validação: até 23:00 do dia anterior (apenas para alunos, não para professores/admin)
+            // Validação: até 24h antes do início da aula (apenas para alunos, não para professores/admin)
             if (usuarioAtual != null && usuarioAtual.getRole() != Role.ADMIN) {
-                LocalDateTime dataLimiteCancelamento = inicioAula.minusDays(1)
-                        .withHour(23).withMinute(0).withSecond(0);
+                LocalDateTime dataLimiteCancelamento = inicioAula.minusHours(24);
 
                 if (agora.isAfter(dataLimiteCancelamento)) {
-                    throw new RuntimeException("Você não pode cancelar a aula após 23:00 do dia anterior. " +
+                    throw new RuntimeException("Você não pode cancelar a aula com menos de 24h de antecedência. " +
                             "Limite: " + dataLimiteCancelamento.format(
                                     java.time.format.DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm")));
                 }
@@ -251,13 +250,12 @@ public class AulaService {
             throw new RuntimeException("N\u00e3o \u00e9 poss\u00edvel reagendar uma aula cancelada");
         }
 
-        // Valida\u00e7\u00e3o: at\u00e9 23:00 do dia anterior (apenas para alunos, n\u00e3o para professores/admin)
+        // Valida\u00e7\u00e3o: at\u00e9 24h antes do in\u00edcio da aula (apenas para alunos, n\u00e3o para professores/admin)
         if (usuarioAtual != null && usuarioAtual.getRole() != Role.ADMIN) {
             LocalDateTime agora = LocalDateTime.now();
-            LocalDateTime dataLimiteReagendamento = a.getDataInicio().minusDays(1)
-                    .withHour(23).withMinute(0).withSecond(0);
+            LocalDateTime dataLimiteReagendamento = a.getDataInicio().minusHours(24);
             if (agora.isAfter(dataLimiteReagendamento)) {
-                throw new RuntimeException("N\u00e3o \u00e9 poss\u00edvel reagendar a aula ap\u00f3s 23:00 do dia anterior. " +
+                throw new RuntimeException("N\u00e3o \u00e9 poss\u00edvel reagendar a aula com menos de 24h de anteced\u00eancia. " +
                         "Limite: " + dataLimiteReagendamento.format(
                                 java.time.format.DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm")));
             }
