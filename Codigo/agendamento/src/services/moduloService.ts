@@ -77,7 +77,10 @@ export async function uploadVideo(
     xhr.addEventListener('abort', () => reject(new Error('Upload cancelado')));
     xhr.addEventListener('timeout', () => reject(new Error('Tempo limite excedido (5 min)')));
 
-    xhr.open('POST', '/upload-modulo/upload');
+    // XHR não passa pelo interceptor de fetch — precisa da URL absoluta em produção
+    const UPLOAD_BACKEND = import.meta.env.VITE_BACKEND_URL?.replace(/\/$/, '')
+      || (import.meta.env.PROD ? 'https://marcosmusic-production.up.railway.app' : '');
+    xhr.open('POST', `${UPLOAD_BACKEND}/upload-modulo/upload`);
     xhr.withCredentials = true;
     xhr.timeout = 5 * 60 * 1000; // 5 minutos
     xhr.send(formData);
