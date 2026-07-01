@@ -247,6 +247,14 @@ public class AulaService {
         if (Boolean.TRUE.equals(a.getFlagCancelada())) {
             throw new RuntimeException("N\u00e3o \u00e9 poss\u00edvel reagendar uma aula cancelada");
         }
+        LocalDateTime agora = LocalDateTime.now();
+        LocalDateTime dataLimiteReagendamento = a.getDataInicio().minusDays(1)
+                .withHour(23).withMinute(0).withSecond(0);
+        if (agora.isAfter(dataLimiteReagendamento)) {
+            throw new RuntimeException("N\u00e3o \u00e9 poss\u00edvel reagendar a aula ap\u00f3s 23:00 do dia anterior. " +
+                    "Limite: " + dataLimiteReagendamento.format(
+                            java.time.format.DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm")));
+        }
         a.setDataInicio(novaDataInicio);
         a.setDataFim(novaDataFim);
         Aula salva = repository.save(a);

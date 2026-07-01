@@ -51,6 +51,7 @@ public class AlunoService {
             aluno.setStatus(dto.getStatus() != null ? dto.getStatus() : true);
             aluno.setTermos(dto.getTermos() != null ? dto.getTermos() : false);
             aluno.setApelido(dto.getApelido());
+            aluno.setPlanoAulasMes(dto.getPlanoAulasMes());
 
             List<Long> idsDTO = dto.getHorarios() == null ? List.of() :
                     dto.getHorarios().stream()
@@ -105,6 +106,7 @@ public class AlunoService {
         aluno.setTermos(dto.getTermos() != null ? dto.getTermos() : false);
         aluno.setStatus(dto.getStatus() != null ? dto.getStatus() : true);
         aluno.setApelido(dto.getApelido());
+        aluno.setPlanoAulasMes(dto.getPlanoAulasMes());
 
         aluno.setUsuario(user); 
 

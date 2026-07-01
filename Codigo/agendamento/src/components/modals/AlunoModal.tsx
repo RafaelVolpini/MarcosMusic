@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { X, User, Mail, Phone, Tag, Save, UserPlus, Info, Lock, CheckCircle2, AlertCircle } from 'lucide-react';
+import { X, User, Mail, Phone, Tag, Save, UserPlus, Info, Lock, CheckCircle2, AlertCircle, Calendar } from 'lucide-react';
 import type { Aluno } from '../../types';
 import type { AlunoFormData } from '../../services/alunoService';
 import { formatPhoneGlobal } from '../../utils';
@@ -45,12 +45,20 @@ function formatPhone(raw: string): string {
   return `+55 ${d.slice(0, 2)} ${d.slice(2, 7)}-${d.slice(7)}`;
 }
 
+const PLAN_OPTIONS = [
+  { value: null, label: 'Sem plano' },
+  { value: 2, label: '2 aulas/mês' },
+  { value: 3, label: '3 aulas/mês' },
+  { value: 4, label: '4 aulas/mês' },
+];
+
 const EMPTY: AlunoFormData = {
   nome: '',
   email: '',
   telefone: '',
   apelido: '',
   ativo: true,
+  planoAulasMes: null,
 };
 
 function toFormData(a: Aluno): AlunoFormData {
@@ -60,6 +68,7 @@ function toFormData(a: Aluno): AlunoFormData {
     telefone: a.telefone ? formatPhoneGlobal(a.telefone) : '',
     apelido: a.apelido ?? '',
     ativo: a.ativo,
+    planoAulasMes: a.planoAulasMes ?? null,
   };
 }
 
@@ -398,6 +407,27 @@ export function AlunoModal({ aluno, open, onClose, onSave }: AlunoModalProps) {
                       onChange={v => set('apelido', v)}
                       placeholder={t('modals.student.nicknamePH')}
                     />
+                  </Field>
+
+                  <Field label="Plano de aulas" icon={Calendar}>
+                    <div className="flex gap-2 flex-wrap">
+                      {PLAN_OPTIONS.map(opt => (
+                        <button
+                          key={String(opt.value)}
+                          type="button"
+                          onClick={() => set('planoAulasMes', opt.value)}
+                          className={`
+                            h-9 px-3.5 rounded-xl text-sm font-medium transition-colors border
+                            ${(form.planoAulasMes ?? null) === opt.value
+                              ? 'bg-(--accent-500) text-white border-(--accent-500)'
+                              : 'bg-(--input-bg) text-(--muted) border-(--input-border) hover:border-(--accent-500) hover:text-(--accent-500)'
+                            }
+                          `}
+                        >
+                          {opt.label}
+                        </button>
+                      ))}
+                    </div>
                   </Field>
 
                   {/* Toggle ativo */}

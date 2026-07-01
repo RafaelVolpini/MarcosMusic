@@ -14,6 +14,7 @@ export interface Aluno {
   ativo: boolean;
   apelido?: string;
   reposicoes?: number;
+  planoAulasMes?: number;
 }
 
 export interface Lesson {

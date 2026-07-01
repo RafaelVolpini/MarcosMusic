@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
-import { Search, Plus, Phone, Mail, Tag, ChevronLeft, ChevronRight, Trash2, MessageSquare } from 'lucide-react';
+import { Search, Plus, Phone, Mail, Tag, ChevronLeft, ChevronRight, Trash2, MessageSquare, Calendar } from 'lucide-react';
 import { DeleteConfirmModal } from '../modals/DeleteConfirmModal';
 import type { Aluno } from '../../types';
 import type { AuthUser } from '../../lib/auth';
@@ -221,6 +221,12 @@ export function StudentsPage({ students, currentUser, onReload }: StudentsPagePr
                       >
                         {formatPhoneGlobal(aluno.telefone)}
                       </a>
+                    </div>
+                  )}
+                  {aluno.planoAulasMes != null && (
+                    <div className="flex items-center gap-2 text-xs text-(--muted)">
+                      <Calendar size={12} className="text-(--accent-500) shrink-0" />
+                      <span>{aluno.planoAulasMes} aulas/mês</span>
                     </div>
                   )}
                 </div>
