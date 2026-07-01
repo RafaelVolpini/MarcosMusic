@@ -19,6 +19,7 @@ import com.marcos.music.dto.Aula.HorarioValidatorDTO;
 import com.marcos.music.entity.Aluno;
 import com.marcos.music.entity.Aula;
 import com.marcos.music.entity.AulaAluno;
+import com.marcos.music.entity.Role;
 import com.marcos.music.entity.Usuario;
 import com.marcos.music.repository.AlunoRepository;
 import com.marcos.music.repository.Aula.AulaAlunoRepository;
