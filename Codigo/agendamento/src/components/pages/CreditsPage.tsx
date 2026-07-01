@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
-import { Gift, Calendar, Check, AlertCircle, TrendingDown, Clock } from 'lucide-react';
+import { Gift, Calendar, Check, AlertCircle, TrendingDown, Clock, BookOpen } from 'lucide-react';
+import type { Lesson } from '../../types';
 
 interface CreditoReposicao {
   id: number;
@@ -41,11 +42,14 @@ function getMondayOfWeek(date: Date): Date {
 
 export function CreditsPage() {
   const [saldo, setSaldo] = useState<SaldoCreditos | null>(null);
+  const [aulas, setAulas] = useState<Lesson[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [tab, setTab] = useState<'mes' | 'historico'>('mes');
 
-  useEffect(() => { fetchCreditos(); }, []);
+  useEffect(() => {
+    Promise.all([fetchCreditos(), fetchAulas()]).finally(() => setLoading(false));
+  }, []);
 
   const fetchCreditos = async () => {
     try {
@@ -54,8 +58,35 @@ export function CreditsPage() {
       setSaldo(await res.json());
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Erro desconhecido');
-    } finally {
-      setLoading(false);
+    }
+  };
+
+  const fetchAulas = async () => {
+    try {
+      const hoje = new Date();
+      const proximos30 = new Date(hoje);
+      proximos30.setDate(hoje.getDate() + 30);
+      const fmt = (d: Date) => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+      const res = await fetch(`/aula/buscar?dataInicio=${fmt(hoje)}T00:00:00&dataFim=${fmt(proximos30)}T23:59:59`, {
+        credentials: 'include'
+      });
+      if (res.ok) {
+        const dtos = await res.json();
+        setAulas(dtos.map((dto: any) => ({
+          id: dto.id,
+          studentId: dto.alunoId,
+          studentName: dto.studentName || 'Aluno',
+          date: dto.dataInicio?.split('T')[0] || '',
+          startTime: dto.dataInicio?.split('T')[1]?.slice(0, 5) || '',
+          endTime: dto.dataFim?.split('T')[1]?.slice(0, 5) || '',
+          type: 'individual',
+          status: 'scheduled',
+          instrument: dto.instrument || '',
+          color: '#8B5CF6',
+        })));
+      }
+    } catch (err) {
+      console.error('Erro ao buscar aulas:', err);
     }
   };
 
@@ -72,7 +103,7 @@ export function CreditsPage() {
       <div className="page-padding py-10">
         <div className="bg-(--surface) border border-(--border) rounded-xl p-6 text-center">
           <AlertCircle className="mx-auto mb-3 text-(--muted)" size={40} />
-          <p className="text-(--muted)">{error || 'Nenhum crédito disponível'}</p>
+          <p className="text-(--muted)">{error || 'Erro ao carregar créditos'}</p>
         </div>
       </div>
     );
@@ -88,23 +119,42 @@ export function CreditsPage() {
     return d.getMonth() === mesAtual && d.getFullYear() === anoAtual;
   });
 
-  // Agrupa por semana
-  const porSemana = new Map<number, { label: string; creditos: CreditoReposicao[] }>();
-  creditosMes.forEach(c => {
-    const d = new Date(c.dataCriacao);
+  // Aulas do mês atual
+  const aulasMes = aulas.filter(a => {
+    const d = new Date(a.date);
+    return d.getMonth() === mesAtual && d.getFullYear() === anoAtual;
+  });
+
+  // Agrupa tudo por semana
+  const porSemana = new Map<number, { label: string; aulas: Lesson[]; creditos: CreditoReposicao[] }>();
+
+  aulasMes.forEach(a => {
+    const d = new Date(a.date);
     const monday = getMondayOfWeek(d);
     const sunday = new Date(monday);
     sunday.setDate(monday.getDate() + 6);
     const semana = getWeekOfMonth(d);
     if (!porSemana.has(semana)) {
       const fmt = (dt: Date) => dt.toLocaleDateString('pt-BR', { day: 'numeric', month: 'short' });
-      porSemana.set(semana, { label: `Semana ${semana} — ${fmt(monday)} a ${fmt(sunday)}`, creditos: [] });
+      porSemana.set(semana, { label: `Semana ${semana} — ${fmt(monday)} a ${fmt(sunday)}`, aulas: [], creditos: [] });
+    }
+    porSemana.get(semana)!.aulas.push(a);
+  });
+
+  creditosMes.forEach(c => {
+    const d = new Date(c.dataCriacao);
+    const semana = getWeekOfMonth(d);
+    if (!porSemana.has(semana)) {
+      const monday = getMondayOfWeek(d);
+      const sunday = new Date(monday);
+      sunday.setDate(monday.getDate() + 6);
+      const fmt = (dt: Date) => dt.toLocaleDateString('pt-BR', { day: 'numeric', month: 'short' });
+      porSemana.set(semana, { label: `Semana ${semana} — ${fmt(monday)} a ${fmt(sunday)}`, aulas: [], creditos: [] });
     }
     porSemana.get(semana)!.creditos.push(c);
   });
 
   const semanasOrdenadas = Array.from(porSemana.entries()).sort((a, b) => a[0] - b[0]);
-
   const nomeMes = hoje.toLocaleDateString('pt-BR', { month: 'long', year: 'numeric' });
 
   return (
@@ -113,16 +163,16 @@ export function CreditsPage() {
       <div className="space-y-1">
         <h1 className="text-2xl font-bold text-(--heading) flex items-center gap-2">
           <Gift className="text-(--accent-600)" size={26} />
-          Meus Créditos
+          Aulas e Créditos
         </h1>
-        <p className="text-(--muted) text-sm">Créditos de reposição ganhos por cancelamentos dentro do prazo</p>
+        <p className="text-(--muted) text-sm">Aulas agendadas e créditos de reposição por semana</p>
       </div>
 
       {/* Stats Cards */}
       <div className="grid grid-cols-3 gap-3">
         <div className="bg-gradient-to-br from-green-500 to-green-600 rounded-2xl p-5 text-white shadow-lg">
           <div className="flex items-center justify-between mb-2">
-            <span className="text-xs font-medium opacity-90">Disponíveis</span>
+            <span className="text-xs font-medium opacity-90">Créditos Disponíveis</span>
             <Check size={16} />
           </div>
           <p className="text-3xl font-bold">{saldo.totalDisponivel}</p>
@@ -135,20 +185,20 @@ export function CreditsPage() {
 
         <div className="bg-gradient-to-br from-blue-500 to-blue-600 rounded-2xl p-5 text-white shadow-lg">
           <div className="flex items-center justify-between mb-2">
-            <span className="text-xs font-medium opacity-90">Utilizados</span>
-            <TrendingDown size={16} />
+            <span className="text-xs font-medium opacity-90">Aulas este Mês</span>
+            <BookOpen size={16} />
           </div>
-          <p className="text-3xl font-bold">{saldo.totalUsado}</p>
-          <p className="text-xs opacity-75 mt-1">Desde o início</p>
+          <p className="text-3xl font-bold">{aulasMes.length}</p>
+          <p className="text-xs opacity-75 mt-1">Agendadas</p>
         </div>
 
         <div className="bg-gradient-to-br from-red-500 to-red-600 rounded-2xl p-5 text-white shadow-lg">
           <div className="flex items-center justify-between mb-2">
-            <span className="text-xs font-medium opacity-90">Expirados</span>
-            <AlertCircle size={16} />
+            <span className="text-xs font-medium opacity-90">Créditos Usados</span>
+            <TrendingDown size={16} />
           </div>
-          <p className="text-3xl font-bold">{saldo.totalExpirado}</p>
-          <p className="text-xs opacity-75 mt-1">Vencidos</p>
+          <p className="text-3xl font-bold">{saldo.totalUsado}</p>
+          <p className="text-xs opacity-75 mt-1">Total</p>
         </div>
       </div>
 
@@ -159,39 +209,61 @@ export function CreditsPage() {
           className={`pb-3 px-1 text-sm font-medium transition-colors ${tab === 'mes' ? 'text-(--accent-600) border-b-2 border-(--accent-600)' : 'text-(--muted) hover:text-(--text)'}`}
         >
           <span className="capitalize">{nomeMes}</span>
-          <span className="ml-1.5 text-xs opacity-70">({creditosMes.length})</span>
         </button>
         <button
           onClick={() => setTab('historico')}
           className={`pb-3 px-1 text-sm font-medium transition-colors ${tab === 'historico' ? 'text-(--accent-600) border-b-2 border-(--accent-600)' : 'text-(--muted) hover:text-(--text)'}`}
         >
-          Histórico completo
-          <span className="ml-1.5 text-xs opacity-70">({saldo.historicoCompleto.length})</span>
+          Histórico de Créditos
         </button>
       </div>
 
       {/* Conteúdo */}
       {tab === 'mes' && (
         <div className="space-y-5">
-          {creditosMes.length === 0 ? (
+          {semanasOrdenadas.length === 0 ? (
             <div className="bg-(--surface) border border-(--border) rounded-lg p-8 text-center">
               <Calendar className="mx-auto mb-3 text-(--muted) opacity-40" size={36} />
-              <p className="text-(--muted) text-sm">Nenhum crédito ganho este mês</p>
+              <p className="text-(--muted) text-sm">Nenhuma aula ou crédito este mês</p>
             </div>
           ) : (
-            semanasOrdenadas.map(([semana, { label, creditos }]) => (
+            semanasOrdenadas.map(([semana, { label, aulas: aulasSem, creditos: creditosSem }]) => (
               <div key={semana}>
-                <div className="flex items-center gap-2 mb-2">
+                <div className="flex items-center gap-2 mb-3">
                   <Clock size={13} className="text-(--muted)" />
                   <span className="text-xs font-semibold text-(--muted) uppercase tracking-wide">{label}</span>
-                  <span className="text-xs bg-(--accent-50) text-(--accent-700) px-2 py-0.5 rounded-full font-medium">
-                    {creditos.filter(c => c.status === 'VALIDO').length} disponível
-                    {creditos.filter(c => c.status === 'VALIDO').length !== 1 ? 'is' : ''}
-                  </span>
                 </div>
-                <div className="space-y-2">
-                  {creditos.map(c => <CreditoCard key={c.id} credito={c} />)}
-                </div>
+
+                {/* Aulas da semana */}
+                {aulasSem.length > 0 && (
+                  <div className="mb-4 space-y-2">
+                    <h3 className="text-xs font-semibold text-(--text) pl-3">Aulas ({aulasSem.length})</h3>
+                    {aulasSem.map(aula => (
+                      <div
+                        key={aula.id}
+                        className="bg-(--surface) border border-(--border) rounded-lg p-3.5 flex items-center gap-3"
+                      >
+                        <div className="w-2 h-2 rounded-full bg-(--accent-500) shrink-0" />
+                        <div className="flex-1">
+                          <p className="text-sm font-medium text-(--text)">{aula.studentName}</p>
+                          <div className="flex gap-3 text-xs text-(--muted) mt-0.5">
+                            <span>{new Date(aula.date).toLocaleDateString('pt-BR')}</span>
+                            <span>{aula.startTime} - {aula.endTime}</span>
+                            {aula.instrument && <span>{aula.instrument}</span>}
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+
+                {/* Créditos da semana */}
+                {creditosSem.length > 0 && (
+                  <div className="space-y-2">
+                    <h3 className="text-xs font-semibold text-(--text) pl-3">Créditos ({creditosSem.length})</h3>
+                    {creditosSem.map(c => <CreditoCard key={c.id} credito={c} />)}
+                  </div>
+                )}
               </div>
             ))
           )}
