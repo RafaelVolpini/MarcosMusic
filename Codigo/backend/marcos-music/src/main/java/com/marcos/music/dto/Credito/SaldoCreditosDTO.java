@@ -18,4 +18,11 @@ public class SaldoCreditosDTO {
     private int diasAteProximaExpiracao;
     private List<CreditoReposicaoDTO> creditosAtivos;
     private List<CreditoReposicaoDTO> historicoCompleto;
+    private int aulasEstaSemana;
+    private int aulasEsteMes;
+
+    public int getAulasEstaSemana() { return aulasEstaSemana; }
+    public void setAulasEstaSemana(int aulasEstaSemana) { this.aulasEstaSemana = aulasEstaSemana; }
+    public int getAulasEsteMes() { return aulasEsteMes; }
+    public void setAulasEsteMes(int aulasEsteMes) { this.aulasEsteMes = aulasEsteMes; }
 }

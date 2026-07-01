@@ -6,6 +6,7 @@ import com.marcos.music.entity.CreditoReposicao;
 import com.marcos.music.entity.Usuario;
 import com.marcos.music.repository.UsuarioRepository;
 import com.marcos.music.service.CreditoReposicaoService;
+import com.marcos.music.service.AulaService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -22,6 +23,7 @@ public class CreditoReposicaoController {
 
     private final CreditoReposicaoService service;
     private final UsuarioRepository usuarioRepository;
+    private final AulaService aulaService;
 
     /**
      * Retorna o saldo de créditos do aluno (para perfil)
@@ -41,20 +43,45 @@ public class CreditoReposicaoController {
 
         int diasAteProxima = service.diasAteExpiracaoPrimeiroCradit(alunoId);
 
-        return ResponseEntity.ok(
-                SaldoCreditosDTO.builder()
-                        .totalDisponivel(totalDisponivel)
-                        .totalUsado(totalUsado)
-                        .totalExpirado(totalExpirado)
-                        .diasAteProximaExpiracao(diasAteProxima)
-                        .creditosAtivos(creditosDisponivel.stream()
-                                .map(CreditoReposicaoDTO::from)
-                                .collect(Collectors.toList()))
-                        .historicoCompleto(historicoCompleto.stream()
-                                .map(CreditoReposicaoDTO::from)
-                                .collect(Collectors.toList()))
-                        .build()
-        );
+        // Calcula intervalo da semana atual (segunda-feira a domingo)
+        java.time.LocalDate hoje = java.time.LocalDate.now();
+        java.time.DayOfWeek dow = hoje.getDayOfWeek();
+        java.time.LocalDate monday = hoje.minusDays(dow.getValue() - 1);
+        java.time.LocalDate sunday = monday.plusDays(6);
+
+        java.time.LocalDateTime semanaInicio = monday.atStartOfDay();
+        java.time.LocalDateTime semanaFim = sunday.atTime(23, 59, 59);
+
+        // Intervalo do mês atual
+        java.time.LocalDate firstOfMonth = hoje.withDayOfMonth(1);
+        java.time.LocalDate lastOfMonth = hoje.withDayOfMonth(hoje.lengthOfMonth());
+        java.time.LocalDateTime mesInicio = firstOfMonth.atStartOfDay();
+        java.time.LocalDateTime mesFim = lastOfMonth.atTime(23, 59, 59);
+
+        int aulasSemana = aulaService.buscar(new com.marcos.music.dto.Aula.CalendarFilterDTO() {{
+            setDataInicio(semanaInicio);
+            setDataFim(semanaFim);
+        }}).stream().filter(a -> a.getIdAluno() != null && a.getIdAluno().equals(alunoId)).collect(Collectors.toList()).size();
+
+        int aulasMes = aulaService.buscar(new com.marcos.music.dto.Aula.CalendarFilterDTO() {{
+            setDataInicio(mesInicio);
+            setDataFim(mesFim);
+        }}).stream().filter(a -> a.getIdAluno() != null && a.getIdAluno().equals(alunoId)).collect(Collectors.toList()).size();
+
+        // Monta DTO e anexa contagens
+        SaldoCreditosDTO dto = SaldoCreditosDTO.builder()
+            .totalDisponivel(totalDisponivel)
+            .totalUsado(totalUsado)
+            .totalExpirado(totalExpirado)
+            .diasAteProximaExpiracao(diasAteProxima)
+            .creditosAtivos(creditosDisponivel.stream().map(CreditoReposicaoDTO::from).collect(Collectors.toList()))
+            .historicoCompleto(historicoCompleto.stream().map(CreditoReposicaoDTO::from).collect(Collectors.toList()))
+            .build();
+
+        dto.setAulasEstaSemana(aulasSemana);
+        dto.setAulasEsteMes(aulasMes);
+
+        return ResponseEntity.ok(dto);
     }
 
     /**

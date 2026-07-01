@@ -9,6 +9,7 @@ import com.marcos.music.entity.Usuario;
 import com.marcos.music.repository.UsuarioRepository;
 import com.marcos.music.service.AulaService;
 
+import java.time.LocalDateTime;
 import java.util.List;
 
 import org.springframework.http.ResponseEntity;
@@ -79,9 +80,24 @@ public class AulaController {
         }
     }
 
-    @PostMapping("buscar")
+    @PostMapping("/buscar")
     public List<CalendarResponseDTO> buscar(@RequestBody CalendarFilterDTO f) {
         return service.buscar(f);
+    }
+
+    @GetMapping("/buscar")
+    public List<CalendarResponseDTO> buscarPorQuery(
+            @RequestParam(required = false) String dataInicio,
+            @RequestParam(required = false) String dataFim
+    ) {
+        CalendarFilterDTO filter = new CalendarFilterDTO();
+        if (dataInicio != null && !dataInicio.isBlank()) {
+            filter.setDataInicio(LocalDateTime.parse(dataInicio));
+        }
+        if (dataFim != null && !dataFim.isBlank()) {
+            filter.setDataFim(LocalDateTime.parse(dataFim));
+        }
+        return service.buscar(filter);
     }
 
     @PostMapping("/criar")
