@@ -34,6 +34,14 @@
   --color-amber-400: #fbbf24;
   --color-amber-500: #f59e0b;
   --color-amber-600: #d97706;
+
+  /* Surface and text tokens for theme-aware landing page styles */
+  --color-surface: var(--surface);
+  --color-surface-soft: var(--surface-soft);
+  --color-surface-container-low: var(--surface-soft);
+  --color-on-surface: var(--text);
+  --color-on-surface-variant: var(--muted);
+  --color-border: var(--border);
 }
 
 * {
