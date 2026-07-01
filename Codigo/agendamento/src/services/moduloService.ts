@@ -55,6 +55,11 @@ export async function uploadVideo(
     idModulo
   }));
 
+  // Usa a mesma lógica de BACKEND_URL do main.tsx
+  const BACKEND_URL = import.meta.env.VITE_BACKEND_URL?.replace(/\/$/, '')
+    || (import.meta.env.PROD ? 'https://marcosmusic-production.up.railway.app' : '');
+  const uploadUrl = BACKEND_URL ? `${BACKEND_URL}/upload-modulo/upload` : '/upload-modulo/upload';
+
   const xhr = new XMLHttpRequest();
 
   return new Promise((resolve, reject) => {
@@ -77,7 +82,7 @@ export async function uploadVideo(
     xhr.addEventListener('abort', () => reject(new Error('Upload cancelado')));
     xhr.addEventListener('timeout', () => reject(new Error('Tempo limite excedido (5 min)')));
 
-    xhr.open('POST', '/upload-modulo/upload');
+    xhr.open('POST', uploadUrl);
     xhr.withCredentials = true;
     xhr.timeout = 5 * 60 * 1000; // 5 minutos
     xhr.send(formData);
