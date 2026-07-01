@@ -67,7 +67,7 @@
   --accent-icon-bg: color-mix(in srgb, var(--accent-500) 12%, var(--surface));
   --accent-icon-bg-active: color-mix(in srgb, var(--accent-500) 20%, var(--surface));
   --accent-icon-fg: var(--accent-600);
-  --app-surface: var(--surface);
+  --app-surface: #f4f5fb;
 }
 
 :root[data-theme='dark'] {
@@ -84,6 +84,7 @@
   --input-text: #e2e8f0;
   --dropdown-bg: #1e293b;
   --dropdown-border: #334155;
+  --app-surface: #0f172a;
 }
 
 :root[data-density='compact'] {
