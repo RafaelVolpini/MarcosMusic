@@ -11,7 +11,6 @@ import { listarReposicoes, type ReposicaoDTO } from '../../services/reposicaoSer
 import { toLesson } from '../../adapters/aulaAdapter';
 import { timeToMinutes, minutesToTime } from '../../utils';
 import { useToast } from '../ui/Toast';
-import { syncGoogleCalendar, getGoogleConnectedFlag } from '../../services/googleService';
 
 interface AgendaPageProps {
   lessons: Lesson[];
@@ -21,15 +20,12 @@ interface AgendaPageProps {
   onUpdateLesson: (lesson: Lesson) => void;
   onDeleteLesson: (id: string) => void;
   onMoveLesson: (id: string, date: string, time: string) => void;
-  onNavigate?: (page: import('../../types').Page) => void;
 }
-
-const GOOGLE_SYNC_SESSION_KEY = 'marcos-music:sync-done';
 
 export function AgendaPage({
   lessons: lessonsProp,
   availability, availabilityReposicao, currentUser,
-  onUpdateLesson, onDeleteLesson, onNavigate,
+  onUpdateLesson, onDeleteLesson,
 }: AgendaPageProps) {
   const toast = useToast();
   const [selectedLesson, setSelectedLesson] = useState<Lesson | null>(null);
@@ -40,29 +36,6 @@ export function AgendaPage({
   const [apiLessons, setApiLessons] = useState<Lesson[] | null>(null);
   const [loadingLessons, setLoadingLessons] = useState(false);
   const [apiError, setApiError] = useState<string | null>(null);
-  const [googleBanner, setGoogleBanner] = useState(false);
-  const [syncingGoogle, setSyncingGoogle] = useState(false);
-
-  // ── Auto-sync Google Calendar ao entrar na agenda (apenas uma vez por sessão) ──
-  useEffect(() => {
-    if (currentUser.role !== 'teacher' || !getGoogleConnectedFlag()) return;
-    if (sessionStorage.getItem(GOOGLE_SYNC_SESSION_KEY)) return; // já sincronizou nesta sessão
-    const now = new Date();
-    const fmt = (d: Date) =>
-      `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
-    const start = new Date(now.getFullYear(), now.getMonth(), 1);
-    const end   = new Date(now.getFullYear(), now.getMonth() + 1, 0, 23, 59, 59);
-    setSyncingGoogle(true);
-    syncGoogleCalendar(`${fmt(start)}T00:00:00`, `${fmt(end)}T23:59:59`)
-      .then(() => { sessionStorage.setItem(GOOGLE_SYNC_SESSION_KEY, '1'); })
-      .catch(err => {
-        if (err instanceof Error && err.message === 'GOOGLE_RECONNECT') {
-          setGoogleBanner(true);
-        }
-      })
-      .finally(() => setSyncingGoogle(false));
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
 
   const fetchAulas = useCallback(async (dataInicio: string, dataFim: string) => {
     setLoadingLessons(true);
@@ -96,26 +69,7 @@ export function AgendaPage({
     fetchAulas(dataInicio, dataFim);
   }, [fetchAulas]);
 
-  const handleSyncGoogle = useCallback(async () => {
-    if (!getGoogleConnectedFlag() || syncingGoogle) return;
-    setSyncingGoogle(true);
-    try {
-      const now = new Date();
-      const fmt = (d: Date) =>
-        `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
-      const start = new Date(now.getFullYear(), now.getMonth(), 1);
-      const end   = new Date(now.getFullYear(), now.getMonth() + 1, 0, 23, 59, 59);
-      await syncGoogleCalendar(`${fmt(start)}T00:00:00`, `${fmt(end)}T23:59:59`);
-    } catch (err) {
-      if (err instanceof Error && err.message === 'GOOGLE_RECONNECT') {
-        setGoogleBanner(true);
-      }
-    } finally {
-      setSyncingGoogle(false);
-    }
-  }, [syncingGoogle]);
-
-  // Busca alunos 
+  // Busca alunos
   useEffect(() => {
     listarAlunos()
       .then(setApiStudents)
@@ -194,22 +148,6 @@ export function AgendaPage({
           Carregando aulas…
         </div>
       )}
-      {googleBanner && (
-        <div className="flex items-center gap-3 px-5 py-2 text-xs bg-(--surface-soft) border-b border-(--border) shrink-0">
-          <span className="w-5 h-5 rounded-md flex items-center justify-center text-white font-bold text-[11px] shrink-0" style={{ backgroundColor: '#0F9D58' }}>G</span>
-          <span className="text-(--muted) flex-1">Sincronize suas aulas com o Google Calendar para manter tudo atualizado.</span>
-          <button
-            onClick={() => {
-              sessionStorage.setItem('marcos-music:settings:section', 'integrations');
-              onNavigate?.('settings');
-            }}
-            className="text-(--accent-600) font-semibold hover:underline shrink-0"
-          >
-            Conectar agora
-          </button>
-          <button onClick={() => setGoogleBanner(false)} className="text-(--muted) hover:text-(--text) ml-1 shrink-0">✕</button>
-        </div>
-      )}
       {apiError && !loadingLessons && (
         <div className="px-6 py-1.5 text-xs text-rose-600 bg-rose-50 dark:bg-rose-950 border-b border-rose-200 dark:border-rose-800 shrink-0">
           ⚠ {apiError}
@@ -227,8 +165,6 @@ export function AgendaPage({
         onLessonMove={handleMoveLesson}
         onWeekChange={handleWeekChange}
         onReposicaoClick={(r) => setSelectedReposicao(r)}
-        onSyncCalendar={getGoogleConnectedFlag() ? handleSyncGoogle : undefined}
-        syncingCalendar={syncingGoogle}
       />
 
       {selectedReposicao && (
@@ -249,6 +185,7 @@ export function AgendaPage({
       )}
 
       <LessonModal
+        key={selectedLesson?.id ?? 'closed'}
         lesson={selectedLesson}
         currentUser={currentUser}
         onClose={() => setSelectedLesson(null)}
@@ -275,7 +212,6 @@ export function AgendaPage({
               dataInicio,
               dataFim,
               recorrente: data.recorrente,
-              isOnline: data.isOnline,
             });
             setApiLessons(prev => [...(prev ?? []), ...novasAulas.map(toLesson)]);
             toast(

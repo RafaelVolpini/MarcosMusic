@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import {
   Users, CalendarDays, Music,
-  Clock, AlertCircle, CheckCircle, Copy, Check,
+  Clock, AlertCircle, CheckCircle,
 } from 'lucide-react';
 import type { Lesson, Aluno, Page } from '../../types';
 import { StatCard, Card } from '../ui/Card';
@@ -19,7 +19,6 @@ interface DashboardProps {
 
 function NextLessonBanner({ lesson }: { lesson: Lesson }) {
   const [now, setNow] = useState(new Date());
-  const [copied, setCopied] = useState(false);
   const { t } = useLanguage();
 
   useEffect(() => {
@@ -42,14 +41,6 @@ function NextLessonBanner({ lesson }: { lesson: Lesson }) {
     if (h > 0) return `em ${h}h`;
     return `em ${m}min`;
   })();
-
-  const handleCopy = () => {
-    if (lesson.meetLink) {
-      navigator.clipboard.writeText(lesson.meetLink);
-      setCopied(true);
-      setTimeout(() => setCopied(false), 2000);
-    }
-  };
 
   return (
     <motion.div variants={{ initial: { opacity: 0, y: 16 }, animate: { opacity: 1, y: 0 } }}>
@@ -84,14 +75,6 @@ function NextLessonBanner({ lesson }: { lesson: Lesson }) {
 
           <div className="flex shrink-0 flex-col items-end gap-2">
             <p className="text-2xl font-bold tabular-nums text-white">{formatTime(lesson.startTime)}</p>
-            <button
-              onClick={handleCopy}
-              disabled={!lesson.meetLink}
-              className="flex items-center gap-1.5 rounded-xl bg-white/20 px-3 py-1.5 text-xs font-semibold text-white transition-colors hover:bg-white/30 disabled:opacity-40 disabled:cursor-not-allowed"
-            >
-              {copied ? <Check size={12} /> : <Copy size={12} />}
-              {copied ? t('dashboard.copied') : t('dashboard.copyLink')}
-            </button>
           </div>
         </div>
       </div>
@@ -207,9 +190,6 @@ export function Dashboard({ lessons, students, onNavigate }: DashboardProps) {
                       {new Date(lesson.date).toLocaleDateString('pt-BR', { day: 'numeric', month: 'short' })}
                     </p>
                   </div>
-                  {lesson.type === 'online' && (
-                    <Badge variant="info" className="shrink-0">Online</Badge>
-                  )}
                 </div>
               ))}
               {upcomingLessons.length === 0 && (

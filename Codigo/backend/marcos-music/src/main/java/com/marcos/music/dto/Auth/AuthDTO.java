@@ -12,4 +12,5 @@ public class AuthDTO {
     private String nome;
     private String sobrenome;
     private String telefone;
+    private Boolean rememberMe;
 }

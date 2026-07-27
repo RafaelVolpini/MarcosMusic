@@ -12,8 +12,6 @@ export interface CalendarResponseDTO {
   flagRealizada?: boolean;
   presencaConfirmada?: boolean;
   recorrente?: boolean;
-  meetLink?: string;
-  isOnline?: boolean;
 }
 
 export interface HorarioValidatorDTO {
@@ -85,7 +83,6 @@ export interface CriarAulaDTO {
   dataInicio: string;  // ISO-8601 "2026-04-22T09:00:00"
   dataFim: string;     // ISO-8601 "2026-04-22T09:50:00"
   recorrente?: boolean;
-  isOnline?: boolean;
 }
 
 /**
@@ -134,18 +131,6 @@ export async function reagendarAula(
 export async function confirmarPresenca(id: string): Promise<CalendarResponseDTO> {
   const res = await fetch(`/aula/confirmarPresenca/${id}`, {
     method: 'PUT',
-    credentials: 'include',
-  });
-  return handleResponse<CalendarResponseDTO>(res);
-}
-
-/**
- * POST /aula/{id}/regenerate-meet
- * Gera (ou regenera) o link do Google Meet para uma aula (professor only).
- */
-export async function regenerarMeetLink(id: string): Promise<CalendarResponseDTO> {
-  const res = await fetch(`/aula/${id}/regenerate-meet`, {
-    method: 'POST',
     credentials: 'include',
   });
   return handleResponse<CalendarResponseDTO>(res);

@@ -55,7 +55,7 @@ public class AuthService {
         return jwtService.generateToken(user);
     }
 
-    public LoginResponse login(String email, String password) {
+    public LoginResponse login(String email, String password, boolean rememberMe) {
         Usuario user = repository.findByEmail(email)
                 .orElseThrow(() -> new RuntimeException("Usuário não encontrado"));
 
@@ -63,7 +63,7 @@ public class AuthService {
             throw new RuntimeException("Senha inválida");
         }
 
-        String jwt = jwtService.generateToken(user);
+        String jwt = jwtService.generateToken(user, rememberMe);
 
         Aluno aluno = alunoRepository.findById(user.getId()).orElse(null);
 
@@ -150,27 +150,46 @@ public class AuthService {
         return jwtService.getUserIdFromToken(id);
     }
 
+    /**
+     * Atualiza nome, telefone e (opcionalmente) o e-mail do usuário autenticado.
+     * Retorna um novo JWT, já que o e-mail (subject do token) pode ter mudado.
+     */
     @Transactional
-    public void updateUserProfile(String email, String nome, String telefone) {
+    public String updateUserProfile(String email, String nome, String telefone, String novoEmail, boolean rememberMe) {
         Usuario usuario = repository.findByEmail(email)
                 .orElseThrow(() -> new RuntimeException("Usuário não encontrado"));
+
+        if (novoEmail != null && !novoEmail.isBlank()) {
+            String normalizado = novoEmail.trim().toLowerCase();
+            if (!normalizado.equalsIgnoreCase(usuario.getEmail())) {
+                if (repository.findByEmailIgnoreCase(normalizado).isPresent()) {
+                    throw new IllegalArgumentException("E-mail já está em uso");
+                }
+                usuario.setEmail(normalizado);
+                repository.save(usuario);
+            }
+        }
+        String emailFinal = usuario.getEmail();
+
         Aluno aluno = alunoRepository.findById(usuario.getId()).orElse(null);
         if (aluno == null) {
             // Conta criada antes do registro automático de Aluno — cria o registro agora
             aluno = new Aluno();
             aluno.setUsuario(usuario);
             aluno.setNome(nome != null && !nome.isBlank() ? nome.trim()
-                    : (email.contains("@") ? email.substring(0, email.indexOf('@')) : email));
+                    : (emailFinal.contains("@") ? emailFinal.substring(0, emailFinal.indexOf('@')) : emailFinal));
             aluno.setTelefone(telefone != null && !telefone.isBlank() ? telefone.trim() : null);
             aluno.setStatus(true);
             aluno.setTermos(false);
             aluno.setReposicoes(0);
             alunoRepository.save(aluno);
-            return;
+        } else {
+            String finalNome = (nome != null && !nome.isBlank()) ? nome.trim() : aluno.getNome();
+            String finalTelefone = (telefone != null && !telefone.isBlank()) ? telefone.trim() : null;
+            // Use direct JPQL update to avoid triggering cascade/orphanRemoval on horarios (lazy collection)
+            alunoRepository.updateNomeAndTelefone(aluno.getId(), finalNome, finalTelefone);
         }
-        String finalNome = (nome != null && !nome.isBlank()) ? nome.trim() : aluno.getNome();
-        String finalTelefone = (telefone != null && !telefone.isBlank()) ? telefone.trim() : null;
-        // Use direct JPQL update to avoid triggering cascade/orphanRemoval on horarios (lazy collection)
-        alunoRepository.updateNomeAndTelefone(aluno.getId(), finalNome, finalTelefone);
+
+        return jwtService.generateToken(usuario, rememberMe);
     }
 }

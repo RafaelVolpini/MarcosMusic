@@ -41,15 +41,6 @@ public class Aula {
     @Column(name = "flag_realizada")
     private Boolean flagRealizada = false;
 
-    @Column(name = "meet_link", length = 500)
-    private String meetLink;
-
-    @Column(name = "is_online")
-    private Boolean isOnline = false;
-
-    @Column(name = "google_event_id", length = 255)
-    private String googleEventId;
-
     @Column(name = "data_solicitacao_cancelamento")
     private LocalDateTime dataSolicitacaoCancelamento;
 

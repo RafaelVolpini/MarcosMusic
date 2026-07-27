@@ -37,6 +37,7 @@ export function AppSettingsProvider({ children }: { children: ReactNode }) {
   return <Ctx.Provider value={{ appSettings, setTimezone }}>{children}</Ctx.Provider>;
 }
 
+// eslint-disable-next-line react-refresh/only-export-components -- hook co-localizado de propósito com o Provider
 export function useAppSettings(): AppSettingsCtx {
   const ctx = useContext(Ctx);
   if (!ctx) throw new Error('useAppSettings must be used inside AppSettingsProvider');

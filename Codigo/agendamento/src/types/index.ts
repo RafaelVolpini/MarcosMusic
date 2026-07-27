@@ -2,7 +2,7 @@ export type ViewType = 'week' | 'day';
 export type DayKey = 'seg' | 'ter' | 'qua' | 'qui' | 'sex' | 'sab' | 'dom';
 export type WeeklyAvailability = Record<DayKey, string[]>;
 
-export type LessonType = 'individual' | 'group' | 'online' | 'trial';
+export type LessonType = 'individual' | 'group' | 'trial';
 
 export type LessonStatus = 'scheduled' | 'completed' | 'cancelled' | 'rescheduled';
 
@@ -14,6 +14,8 @@ export interface Aluno {
   ativo: boolean;
   apelido?: string;
   reposicoes?: number;
+  /** Plano do aluno: quantidade máxima de aulas por semana (padrão: 3) */
+  aulasPorSemanaPlano?: number;
 }
 
 export interface Lesson {
@@ -28,26 +30,12 @@ export interface Lesson {
   status: LessonStatus;
   instrument: string;
   notes?: string;
-  meetLink?: string;
-  isOnline?: boolean;
   attendanceConfirmed?: boolean;
   attendanceConfirmedAt?: string;
   reminderMinutesBefore?: number;
   lastReminderSentAt?: string;
   color: string;
-  recording?: VideoRecording;
   recorrente?: boolean;
-}
-
-export interface VideoRecording {
-  id: string;
-  lessonId: string;
-  title: string;
-  url: string;
-  thumbnailUrl?: string;
-  duration: number; // seconds
-  uploadedAt: string;
-  size: number; // bytes
 }
 
 export interface Payment {
@@ -68,7 +56,7 @@ export type Page =
   | 'students'
   | 'rooms'
   | 'rescheduling'
-  | 'video'
   | 'lessonAlerts'
   | 'settings'
-  | 'profile';
+  | 'profile'
+  | 'credits';

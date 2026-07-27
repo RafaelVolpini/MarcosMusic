@@ -107,6 +107,7 @@ export function ReschedulingPage({ sessionUser }: ReschedulingPageProps) {
           }),
       );
     } catch {
+      // mantém a lista anterior em caso de falha
     } finally {
       setLoading(false);
     }

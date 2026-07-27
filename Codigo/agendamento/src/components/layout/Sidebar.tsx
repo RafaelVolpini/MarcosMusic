@@ -4,12 +4,12 @@ import {
   Users,
   CalendarClock,
   RefreshCw,
-  PlayCircle,
   MessageCircle,
   Settings,
   ChevronLeft,
   LayoutDashboard,
   Music2,
+  Gift,
 } from 'lucide-react';
 import type { ReactNode } from 'react';
 import type { Page } from '../../types';
@@ -33,7 +33,7 @@ function getNavItems(t: (k: string) => string): NavItem[] {
     { id: 'agenda',       label: t('nav.agenda'),       icon: <CalendarDays size={20} />,    color: 'var(--accent-500)', roles: ['teacher', 'student'] },
     { id: 'rooms',        label: t('nav.rooms'),        icon: <CalendarClock size={20} />,   color: 'var(--accent-500)', roles: ['teacher'] },
     { id: 'rescheduling', label: t('nav.rescheduling'), icon: <RefreshCw size={20} />,       color: 'var(--accent-500)', roles: ['teacher', 'student'] },
-    { id: 'video',        label: t('nav.video'),        icon: <PlayCircle size={20} />,      color: 'var(--accent-500)', roles: ['teacher', 'student'] },
+    { id: 'credits',      label: t('nav.credits'),      icon: <Gift size={20} />,           color: 'var(--accent-500)', roles: ['student'] },
     { id: 'lessonAlerts', label: t('nav.lessonAlerts'), icon: <MessageCircle size={20} />,   color: 'var(--accent-500)', roles: ['teacher'] },
     { id: 'students',     label: t('nav.students'),     icon: <Users size={20} />,           color: 'var(--accent-500)', roles: ['teacher'] },
     { id: 'settings',     label: t('nav.settings'),     icon: <Settings size={20} />,        color: 'var(--accent-500)', roles: ['teacher', 'student'] },
@@ -207,7 +207,7 @@ function NavButton({ item, active, collapsed, onClick }: NavButtonProps) {
         />
       )}
 
-      {/* Glow effect on hover */}
+      {/* Tint sutil no hover */}
       <div
         className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-300 rounded-xl"
         style={{ backgroundColor: `color-mix(in srgb, ${item.color} 8%, transparent)` }}
@@ -220,9 +220,6 @@ function NavButton({ item, active, collapsed, onClick }: NavButtonProps) {
           backgroundColor: active
             ? `color-mix(in srgb, ${item.color} 20%, var(--surface))`
             : 'var(--accent-icon-bg)',
-          boxShadow: active
-            ? `0 0 16px color-mix(in srgb, ${item.color} 40%, transparent)`
-            : 'none',
         }}
       >
         <span style={{ color: item.color }}>

@@ -20,6 +20,7 @@ export interface ThemeBundleDef {
   darkBg: string;
 }
 
+// eslint-disable-next-line react-refresh/only-export-components -- constante compartilhada com o Provider deste arquivo
 export const THEME_BUNDLES: ThemeBundleDef[] = [
   { id: 'neutro',   label: 'Neutro',      description: 'Limpo e minimalista',  preset: 'indigo',  bgColor: 'default', accentA: '#6366f1', accentB: '#9333ea', lightBg: '#e8eaf3', darkBg: '#020617' },
   { id: 'aurora',   label: 'Aurora',      description: 'Místico e criativo',   preset: 'purple',  bgColor: 'violet',  accentA: '#a855f7', accentB: '#6366f1', lightBg: '#eeeaff', darkBg: '#09041a' },
@@ -38,6 +39,80 @@ export interface UiSettings {
   surface: ThemeSurface;
   radius: ThemeRadius;
   bgColor: ThemeBgColor;
+  /** Cor principal customizada (hex). Quando definida, sobrepõe o preset. */
+  customPrimary?: string;
+  /** Cor secundária customizada (hex), usada em gradientes e detalhes. */
+  customSecondary?: string;
+}
+
+// ─── Geração de paleta a partir de cores customizadas ─────────────────────────
+
+function hexToRgb(hex: string): [number, number, number] {
+  const clean = hex.replace('#', '').trim();
+  const full = clean.length === 3 ? clean.split('').map((c) => c + c).join('') : clean;
+  const int = parseInt(full, 16);
+  return [(int >> 16) & 255, (int >> 8) & 255, int & 255];
+}
+
+function rgbToHex(r: number, g: number, b: number): string {
+  const clamp = (v: number) => Math.max(0, Math.min(255, Math.round(v)));
+  return `#${[clamp(r), clamp(g), clamp(b)].map((v) => v.toString(16).padStart(2, '0')).join('')}`;
+}
+
+function mixHex(hex: string, target: [number, number, number], amount: number): string {
+  const [r, g, b] = hexToRgb(hex);
+  const [tr, tg, tb] = target;
+  return rgbToHex(r + (tr - r) * amount, g + (tg - g) * amount, b + (tb - b) * amount);
+}
+
+const lighten = (hex: string, amount: number) => mixHex(hex, [255, 255, 255], amount);
+const darken = (hex: string, amount: number) => mixHex(hex, [0, 0, 0], amount);
+
+function isValidHex(hex: string | undefined): hex is string {
+  return !!hex && /^#([0-9a-f]{3}|[0-9a-f]{6})$/i.test(hex.trim());
+}
+
+/** Deriva toda a escala de tons da cor principal (o gradiente é só um tom mais escuro dela mesma). */
+function paletteFromCustomPrimary(primary: string): PresetPalette {
+  return {
+    accent50: lighten(primary, 0.94),
+    accent100: lighten(primary, 0.85),
+    accent500: primary,
+    accent600: darken(primary, 0.13),
+    accent700: darken(primary, 0.25),
+    accentGradientFrom: primary,
+    accentGradientTo: darken(primary, 0.22),
+  };
+}
+
+/** Deriva a paleta de fundo (claro e escuro) a partir da cor secundária escolhida. */
+function bgPaletteFromCustomSecondary(hex: string): BgPalette {
+  return {
+    light: {
+      bg: lighten(hex, 0.9),
+      surface: lighten(hex, 0.96),
+      surfaceSoft: lighten(hex, 0.84),
+      border: lighten(hex, 0.6),
+      hoverBg: lighten(hex, 0.78),
+      inputBg: lighten(hex, 0.96),
+      inputBorder: lighten(hex, 0.6),
+      dropdownBg: lighten(hex, 0.96),
+      dropdownBorder: lighten(hex, 0.78),
+      heading: darken(hex, 0.72),
+    },
+    dark: {
+      bg: darken(hex, 0.94),
+      surface: darken(hex, 0.87),
+      surfaceSoft: darken(hex, 0.94),
+      border: darken(hex, 0.72),
+      hoverBg: darken(hex, 0.8),
+      inputBg: darken(hex, 0.87),
+      inputBorder: darken(hex, 0.68),
+      dropdownBg: darken(hex, 0.87),
+      dropdownBorder: darken(hex, 0.72),
+      heading: lighten(hex, 0.88),
+    },
+  };
 }
 
 interface PresetPalette {
@@ -71,8 +146,8 @@ interface BgPalette {
 const STORAGE_KEY = 'marcos-music:ui-settings';
 
 const DEFAULT_SETTINGS: UiSettings = {
-  mode: 'system',
-  preset: 'indigo',
+  mode: 'light',
+  preset: 'teal',
   density: 'comfortable',
   surface: 'soft',
   radius: 'lg',
@@ -224,8 +299,9 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
   const resolvedMode = settings.mode === 'system' ? systemMode : settings.mode;
 
   const activeBundle = useMemo<ThemeBundleId | null>(() => {
+    if (isValidHex(settings.customPrimary) || isValidHex(settings.customSecondary)) return null;
     return THEME_BUNDLES.find(b => b.preset === settings.preset && b.bgColor === settings.bgColor)?.id ?? null;
-  }, [settings.preset, settings.bgColor]);
+  }, [settings.preset, settings.bgColor, settings.customPrimary, settings.customSecondary]);
 
   useEffect(() => {
     localStorage.setItem(STORAGE_KEY, JSON.stringify(settings));
@@ -240,7 +316,9 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     const root = document.documentElement;
-    const palette = PALETTES[settings.preset];
+    const palette = isValidHex(settings.customPrimary)
+      ? paletteFromCustomPrimary(settings.customPrimary)
+      : PALETTES[settings.preset];
 
     root.dataset.theme = resolvedMode;
     root.dataset.density = settings.density;
@@ -255,7 +333,9 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
     root.style.setProperty('--accent-gradient-from', palette.accentGradientFrom);
     root.style.setProperty('--accent-gradient-to', palette.accentGradientTo);
 
-    const bg = BG_PALETTES[settings.bgColor][resolvedMode];
+    const bg = isValidHex(settings.customSecondary)
+      ? bgPaletteFromCustomSecondary(settings.customSecondary)[resolvedMode]
+      : BG_PALETTES[settings.bgColor][resolvedMode];
     root.style.setProperty('--bg', bg.bg);
     root.style.setProperty('--surface', bg.surface);
     root.style.setProperty('--surface-soft', bg.surfaceSoft);
@@ -279,6 +359,7 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
   return <ThemeContext.Provider value={value}>{children}</ThemeContext.Provider>;
 }
 
+// eslint-disable-next-line react-refresh/only-export-components -- hook co-localizado de propósito com o Provider
 export function useThemeSettings() {
   const context = useContext(ThemeContext);
   if (!context) {

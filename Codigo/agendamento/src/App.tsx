@@ -1,19 +1,27 @@
 import { useEffect, useState } from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
+import {
+  BrowserRouter,
+  Routes,
+  Route,
+  Navigate,
+  useLocation,
+  useNavigate,
+  useSearchParams,
+} from 'react-router-dom';
 import { Layout } from './components/layout/Layout';
 import { Dashboard } from './components/pages/Dashboard';
 import { AgendaPage } from './components/pages/AgendaPage';
 import { StudentsPage } from './components/pages/StudentsPage';
+import { CreditosPage } from './components/pages/CreditosPage';
 import { DisponibilidadePage } from './components/pages/Disponibilidade';
 import { ReschedulingPage } from './components/pages/ReschedulingPage';
-import { VideoPage } from './components/pages/VideoPage';
 import { LessonAlertsPage } from './components/pages/AlertsPage';
 import { SettingsPage } from './components/pages/SettingsPage';
 import { LoginPage } from './components/auth/LoginPage';
+import { ForgotPasswordPage } from './components/auth/ForgotPasswordPage';
 import { ContractGate } from './components/auth/ContractGate';
-import { LandingPage } from './components/pages/LandingPage';
 import type { Page, Lesson, WeeklyAvailability, Aluno } from './types';
-import { mockVideos } from './data/mockData';
 import {
   logout,
   getUser,
@@ -28,6 +36,27 @@ import { toLesson } from './adapters/aulaAdapter';
 const LESSON_DURATION_MINUTES = 50;
 
 const EMPTY_AVAILABILITY: WeeklyAvailability = { seg: [], ter: [], qua: [], qui: [], sex: [], sab: [], dom: [] };
+
+// ─── Mapeamento página ⇄ rota ─────────────────────────────────────────────────
+
+// Obs: nenhum destes caminhos pode colidir com os prefixos de proxy do backend
+// configurados em vite.config.ts (/aula, /aluno, /disponibilidade, /reposicao, etc.),
+// já que o proxy do Vite casa por prefixo e intercepta a rota antes do React Router.
+const PAGE_PATHS: Record<Page, string> = {
+  dashboard: '/dashboard',
+  agenda: '/agenda',
+  students: '/estudantes',
+  rooms: '/horarios',
+  rescheduling: '/reagendamentos',
+  lessonAlerts: '/alertas',
+  settings: '/configuracoes',
+  profile: '/perfil',
+  credits: '/meus-creditos',
+};
+
+const PATH_TO_PAGE: Record<string, Page> = Object.fromEntries(
+  Object.entries(PAGE_PATHS).map(([page, path]) => [path, page as Page]),
+) as Record<string, Page>;
 
 function dtosToAvailability(dtos: Awaited<ReturnType<typeof buscarDisponibilidade>>) {
   const avail: WeeklyAvailability = { seg: [], ter: [], qua: [], qui: [], sex: [], sab: [], dom: [] };
@@ -55,13 +84,19 @@ const addMinutesToTime = (time: string, minutesToAdd: number) => {
   return `${String(Math.floor(total / 60)).padStart(2, '0')}:${String(total % 60).padStart(2, '0')}`;
 };
 
-type AppState = 'landing' | 'login' | 'app';
+function AppInner() {
+  const navigate = useNavigate();
+  const location = useLocation();
+  const [searchParams] = useSearchParams();
 
-function App() {
-  const [appState, setAppState] = useState<AppState>('landing');
-  const [sessionUser, setSessionUser] = useState<AuthUser | null>(null);
-  const [contractAccepted, setContractAccepted] = useState<boolean>(false);
-  const [activePage, setActivePage] = useState<Page>('dashboard');
+  // getUser() é síncrono (apenas leitura de localStorage/sessionStorage), então a
+  // sessão pode ser resolvida direto no estado inicial — sem precisar de efeito.
+  const [sessionUser, setSessionUser] = useState<AuthUser | null>(() => getUser());
+  const [contractAccepted, setContractAccepted] = useState<boolean>(() => {
+    const savedUser = getUser();
+    if (!savedUser) return false;
+    return savedUser.role === 'teacher' || savedUser.termos === true;
+  });
   const [collapsed, setCollapsed] = useState(false);
   const [lessons, setLessons] = useState<Lesson[]>([]);
   const [alunos, setAlunos] = useState<Aluno[]>([]);
@@ -102,29 +137,13 @@ function App() {
     }
   };
 
-  // Tenta restaurar a sessão ao carregar a página
+  // Carrega os dados remotos quando já existe uma sessão restaurada
   useEffect(() => {
-    const savedUser = getUser();
-    if (savedUser) {
-      setSessionUser(savedUser);
-      setAppState('app');
-      loadAvailability();
-      loadLessons();
-      loadAlunos();
-      // Se for professor, já aceitou contrato. Se for aluno, verifica o campo termos.
-      if (savedUser.role === 'teacher' || savedUser.termos === true) {
-        setContractAccepted(true);
-      }
-      return;
-    }
-  }, []);
-
-  // Detecta se voltamos do Google OAuth e navega para Configurações
-  useEffect(() => {
-    const params = new URLSearchParams(window.location.search);
-    if (params.has('google')) {
-      setActivePage('settings');
-    }
+    if (!sessionUser) return;
+    loadAvailability();
+    loadLessons();
+    loadAlunos();
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- só deve rodar uma vez, ao montar
   }, []);
 
   const studentFromEmail = sessionUser?.role === 'student'
@@ -154,9 +173,10 @@ function App() {
     ? lessons
     : lessons.filter(lessonBelongsToSessionUser);
 
+  const defaultPage: Page = sessionUser?.role === 'teacher' ? 'dashboard' : 'agenda';
+
   const handleLoginSuccess = (user: AuthUser) => {
     setSessionUser(user);
-    setAppState('app');
     loadAvailability();
     loadLessons();
     loadAlunos();
@@ -166,6 +186,7 @@ function App() {
     } else {
       setContractAccepted(hasAcceptedContract(user.email));
     }
+    navigate(PAGE_PATHS[user.role === 'teacher' ? 'dashboard' : 'agenda'], { replace: true });
   };
 
   const handleContractAccepted = (_acceptance: ContractAcceptance) => {
@@ -176,23 +197,19 @@ function App() {
     void logout(); // async clears HttpOnly cookie on the server
     setSessionUser(null);
     setContractAccepted(false);
-    setActivePage('dashboard');
-    setAppState('landing');
+    navigate('/login', { replace: true });
   };
 
   const allowedPages: Page[] = sessionUser?.role === 'teacher'
-    ? ['dashboard', 'agenda', 'students', 'rooms', 'rescheduling', 'video', 'lessonAlerts', 'settings', 'profile']
-    : ['agenda', 'rescheduling', 'video', 'settings', 'profile'];
+    ? ['dashboard', 'agenda', 'students', 'rooms', 'rescheduling', 'lessonAlerts', 'settings', 'profile']
+    : ['agenda', 'rescheduling', 'credits', 'settings', 'profile'];
 
-  const defaultPage: Page = sessionUser?.role === 'teacher' ? 'dashboard' : 'agenda';
+  const handleNavigate = (page: Page) => navigate(PAGE_PATHS[page]);
 
   const handleProfileUpdate = (updatedUser: AuthUser) => {
     setSessionUser(updatedUser);
-    setActivePage(defaultPage);
+    navigate(PAGE_PATHS[defaultPage]);
   };
-  const safeActivePage = allowedPages.includes(activePage)
-    ? activePage
-    : defaultPage;
 
   const handleUpdateLesson = (updated: Lesson) =>
     setLessons((prev) => prev.map((lesson) => {
@@ -266,77 +283,56 @@ function App() {
     return () => window.clearInterval(timer);
   }, [visibleLessons]);
 
-  const renderPage = () => {
-    switch (safeActivePage) {
-      case 'dashboard':
-        return (
-          <Dashboard
-            lessons={visibleLessons}
-            students={alunos}
-            onNavigate={setActivePage}
-          />
-        );
-      case 'agenda':
-        return (
-          <AgendaPage
-            lessons={visibleLessons}
-            availability={availability}
-            availabilityReposicao={availabilityReposicao}
-            currentUser={sessionUser!}
-            onUpdateLesson={handleUpdateLesson}
-            onDeleteLesson={handleDeleteLesson}
-            onMoveLesson={handleMoveLesson}
-            onNavigate={setActivePage}
-          />
-        );
-      case 'students':
-        return (
-          <StudentsPage
-            students={alunos}
-            currentUser={sessionUser ?? undefined}
-            onReload={loadAlunos}
-          />
-        );
-      case 'rooms':
-        return (
-          <DisponibilidadePage
-            availability={availability}
-            availabilityReposicao={availabilityReposicao}
-            onChangeAvailability={setAvailability}
-            onChangeAvailabilityReposicao={setAvailabilityReposicao}
-          />
-        );
-      case 'rescheduling':
-        return <ReschedulingPage sessionUser={sessionUser!} />;
-      case 'video':
-        return <VideoPage user={sessionUser} />;
-      case 'lessonAlerts':
-        return <LessonAlertsPage />;
-      case 'settings':
-        return <SettingsPage user={sessionUser!} onProfileUpdate={handleProfileUpdate} />;
-      case 'profile':
-        return <SettingsPage user={sessionUser!} onProfileUpdate={handleProfileUpdate} initialSection="profile" />;
-    }
-  };
-
-  if (appState === 'landing') {
-    return <LandingPage onEnterLogin={() => setAppState('login')} />;
-  }
-
-  if (appState === 'login' || !sessionUser) {
-    return <LoginPage onLoginSuccess={handleLoginSuccess} />;
+  // ── Não autenticado: apenas rotas de login/recuperação de senha ──────────────
+  if (!sessionUser) {
+    return (
+      <Routes>
+        <Route
+          path="/login"
+          element={(
+            <LoginPage
+              onLoginSuccess={handleLoginSuccess}
+              onForgotPassword={() => navigate('/esqueci-senha')}
+            />
+          )}
+        />
+        <Route
+          path="/esqueci-senha"
+          element={(
+            <ForgotPasswordPage
+              onBack={() => navigate('/login')}
+              onResetSuccess={() => navigate('/login')}
+            />
+          )}
+        />
+        <Route
+          path="/redefinir-senha"
+          element={(
+            <ForgotPasswordPage
+              resetToken={searchParams.get('token') ?? undefined}
+              onBack={() => navigate('/login')}
+              onResetSuccess={() => navigate('/login')}
+            />
+          )}
+        />
+        <Route path="*" element={<Navigate to="/login" replace />} />
+      </Routes>
+    );
   }
 
   if (!contractAccepted) {
     return <ContractGate user={sessionUser} onAccepted={handleContractAccepted} />;
   }
 
+  const currentPage = PATH_TO_PAGE[location.pathname];
+  const safeActivePage = currentPage && allowedPages.includes(currentPage) ? currentPage : defaultPage;
+
   return (
     <Layout
       collapsed={collapsed}
-      onToggle={() => setCollapsed(v => !v)}
+      onToggle={() => setCollapsed((v) => !v)}
       activePage={safeActivePage}
-      onNavigate={setActivePage}
+      onNavigate={handleNavigate}
       user={sessionUser}
       onLogout={handleLogout}
     >
@@ -349,10 +345,75 @@ function App() {
           transition={{ duration: 0.18 }}
           className={safeActivePage === 'agenda' ? 'h-full flex flex-col' : ''}
         >
-          {renderPage()}
+          <Routes>
+            {allowedPages.includes('dashboard') && (
+              <Route
+                path={PAGE_PATHS.dashboard}
+                element={<Dashboard lessons={visibleLessons} students={alunos} onNavigate={handleNavigate} />}
+              />
+            )}
+            <Route
+              path={PAGE_PATHS.agenda}
+              element={(
+                <AgendaPage
+                  lessons={visibleLessons}
+                  availability={availability}
+                  availabilityReposicao={availabilityReposicao}
+                  currentUser={sessionUser}
+                  onUpdateLesson={handleUpdateLesson}
+                  onDeleteLesson={handleDeleteLesson}
+                  onMoveLesson={handleMoveLesson}
+                />
+              )}
+            />
+            {allowedPages.includes('students') && (
+              <Route
+                path={PAGE_PATHS.students}
+                element={<StudentsPage students={alunos} currentUser={sessionUser} onReload={loadAlunos} />}
+              />
+            )}
+            {allowedPages.includes('rooms') && (
+              <Route
+                path={PAGE_PATHS.rooms}
+                element={(
+                  <DisponibilidadePage
+                    availability={availability}
+                    availabilityReposicao={availabilityReposicao}
+                    onChangeAvailability={setAvailability}
+                    onChangeAvailabilityReposicao={setAvailabilityReposicao}
+                  />
+                )}
+              />
+            )}
+            <Route path={PAGE_PATHS.rescheduling} element={<ReschedulingPage sessionUser={sessionUser} />} />
+            {allowedPages.includes('lessonAlerts') && (
+              <Route path={PAGE_PATHS.lessonAlerts} element={<LessonAlertsPage />} />
+            )}
+            {allowedPages.includes('credits') && (
+              <Route path={PAGE_PATHS.credits} element={<CreditosPage currentUser={sessionUser} students={alunos} />} />
+            )}
+            <Route
+              path={PAGE_PATHS.settings}
+              element={<SettingsPage user={sessionUser} onProfileUpdate={handleProfileUpdate} />}
+            />
+            <Route
+              path={PAGE_PATHS.profile}
+              element={<SettingsPage user={sessionUser} onProfileUpdate={handleProfileUpdate} initialSection="profile" />}
+            />
+            <Route path="/login" element={<Navigate to={PAGE_PATHS[defaultPage]} replace />} />
+            <Route path="*" element={<Navigate to={PAGE_PATHS[defaultPage]} replace />} />
+          </Routes>
         </motion.div>
       </AnimatePresence>
     </Layout>
+  );
+}
+
+function App() {
+  return (
+    <BrowserRouter>
+      <AppInner />
+    </BrowserRouter>
   );
 }
 

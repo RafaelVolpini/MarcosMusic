@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
-import { Search, Plus, Phone, Mail, Tag, ChevronLeft, ChevronRight, Trash2, MessageSquare } from 'lucide-react';
+import { Search, Plus, Phone, Mail, Tag, ChevronLeft, ChevronRight, Trash2 } from 'lucide-react';
 import { DeleteConfirmModal } from '../modals/DeleteConfirmModal';
 import type { Aluno } from '../../types';
 import type { AuthUser } from '../../lib/auth';
@@ -10,7 +10,6 @@ import { Avatar } from '../ui/Avatar';
 import { Button } from '../ui/Button';
 import { AlunoModal } from '../modals/AlunoModal';
 import { criarAluno, atualizarAluno, deletarAluno, type AlunoFormData } from '../../services/alunoService';
-import { chatBus } from '../../lib/chatBus';
 import { formatPhoneGlobal, phoneToWhatsApp } from '../../utils';
 import { useLanguage } from '../../context/LanguageContext';
 
@@ -168,23 +167,6 @@ export function StudentsPage({ students, currentUser, onReload }: StudentsPagePr
                       ? <span className="w-3.5 h-3.5 border-2 border-red-400/40 border-t-red-400 rounded-full animate-spin" />
                       : <Trash2 size={13} />
                     }
-                  </button>
-                )}
-                {/* Botão de chat  professor abre conversa direto com o aluno */}
-                {isTeacher && (
-                  <button
-                    onClick={(e) => { e.stopPropagation(); chatBus.open(aluno.id); }}
-                    title="Abrir chat com aluno"
-                    className="
-                      absolute top-3 right-12 w-7 h-7 rounded-lg
-                      flex items-center justify-center
-                      text-[var(--muted)] hover:text-[var(--accent-600)]
-                      hover:bg-[var(--hover-bg)]
-                      opacity-0 group-hover:opacity-100
-                      transition-all duration-150
-                    "
-                  >
-                    <MessageSquare size={13} />
                   </button>
                 )}
 

@@ -101,12 +101,6 @@ export function minutesToTime(minutes: number): string {
   return `${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}`;
 }
 
-export function generateMeetLink(): string {
-  const chars = 'abcdefghijklmnopqrstuvwxyz';
-  const seg = (n: number) => Array.from({ length: n }, () => chars[Math.floor(Math.random() * chars.length)]).join('');
-  return `https://meet.google.com/${seg(3)}-${seg(4)}-${seg(3)}`;
-}
-
 export function getDayKeyFromISODate(dateISO: string): DayKey {
   const day = new Date(`${dateISO}T00:00:00`).getDay();
   return (['dom', 'seg', 'ter', 'qua', 'qui', 'sex', 'sab'][day] as DayKey);

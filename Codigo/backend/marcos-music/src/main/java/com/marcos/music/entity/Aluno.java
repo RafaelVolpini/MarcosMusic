@@ -52,6 +52,9 @@ public class Aluno {
     @Column(name = "mensalidade_notificacao")
     private LocalDate mensalidadeNotificacao;
 
+    @Column(name = "aulas_por_semana_plano", nullable = false)
+    private Integer aulasPorSemanaPlano = 3;
+
     @OneToMany(mappedBy = "aluno", cascade = CascadeType.ALL, orphanRemoval = true)
     @JsonIgnore
     private List<AulaAluno> horarios;

@@ -132,8 +132,6 @@ function reposicaoToLessons(r: ReposicaoDTO): Lesson[] {
     status: 'rescheduled' as const,
     attendanceConfirmed: false,
     recorrente: false,
-    meetLink: undefined,
-    isOnline: false,
   }));
 }
 
@@ -472,7 +470,6 @@ export function LessonAlertsPage() {
     const week = new Date(today);
     week.setDate(today.getDate() + 7);
 
-    setLoading(true);
     Promise.all([
       buscarAulas(`${fmt(today)}T00:00:00`, `${fmt(week)}T23:59:59`),
       listarAlunos(),
@@ -506,14 +503,11 @@ export function LessonAlertsPage() {
   }, [lessons, nowDate, nowTime]);
 
   const firstWithPhone = allScheduled.find(l => students.find(s => s.id === l.studentId)?.telefone);
-  const [selectedLessonId, setSelectedLessonId] = useState('');
 
-  // inicializa seleção quando dados carregam
-  useEffect(() => {
-    if (selectedLessonId === '' && allScheduled.length > 0) {
-      setSelectedLessonId(firstWithPhone?.id ?? allScheduled[0].id);
-    }
-  }, [allScheduled, firstWithPhone, selectedLessonId]);
+  // Seleção do usuário (vazio = segue o padrão calculado abaixo automaticamente)
+  const [selectedLessonIdOverride, setSelectedLessonIdOverride] = useState('');
+  const selectedLessonId = selectedLessonIdOverride || firstWithPhone?.id || allScheduled[0]?.id || '';
+  const setSelectedLessonId = setSelectedLessonIdOverride;
 
   const lessonModeLesson = useMemo(
     () => allScheduled.find(l => l.id === selectedLessonId),
@@ -532,14 +526,10 @@ export function LessonAlertsPage() {
     [students, lessons],
   );
 
-  const [selectedStudentId, setSelectedStudentId] = useState('');
+  const [selectedStudentIdOverride, setSelectedStudentIdOverride] = useState('');
+  const selectedStudentId = selectedStudentIdOverride || firstStudentWithPhone?.id || '';
+  const setSelectedStudentId = setSelectedStudentIdOverride;
   const [selectedStudentLessonId, setSelectedStudentLessonId] = useState('');
-
-  useEffect(() => {
-    if (selectedStudentId === '' && firstStudentWithPhone) {
-      setSelectedStudentId(firstStudentWithPhone.id);
-    }
-  }, [firstStudentWithPhone, selectedStudentId]);
 
   const studentLessons = useMemo(() => {
     return lessons

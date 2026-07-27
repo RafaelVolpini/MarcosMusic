@@ -1,7 +1,6 @@
 import { useEffect, useState } from 'react';
-import { Gift, AlertCircle, CheckCircle2, Clock } from 'lucide-react';
+import { Gift, AlertCircle, Clock } from 'lucide-react';
 import { getSaldoCreditos, type SaldoCreditosDTO } from '../../services/creditoReposicaoService';
-import { useLanguage } from '../../context/LanguageContext';
 
 interface SaldoCreditosCardProps {
   alunoId: string;
@@ -9,7 +8,6 @@ interface SaldoCreditosCardProps {
 }
 
 export function SaldoCreditosCard({ alunoId, isTeacher = false }: SaldoCreditosCardProps) {
-  const { t } = useLanguage();
   const [saldo, setSaldo] = useState<SaldoCreditosDTO | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -143,7 +141,7 @@ export function SaldoCreditosCard({ alunoId, isTeacher = false }: SaldoCreditosC
             <div className="text-sm text-amber-700 dark:text-amber-300">
               <p className="font-medium">Você não tem créditos</p>
               <p className="text-xs opacity-80 mt-0.5">
-                Cancele aulas com até 23:00 do dia anterior para ganhar créditos
+                Cancele aulas com pelo menos 24h de antecedência para ganhar créditos
               </p>
             </div>
           </div>

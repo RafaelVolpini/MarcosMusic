@@ -1,17 +1,14 @@
 import type { ReactNode } from "react";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   X,
   User,
   Clock,
   FileText,
-  Video,
-  ExternalLink,
   CheckCircle,
   XCircle,
   RefreshCw,
-  Music,
   Trash2,
 } from "lucide-react";
 import type { Lesson } from "../../types";
@@ -29,7 +26,6 @@ import { Avatar } from "../ui/Avatar";
 import { useAppSettings } from "../../context/AppSettingsContext";
 import { useToast } from "../ui/Toast";
 import { useLanguage } from "../../context/LanguageContext";
-import { regenerarMeetLink } from "../../services/aulaService";
 
 interface LessonModalProps {
   lesson: Lesson | null;
@@ -54,27 +50,16 @@ export function LessonModal({
   onReschedule,
   onConfirmPresence,
 }: LessonModalProps) {
-  const [notes, setNotes] = useState("");
-  const [meetLink, setMeetLink] = useState("");
-  const [attendanceConfirmed, setAttendanceConfirmed] = useState(false);
+  // O componente é remontado (via `key`) sempre que o id da aula muda,
+  // então o estado local já nasce sincronizado com a aula atual — sem
+  // precisar de um efeito para "resetar" o estado a cada nova `lesson`.
+  const [notes, setNotes] = useState(lesson?.notes ?? "");
+  const [attendanceConfirmed, setAttendanceConfirmed] = useState(lesson?.attendanceConfirmed ?? false);
   const [editing, setEditing] = useState(false);
   const [confirmDelete, setConfirmDelete] = useState(false);
   const [rescheduling, setRescheduling] = useState(false);
-  const [rescheduleDate, setRescheduleDate] = useState("");
-  const [rescheduleTime, setRescheduleTime] = useState("");
-  const [regenerating, setRegenerating] = useState(false);
-
-  useEffect(() => {
-    if (!lesson) return;
-    setNotes(lesson.notes ?? "");
-    setMeetLink(lesson.meetLink ?? "");
-    setAttendanceConfirmed(lesson.attendanceConfirmed ?? false);
-    setEditing(false);
-    setConfirmDelete(false);
-    setRescheduling(false);
-    setRescheduleDate(lesson.date);
-    setRescheduleTime(lesson.startTime);
-  }, [lesson]);
+  const [rescheduleDate, setRescheduleDate] = useState(lesson?.date ?? "");
+  const [rescheduleTime, setRescheduleTime] = useState(lesson?.startTime ?? "");
 
   // Hooks that must be called unconditionally (before any early return)
   const { appSettings } = useAppSettings();
@@ -84,7 +69,6 @@ export function LessonModal({
   const TYPE_LABELS: Record<string, string> = {
     individual: t('modals.lesson.types.individual'),
     group:      t('modals.lesson.types.group'),
-    online:     t('modals.lesson.types.online'),
     trial:      t('modals.lesson.types.trial'),
   };
 
@@ -99,7 +83,6 @@ export function LessonModal({
 
   const statusInfo = STATUS_BADGE[lesson.status];
   const duration = formatDuration(lesson.startTime, lesson.endTime);
-  const canManageMeet = currentUser.role === "teacher";
   const LESSON_DURATION_MINUTES = 50;
 
   // Permissão: admin (teacher) pode tudo; aluno só pode agir na própria aula
@@ -152,27 +135,10 @@ export function LessonModal({
     toast('Presença confirmada com sucesso.', 'success');
   };
 
-  const handleGenerateMeet = async () => {
-    if (!canManageMeet || !lesson) return;
-    setRegenerating(true);
-    try {
-      const updated = await regenerarMeetLink(String(lesson.id));
-      const newLink = updated.meetLink ?? '';
-      setMeetLink(newLink);
-      onUpdate({ ...lesson, meetLink: newLink });
-      toast('Link do Meet gerado com sucesso.', 'success');
-    } catch (err) {
-      toast(err instanceof Error ? err.message : 'Erro ao gerar link.', 'error');
-    } finally {
-      setRegenerating(false);
-    }
-  };
-
   const handleSave = () => {
     onUpdate({
       ...lesson,
       notes,
-      meetLink,
       attendanceConfirmed,
       attendanceConfirmedAt: attendanceConfirmed
         ? (lesson.attendanceConfirmedAt ?? new Date().toISOString())
@@ -265,67 +231,29 @@ export function LessonModal({
                   </InfoRow>
                 </div>
 
-                {/* Meet link */}
-                <div className="grid grid-cols-2 gap-4">
-                  <InfoRow icon={<Video size={14} />} label={t('modals.lesson.labelLink')}>
-                    {meetLink ? (
-                      <div className="flex items-center gap-2">
-                        <a
-                          href={meetLink}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="text-sm text-(--accent-700) hover:underline flex items-center gap-1 truncate"
-                        >
-                          {meetLink.replace("https://", "")}
-                          <ExternalLink size={12} className="shrink-0" />
-                        </a>
-                        {canManageMeet && (
-                          <Button
-                            size="sm"
-                            variant="ghost"
-                            onClick={handleGenerateMeet}
-                            disabled={regenerating}
-                          >
-                            <RefreshCw size={12} />
-                          </Button>
-                        )}
-                      </div>
-                    ) : canManageMeet ? (
-                      <Button
-                        size="sm"
-                        variant="secondary"
-                        onClick={handleGenerateMeet}
-                        disabled={regenerating}
-                      >
-                        <Video size={12} />
-                        {regenerating ? '...' : t('modals.lesson.generateMeet')}
-                      </Button>
-                    ) : null}
-                  </InfoRow>
-                  <InfoRow icon={<CheckCircle size={14} />} label={t('modals.lesson.labelAttendance')}>
-                    {editing ? (
-                      <label className="flex items-center gap-2 text-sm text-(--text)">
-                        <input
-                          type="checkbox"
-                          checked={attendanceConfirmed}
-                          onChange={(e) =>
-                            setAttendanceConfirmed(e.target.checked)
-                          }
-                          className="rounded border-(--input-border)"
-                        />
-                        {t('modals.lesson.confirmed')}
-                      </label>
-                    ) : (
-                      <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-semibold ${
-                        attendanceConfirmed
-                          ? 'bg-emerald-50 text-emerald-700'
-                          : 'bg-amber-50 text-amber-700'
-                      }`}>
-                        {attendanceConfirmed ? t('modals.lesson.confirmed') : t('modals.lesson.pending')}
-                      </span>
-                    )}
-                  </InfoRow>
-                </div>
+                <InfoRow icon={<CheckCircle size={14} />} label={t('modals.lesson.labelAttendance')}>
+                  {editing ? (
+                    <label className="flex items-center gap-2 text-sm text-(--text)">
+                      <input
+                        type="checkbox"
+                        checked={attendanceConfirmed}
+                        onChange={(e) =>
+                          setAttendanceConfirmed(e.target.checked)
+                        }
+                        className="rounded border-(--input-border)"
+                      />
+                      {t('modals.lesson.confirmed')}
+                    </label>
+                  ) : (
+                    <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-semibold ${
+                      attendanceConfirmed
+                        ? 'bg-emerald-50 text-emerald-700'
+                        : 'bg-amber-50 text-amber-700'
+                    }`}>
+                      {attendanceConfirmed ? t('modals.lesson.confirmed') : t('modals.lesson.pending')}
+                    </span>
+                  )}
+                </InfoRow>
 
                 {/* Notes */}
                 <InfoRow icon={<FileText size={14} />} label={t('modals.lesson.labelNotes')}>
@@ -347,31 +275,6 @@ export function LessonModal({
                     </p>
                   )}
                 </InfoRow>
-
-                {/* Recording */}
-                {lesson.recording && (
-                  <InfoRow icon={<Music size={14} />} label={t('modals.lesson.labelRecording')}>
-                    <div className="flex items-center gap-2 bg-(--surface-soft) rounded-xl px-3 py-2">
-                      <div className="w-8 h-8 rounded-lg bg-(--accent-50) flex items-center justify-center">
-                        <Video size={14} className="text-(--accent-600)" />
-                      </div>
-                      <div className="flex-1 min-w-0">
-                        <p className="text-xs font-medium text-(--heading) truncate">
-                          {lesson.recording.title}
-                        </p>
-                        <p className="text-xs text-(--muted)">
-                          {Math.floor(lesson.recording.duration / 60)} min
-                        </p>
-                      </div>
-                      <a
-                        href={lesson.recording.url}
-                        className="text-(--accent-600) hover:text-(--accent-700)"
-                      >
-                        <ExternalLink size={14} />
-                      </a>
-                    </div>
-                  </InfoRow>
-                )}
               </div>
 
               {/* Footer actions */}

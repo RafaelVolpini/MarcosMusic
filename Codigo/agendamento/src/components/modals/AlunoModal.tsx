@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { X, User, Mail, Phone, Tag, Save, UserPlus, Info, Lock, CheckCircle2, AlertCircle } from 'lucide-react';
+import { X, User, Mail, Phone, Tag, Save, UserPlus, Info, CheckCircle2, AlertCircle, GraduationCap } from 'lucide-react';
 import type { Aluno } from '../../types';
 import type { AlunoFormData } from '../../services/alunoService';
 import { formatPhoneGlobal } from '../../utils';
@@ -51,6 +51,7 @@ const EMPTY: AlunoFormData = {
   telefone: '',
   apelido: '',
   ativo: true,
+  aulasPorSemanaPlano: 3,
 };
 
 function toFormData(a: Aluno): AlunoFormData {
@@ -60,6 +61,7 @@ function toFormData(a: Aluno): AlunoFormData {
     telefone: a.telefone ? formatPhoneGlobal(a.telefone) : '',
     apelido: a.apelido ?? '',
     ativo: a.ativo,
+    aulasPorSemanaPlano: a.aulasPorSemanaPlano ?? 3,
   };
 }
 
@@ -217,12 +219,10 @@ export function AlunoModal({ aluno, open, onClose, onSave }: AlunoModalProps) {
     if (!form.nome.trim()) {
       e.nome = t('modals.student.errName');
     }
-    if (!isEdit) {
-      if (!form.email.trim()) {
-        e.email = t('modals.student.errEmail');
-      } else if (!EMAIL_RE.test(form.email.trim())) {
-        e.email = t('modals.student.errEmailFmt');
-      }
+    if (!form.email.trim()) {
+      e.email = t('modals.student.errEmail');
+    } else if (!EMAIL_RE.test(form.email.trim())) {
+      e.email = t('modals.student.errEmailFmt');
     }
     if (form.telefone && form.telefone.trim() && !isPhoneValid(form.telefone)) {
       e.telefone = t('modals.student.errPhone');
@@ -335,8 +335,7 @@ export function AlunoModal({ aluno, open, onClose, onSave }: AlunoModalProps) {
                     label={t('modals.student.emailLabel')}
                     icon={Mail}
                     error={errors.email}
-                    required={!isEdit}
-                    hint={isEdit ? t('modals.student.emailHint') : undefined}
+                    required
                   >
                     <TextInput
                       type="email"
@@ -344,10 +343,27 @@ export function AlunoModal({ aluno, open, onClose, onSave }: AlunoModalProps) {
                       onChange={v => set('email', v)}
                       placeholder={t('modals.student.emailPH')}
                       hasError={!!errors.email}
-                      isValid={!isEdit && !!form.email.trim() && EMAIL_RE.test(form.email.trim()) && !errors.email}
-                      disabled={isEdit}
-                      iconRight={isEdit ? <Lock size={13} /> : undefined}
+                      isValid={!!form.email.trim() && EMAIL_RE.test(form.email.trim()) && !errors.email}
                     />
+                  </Field>
+
+                  <Field label={t('modals.student.planLabel')} icon={GraduationCap} hint={t('modals.student.planHint')}>
+                    <div className="grid grid-cols-3 gap-2">
+                      {[1, 2, 3].map((n) => (
+                        <button
+                          key={n}
+                          type="button"
+                          onClick={() => set('aulasPorSemanaPlano', n)}
+                          className={`h-10 rounded-xl text-sm font-semibold border transition-all ${
+                            form.aulasPorSemanaPlano === n
+                              ? 'bg-(--accent-500) text-white border-transparent'
+                              : 'bg-(--input-bg) text-(--text) border-(--input-border) hover:border-(--accent-500)'
+                          }`}
+                        >
+                          {n}x/{t('modals.student.planWeek')}
+                        </button>
+                      ))}
+                    </div>
                   </Field>
 
                   {/* Senha padrão somente no cadastro */}

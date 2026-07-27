@@ -51,6 +51,7 @@ public class AlunoService {
             aluno.setStatus(dto.getStatus() != null ? dto.getStatus() : true);
             aluno.setTermos(dto.getTermos() != null ? dto.getTermos() : false);
             aluno.setApelido(dto.getApelido());
+            aluno.setAulasPorSemanaPlano(dto.getAulasPorSemanaPlano() != null ? dto.getAulasPorSemanaPlano() : 3);
 
             List<Long> idsDTO = dto.getHorarios() == null ? List.of() :
                     dto.getHorarios().stream()
@@ -91,8 +92,16 @@ public class AlunoService {
             Usuario u = usuarioRepository.findById(aluno.getId())
                     .orElseThrow(() -> new RuntimeException("Usuario não encontrado"));
 
-            u.setEmail(dto.getEmail());
-            usuarioRepository.save(u);
+            String novoEmail = dto.getEmail() != null ? dto.getEmail().trim().toLowerCase() : null;
+            if (novoEmail != null && !novoEmail.isBlank() && !novoEmail.equalsIgnoreCase(u.getEmail())) {
+                usuarioRepository.findByEmailIgnoreCase(novoEmail).ifPresent(existente -> {
+                    if (!existente.getId().equals(u.getId())) {
+                        throw new IllegalArgumentException("E-mail já cadastrado");
+                    }
+                });
+                u.setEmail(novoEmail);
+                usuarioRepository.save(u);
+            }
 
             return aluno;
         }
@@ -105,6 +114,7 @@ public class AlunoService {
         aluno.setTermos(dto.getTermos() != null ? dto.getTermos() : false);
         aluno.setStatus(dto.getStatus() != null ? dto.getStatus() : true);
         aluno.setApelido(dto.getApelido());
+        aluno.setAulasPorSemanaPlano(dto.getAulasPorSemanaPlano() != null ? dto.getAulasPorSemanaPlano() : 3);
 
         aluno.setUsuario(user); 
 
@@ -184,6 +194,7 @@ public class AlunoService {
                         dto.setEmail(aluno.getUsuario().getEmail());
                     }
                     dto.setApelido(aluno.getApelido());
+                    dto.setAulasPorSemanaPlano(aluno.getAulasPorSemanaPlano());
                     return dto;
                 })
                 .collect(Collectors.toList());

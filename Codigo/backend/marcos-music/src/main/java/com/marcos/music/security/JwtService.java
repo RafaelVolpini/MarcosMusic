@@ -17,16 +17,20 @@ public class JwtService {
     private final String SECRET = "super-secret-key-super-secret-key";
 
     public String generateToken(Usuario user) {
-        Map<String, Object> claims = new HashMap<>();
-    
-        claims.put("id", user.getId());
-        claims.put("role", user.getRole());
-        
+        return generateToken(user, false);
+    }
+
+    public String generateToken(Usuario user, boolean rememberMe) {
+        long expiryMs = rememberMe
+                ? 30L * 24 * 60 * 60 * 1000   // 30 days
+                : 8L * 60 * 60 * 1000;          // 8 hours
+
         return Jwts.builder()
                 .setSubject(user.getEmail())
+                .claim("id", user.getId())
                 .claim("role", user.getRole().name())
                 .setIssuedAt(new Date())
-                .setExpiration(new Date(System.currentTimeMillis() + 28800000)) // 8 hours
+                .setExpiration(new Date(System.currentTimeMillis() + expiryMs))
                 .signWith(Keys.hmacShaKeyFor(SECRET.getBytes()))
                 .compact();
     }
@@ -48,5 +52,20 @@ public class JwtService {
                 .parseClaimsJws(token)
                 .getBody()
                 .getSubject();
+    }
+
+    /** true se o token foi emitido com "manter conectado" (validade longa). */
+    public boolean isLongLived(String token) {
+        try {
+            Claims claims = Jwts.parserBuilder()
+                    .setSigningKey(SECRET.getBytes())
+                    .build()
+                    .parseClaimsJws(token)
+                    .getBody();
+            long lifetimeMs = claims.getExpiration().getTime() - claims.getIssuedAt().getTime();
+            return lifetimeMs > 24L * 60 * 60 * 1000;
+        } catch (Exception e) {
+            return false;
+        }
     }
 }

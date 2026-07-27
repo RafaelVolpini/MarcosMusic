@@ -1,13 +1,10 @@
 import { useState, useEffect, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Bell, ChevronDown, Music, Settings, LogOut, User, MessageSquare } from 'lucide-react';
-import { ChatPanel } from '../modals/ChatPanel';
-import { chatService } from '../../services/chatService';
+import { Bell, ChevronDown, Music, Settings, LogOut, User } from 'lucide-react';
 import { notificacaoService, type NotificacaoDTO } from '../../services/notificacaoService';
-import { chatBus } from '../../lib/chatBus';
 import type { Page } from '../../types';
 import { cn } from '../../utils';
-import type { AuthUser } from '../../lib/auth'; 
+import type { AuthUser } from '../../lib/auth';
 import marcosPhoto from '../../assets/image.png';
 import { useLanguage } from '../../context/LanguageContext';
 
@@ -22,24 +19,11 @@ export function TopBar({ activePage, user, onLogout, onNavigate }: TopBarProps) 
   const { lang, setLang, t } = useLanguage();
   const [notifOpen, setNotifOpen] = useState(false);
   const [profileOpen, setProfileOpen] = useState(false);
-  const [chatOpen, setChatOpen] = useState(false);
-  const [chatNaoLidas, setChatNaoLidas] = useState(0);
   const [notifications, setNotifications] = useState<NotificacaoDTO[]>([]);
   const [notifNaoLidas, setNotifNaoLidas] = useState(0);
-  const [chatTargetAlunoId, setChatTargetAlunoId] = useState<string | undefined>();
 
   const dest = user.role === 'teacher' ? 'PROFESSOR' : (user.id ?? '');
-  const remetente = user.role === 'teacher' ? 'professor' : 'aluno';
 
-  // ── Chat não lidas ────────────────────────────────────────────────────────
-  const refreshChatNaoLidas = useCallback(async () => {
-    try {
-      const total = await chatService.naoLidas(remetente as 'professor' | 'aluno');
-      setChatNaoLidas(total);
-    } catch { /* silencia */ }
-  }, [remetente]);
-
-  // ── Notificações ──────────────────────────────────────────────────────────
   const refreshNotificacoes = useCallback(async () => {
     if (!dest) return;
     try {
@@ -52,52 +36,29 @@ export function TopBar({ activePage, user, onLogout, onNavigate }: TopBarProps) 
     } catch { /* silencia */ }
   }, [dest]);
 
-  // Polling inicial + periódico
   useEffect(() => {
-    refreshChatNaoLidas();
-    const id1 = setInterval(refreshChatNaoLidas, 10000);
-    return () => clearInterval(id1);
-  }, [refreshChatNaoLidas]);
-
-  useEffect(() => {
-    refreshNotificacoes();
-    const id2 = setInterval(refreshNotificacoes, 10000);
-    return () => clearInterval(id2);
+    // Busca (assíncrona) ao montar + polling a cada 10s — não é um setState síncrono.
+    refreshNotificacoes(); // eslint-disable-line react-hooks/set-state-in-effect
+    const id = setInterval(refreshNotificacoes, 10000);
+    return () => clearInterval(id);
   }, [refreshNotificacoes]);
 
-  // Atualiza ao mudar de aba / retornar ao foco
   useEffect(() => {
     const onVisible = () => {
-      if (document.visibilityState === 'visible') {
-        refreshChatNaoLidas();
-        refreshNotificacoes();
-      }
+      if (document.visibilityState === 'visible') refreshNotificacoes();
     };
     document.addEventListener('visibilitychange', onVisible);
     return () => document.removeEventListener('visibilitychange', onVisible);
-  }, [refreshChatNaoLidas, refreshNotificacoes]);
+  }, [refreshNotificacoes]);
 
-  // Atualiza ao navegar entre páginas
   useEffect(() => {
-    refreshChatNaoLidas();
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- busca assíncrona ao trocar de página
     refreshNotificacoes();
   }, [activePage]); // eslint-disable-line react-hooks/exhaustive-deps
 
-  // Escuta pedidos de abertura de chat de outras páginas (ex: StudentsPage)
-  useEffect(() => {
-    return chatBus.listen((alunoId) => {
-      setChatTargetAlunoId(alunoId);
-      setChatOpen(true);
-      setNotifOpen(false);
-      setProfileOpen(false);
-    });
-  }, []);
-
-  // Ao abrir painel de notificações, marca todas como lidas
   const handleOpenNotif = async () => {
     setNotifOpen(v => !v);
     setProfileOpen(false);
-    setChatOpen(false);
     if (!notifOpen && dest) {
       try {
         await notificacaoService.marcarTodasLidas(dest);
@@ -113,10 +74,10 @@ export function TopBar({ activePage, user, onLogout, onNavigate }: TopBarProps) 
     students:     t('pages.students'),
     rooms:        t('pages.rooms'),
     rescheduling: t('pages.rescheduling'),
-    video:        t('pages.video'),
     lessonAlerts: t('pages.lessonAlerts'),
     settings:     t('pages.settings'),
     profile:      t('pages.profile'),
+    credits:      t('pages.credits'),
   };
 
   const initials = `${user.firstName?.[0] ?? ''}${user.lastName?.[0] ?? ''}`.trim().toUpperCase() || user.email.slice(0, 2).toUpperCase();
@@ -146,7 +107,6 @@ export function TopBar({ activePage, user, onLogout, onNavigate }: TopBarProps) 
               lang === l ? 'text-(--heading)' : 'text-(--muted) hover:text-(--text)',
             )}
           >
-            {/* Sliding active pill */}
             {lang === l && (
               <motion.span
                 layoutId="lang-pill"
@@ -181,26 +141,6 @@ export function TopBar({ activePage, user, onLogout, onNavigate }: TopBarProps) 
             </span>
           </button>
         ))}
-      </div>
-
-      {/* Chat */}
-      <div className="relative">
-        <button
-          aria-label={t('topbar.chat')}
-          aria-expanded={chatOpen}
-          onClick={() => { setChatOpen(v => !v); setNotifOpen(false); setProfileOpen(false); }}
-          className="relative w-10 h-10 flex items-center justify-center rounded-xl text-[var(--muted)] hover:bg-[var(--hover-bg)] hover:text-[var(--accent-600)] transition-colors cursor-pointer"
-        >
-          <MessageSquare size={18} />
-          {chatNaoLidas > 0 && (
-            <span
-              className="absolute top-1.5 right-1.5 min-w-[14px] h-[14px] flex items-center justify-center rounded-full text-[9px] font-bold text-white px-0.5 ring-2 ring-(--surface)"
-              style={{ background: 'linear-gradient(135deg, var(--accent-gradient-from), var(--accent-gradient-to))' }}
-            >
-              {chatNaoLidas > 99 ? '99+' : chatNaoLidas}
-            </span>
-          )}
-        </button>
       </div>
 
       {/* Notifications */}
@@ -281,7 +221,7 @@ export function TopBar({ activePage, user, onLogout, onNavigate }: TopBarProps) 
         <button
           aria-label={t('topbar.profile')}
           aria-expanded={profileOpen}
-          onClick={() => { setProfileOpen(v => !v); setNotifOpen(false); setChatOpen(false); }}
+          onClick={() => { setProfileOpen(v => !v); setNotifOpen(false); }}
           className="flex items-center gap-2 h-10 px-2 rounded-xl hover:bg-(--hover-bg) transition-colors"
         >
           <div
@@ -342,23 +282,13 @@ export function TopBar({ activePage, user, onLogout, onNavigate }: TopBarProps) 
         </AnimatePresence>
       </div>
 
-      {/* Backdrop for dropdowns */}
+      {/* Backdrop */}
       {(notifOpen || profileOpen) && (
         <div
           className="fixed inset-0 z-40"
           onClick={() => { setNotifOpen(false); setProfileOpen(false); }}
         />
       )}
-
-      {/* Chat panel (fora do header, mas abaixo dos modais) */}
-      <ChatPanel
-        isOpen={chatOpen}
-        onClose={() => setChatOpen(false)}
-        currentUser={user}
-        onUnreadChange={refreshChatNaoLidas}
-        defaultChatAlunoId={chatTargetAlunoId}
-        onDefaultChatHandled={() => setChatTargetAlunoId(undefined)}
-      />
     </header>
   );
 }

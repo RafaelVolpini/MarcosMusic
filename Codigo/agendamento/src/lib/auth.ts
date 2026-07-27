@@ -136,6 +136,30 @@ interface LoginResponse {
   id: string | null;
 }
 
+export async function forgotPassword(emailInput: string): Promise<void> {
+  const email = emailInput.trim().toLowerCase();
+  await fetch(`${BACKEND_URL}/auth/forgot-password`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    credentials: 'include',
+    body: JSON.stringify({ email }),
+  });
+  // Always resolves — backend never reveals if email exists
+}
+
+export async function resetPassword(token: string, novaSenha: string): Promise<void> {
+  const res = await fetch(`${BACKEND_URL}/auth/reset-password`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    credentials: 'include',
+    body: JSON.stringify({ token, novaSenha }),
+  });
+  if (!res.ok) {
+    const msg = await res.text().catch(() => '');
+    throw new Error(msg || 'Token inválido ou expirado');
+  }
+}
+
 export async function login(emailInput: string, passwordInput: string, rememberMe = false): Promise<AuthUser | null> {
   const email = emailInput.trim().toLowerCase();
   const password = passwordInput.trim();
@@ -144,7 +168,7 @@ export async function login(emailInput: string, passwordInput: string, rememberM
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     credentials: 'include', // browser stores the HttpOnly cookie from Set-Cookie response header
-    body: JSON.stringify({ email, password }),
+    body: JSON.stringify({ email, password, rememberMe }),
   });
 
   if (!res.ok) {

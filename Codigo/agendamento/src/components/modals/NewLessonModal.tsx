@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { X, Plus, Video, Repeat, ChevronDown } from 'lucide-react';
+import { X, Plus, Repeat, ChevronDown } from 'lucide-react';
 import type { Lesson, LessonType, Aluno } from '../../types';
 import type { AuthUser } from '../../lib/auth';
 import { minutesToTime, timeToMinutes } from '../../utils';
@@ -27,7 +27,6 @@ interface NewLessonModalProps {
     type: LessonType;
     instrument: string;
     notes: string;
-    isOnline: boolean;
     recorrente: boolean;
   }) => void;
 }
@@ -47,7 +46,6 @@ export function NewLessonModal({
   const [startTime, setStartTime] = useState(defaultTime);
   const [instrument, setInstrument] = useState('Piano');
   const [notes, setNotes] = useState('');
-  const [isOnline, setIsOnline] = useState(false);
   const [recorrente, setRecorrente] = useState(false);
   const [errors, setErrors] = useState<string[]>([]);
   const [studentDropdownOpen, setStudentDropdownOpen] = useState(false);
@@ -111,7 +109,6 @@ export function NewLessonModal({
     if (!open) return;
     setDate(defaultDate);
     setStartTime(defaultTime || ALL_HOURS[2]);
-    setIsOnline(false);
     setRecorrente(false);
     setNotes('');
     setErrors([]);
@@ -134,10 +131,9 @@ export function NewLessonModal({
       date,
       startTime,
       endTime,
-      type: isOnline ? 'online' : 'individual',
+      type: 'individual',
       instrument,
       notes,
-      isOnline,
       recorrente,
     });
     onClose();
@@ -270,19 +266,6 @@ export function NewLessonModal({
                 </div>
 
                 <p className="text-[11px] text-(--muted) -mt-2">{t('modals.newLesson.duration50')}</p>
-
-                <label className="flex items-center justify-between rounded-xl border border-(--border) px-3 py-2 text-sm text-(--text)">
-                  <span className="flex items-center gap-2">
-                    <Video size={14} className="text-(--accent-600)" />
-                    {t('modals.newLesson.meetCheck')}
-                  </span>
-                  <input
-                    type="checkbox"
-                    checked={isOnline}
-                    onChange={(e) => setIsOnline(e.target.checked)}
-                    className="rounded border-(--input-border)"
-                  />
-                </label>
 
                 <label className="flex items-center justify-between rounded-xl border border-(--border) px-3 py-2 text-sm text-(--text)">
                   <span className="flex items-center gap-2">

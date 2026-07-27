@@ -1,13 +1,12 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
-  Settings, Bell, Palette, Globe, Check, RotateCcw, Sliders, CheckCircle2,
+  Settings, Bell, Palette, Check, RotateCcw, Sliders, CheckCircle2,
   User, Phone, Mail, AlertCircle,
 } from 'lucide-react';
 import { Card } from '../ui/Card';
 import { Button } from '../ui/Button';
 import { cn } from '../../utils';
-import { startGoogleOAuth, setGoogleConnectedFlag, getGoogleConnectedFlag, getAutoSyncFlag, setAutoSyncFlag } from '../../services/googleService';
 import {
   useThemeSettings,
   type ThemePreset,
@@ -77,12 +76,12 @@ const SECTIONS = [
   { id: 'general',       labelKey: 'settings.sections.general',       icon: <Settings size={15} /> },
   { id: 'notifications', labelKey: 'settings.sections.notifications', icon: <Bell size={15} /> },
   { id: 'appearance',    labelKey: 'settings.sections.appearance',    icon: <Palette size={15} /> },
-  { id: 'integrations',  labelKey: 'settings.sections.integrations',  icon: <Globe size={15} /> },
 ];
 
 // ─── helpers de perfil ────────────────────────────────────────────────────────
 
 const SESSION_KEY = 'marcos-music:auth:session';
+const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/;
 
 function formatPhone(raw: string): string {
   // Remove tudo que não é dígito, ignorar código do país se já digitado
@@ -152,6 +151,7 @@ export function SettingsPage({ user, onProfileUpdate, initialSection }: Settings
   const [notifMessages, setNotifMessages] = useState(false);
 
   // ── Perfil ──
+  const [profileEmail, setProfileEmail] = useState(user?.email ?? '');
   const [profileNome, setProfileNome] = useState(user?.name ?? '');
   // Armazena apenas os dígitos locais (sem +55), para evitar bug do contador 55 na máscara
   const [profileTelefone, setProfileTelefone] = useState(() => {
@@ -160,7 +160,7 @@ export function SettingsPage({ user, onProfileUpdate, initialSection }: Settings
     if (d.startsWith('55') && d.length > 11) d = d.slice(2);
     return d.slice(0, 11);
   });
-  const [profilePhoto, setProfilePhoto] = useState<string | null>(user?.photoUrl ?? null);
+  const profilePhoto = user?.photoUrl ?? null;
   const [profileLoading, setProfileLoading] = useState(false);
   const [profileError, setProfileError] = useState('');
   const [profileSaved, setProfileSaved] = useState(false);
@@ -174,6 +174,10 @@ export function SettingsPage({ user, onProfileUpdate, initialSection }: Settings
   const handleProfileSave = async (e: React.FormEvent) => {
     e.preventDefault();
     if (user?.role === 'teacher' && !profileNome.trim()) { setProfileError(t('profileSetup.errName')); return; }
+    if (!profileEmail.trim() || !EMAIL_RE.test(profileEmail.trim())) {
+      setProfileError(t('profileSetup.errEmail'));
+      return;
+    }
     if (profileTelefone.trim() && !isPhoneValid(profileTelefone)) {
       setProfileError(t('profileSetup.errPhone'));
       return;
@@ -188,9 +192,13 @@ export function SettingsPage({ user, onProfileUpdate, initialSection }: Settings
         body: JSON.stringify({
           nome: user?.role === 'teacher' ? (profileNome.trim() || undefined) : undefined,
           telefone: formatPhone(profileTelefone).trim() || null,
+          email: profileEmail.trim().toLowerCase(),
         }),
       });
-      if (!res.ok) throw new Error('Erro ao salvar perfil');
+      if (!res.ok) {
+        if (res.status === 409) throw new Error(t('profileSetup.errEmailTaken'));
+        throw new Error('Erro ao salvar perfil');
+      }
       const savedNome = user?.role === 'teacher' ? profileNome.trim() : (user?.name ?? profileNome.trim());
       const parts = savedNome.split(' ');
       const updatedUser: AuthUser = {
@@ -199,6 +207,7 @@ export function SettingsPage({ user, onProfileUpdate, initialSection }: Settings
         lastName: parts.slice(1).join(' '),
         name: savedNome,
         phone: formatPhone(profileTelefone).trim(),
+        email: profileEmail.trim().toLowerCase(),
       };
       // Persiste na mesma storage que o login usou (remember-me → localStorage)
       const payload = JSON.stringify(updatedUser);
@@ -211,84 +220,10 @@ export function SettingsPage({ user, onProfileUpdate, initialSection }: Settings
       setTimeout(() => setProfileSaved(false), 3000);
       onProfileUpdate?.(updatedUser);
       toast(t('profileSetup.saved'), 'success');
-    } catch {
-      setProfileError(t('profileSetup.errSave'));
+    } catch (err) {
+      setProfileError(err instanceof Error ? err.message : t('profileSetup.errSave'));
     } finally {
       setProfileLoading(false);
-    }
-  };
-
-  // ── Google Calendar ──
-  const [googleConnected, setGoogleConnectedState] = useState(getGoogleConnectedFlag);
-  const [googleConnecting, setGoogleConnecting] = useState(false);
-  const [googleError, setGoogleError] = useState<string | null>(null);
-  const [autoSync, setAutoSyncState] = useState(getAutoSyncFlag);
-
-  function setAutoSync(v: boolean) {
-    setAutoSyncState(v);
-    setAutoSyncFlag(v);
-  }
-
-  function setGoogleConnected(v: boolean) {
-    setGoogleConnectedState(v);
-    setGoogleConnectedFlag(v);
-  }
-
-  // Detecta retorno do OAuth do Google
-  useEffect(() => {
-    const params = new URLSearchParams(window.location.search);
-    const status = params.get('google');
-    if (!status) return;
-
-    params.delete('google');
-    const url = new URL(window.location.href);
-    url.search = params.toString();
-    window.history.replaceState({}, '', url.toString());
-
-    if (status === 'connected') {
-      setGoogleConnected(true);
-      setActiveSection('integrations');
-      toast('Google Calendar conectado com sucesso!', 'success');
-    } else {
-      setGoogleError('Não foi possível conectar ao Google Calendar.');
-      setActiveSection('integrations');
-    }
-  }, []);
-
-  // Busca foto do perfil Google quando conectado
-  useEffect(() => {
-    if (!googleConnected || profilePhoto) return;
-    fetch('/google/me/photo', { credentials: 'include' })
-      .then(r => r.ok ? r.json() : null)
-      .then((data: { photoUrl?: string } | null) => {
-        if (!data?.photoUrl) return;
-        setProfilePhoto(data.photoUrl);
-        // Persiste no mesmo storage usado pelo login
-        const raw = localStorage.getItem(SESSION_KEY) ?? sessionStorage.getItem(SESSION_KEY);
-        if (raw) {
-          try {
-            const current = JSON.parse(raw);
-            const updated = JSON.stringify({ ...current, photoUrl: data.photoUrl });
-            if (localStorage.getItem(SESSION_KEY)) localStorage.setItem(SESSION_KEY, updated);
-            else sessionStorage.setItem(SESSION_KEY, updated);
-          } catch { /* ignore */ }
-        }
-      })
-      .catch(() => {});
-  }, [googleConnected]);
-
-  const handleConnectGoogle = async () => {
-    setGoogleConnecting(true);
-    setGoogleError(null);
-    try {
-      const returnUrl = `${window.location.origin}${window.location.pathname}`;
-      // Passa o email do professor como loginHint para o backend identificar o usuário
-      await startGoogleOAuth(user?.email, returnUrl);
-    } catch (err) {
-      const msg = err instanceof Error ? err.message : 'Erro ao conectar com Google.';
-      setGoogleError(msg);
-      toast(msg, 'error');
-      setGoogleConnecting(false);
     }
   };
 
@@ -367,20 +302,20 @@ export function SettingsPage({ user, onProfileUpdate, initialSection }: Settings
                     </div>
                   </div>
 
-                  {/* Email (readonly) */}
+                  {/* Email */}
                   <div>
                     <label className={labelCls}>{t('profileSetup.emailLabel')}</label>
                     <div className="relative">
                       <Mail size={14} className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-(--muted)" />
                       <input
-                        className="w-full border rounded-xl pl-9 pr-3 py-2 text-sm opacity-60 cursor-not-allowed"
+                        type="email"
+                        className="w-full border rounded-xl pl-9 pr-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-(--accent-100)"
                         style={profileInputStyle}
-                        value={user.email}
-                        readOnly
-                        tabIndex={-1}
+                        value={profileEmail}
+                        onChange={(e) => setProfileEmail(e.target.value)}
                       />
                     </div>
-                    <p className="mt-1 text-[11px] text-(--muted)">{t('profileSetup.emailReadonly')}</p>
+                    <p className="mt-1 text-[11px] text-(--muted)">{t('profileSetup.emailHint')}</p>
                   </div>
 
                   {/* Nome */}
@@ -564,7 +499,7 @@ export function SettingsPage({ user, onProfileUpdate, initialSection }: Settings
                         bundle={bundle}
                         active={activeBundle === bundle.id}
                         activeMode={resolvedMode}
-                        onClick={() => setSettings({ preset: bundle.preset, bgColor: bundle.bgColor })}
+                        onClick={() => setSettings({ preset: bundle.preset, bgColor: bundle.bgColor, customPrimary: undefined, customSecondary: undefined })}
                       />
                     ))}
                   </div>
@@ -624,37 +559,58 @@ export function SettingsPage({ user, onProfileUpdate, initialSection }: Settings
                     <div className="px-6 pb-6 space-y-5 border-t border-(--border)">
                       {/* Accent colors */}
                       <div className="pt-5">
-                        <label className={labelCls}>Cor de destaque</label>
-                        <div className="flex gap-2.5 mt-2 flex-wrap">
+                        <label className={labelCls}>Cor principal</label>
+                        <div className="flex items-center gap-2.5 mt-2 flex-wrap">
                           {ACCENT_COLORS.map(c => (
                             <button
                               key={c.value}
-                              onClick={() => setSettings({ preset: c.value as ThemePreset })}
+                              onClick={() => setSettings({ preset: c.value as ThemePreset, customPrimary: undefined })}
                               title={c.name}
                               className={cn(
                                 'w-9 h-9 rounded-full flex items-center justify-center transition-all hover:scale-110',
-                                settings.preset === c.value && 'ring-2 ring-offset-2 ring-(--accent-600) scale-110',
+                                !settings.customPrimary && settings.preset === c.value && 'ring-2 ring-offset-2 ring-(--accent-600) scale-110',
                               )}
                               style={{ background: c.swatch }}
                             >
-                              {settings.preset === c.value && <Check size={13} className="text-white drop-shadow" />}
+                              {!settings.customPrimary && settings.preset === c.value && <Check size={13} className="text-white drop-shadow" />}
                             </button>
                           ))}
+
+                          {/* Cor principal 100% customizável */}
+                          <label
+                            title="Cor personalizada"
+                            className={cn(
+                              'relative w-9 h-9 rounded-full cursor-pointer transition-all hover:scale-110 overflow-hidden border-2',
+                              settings.customPrimary ? 'ring-2 ring-offset-2 ring-(--accent-600) scale-110 border-transparent' : 'border-dashed border-(--border)',
+                            )}
+                            style={settings.customPrimary ? { background: settings.customPrimary } : undefined}
+                          >
+                            <input
+                              type="color"
+                              value={settings.customPrimary ?? '#14b8a6'}
+                              onChange={(e) => setSettings({ customPrimary: e.target.value })}
+                              className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
+                            />
+                            {!settings.customPrimary && (
+                              <Palette size={14} className="absolute inset-0 m-auto text-(--muted)" />
+                            )}
+                            {settings.customPrimary && <Check size={13} className="absolute inset-0 m-auto text-white drop-shadow" />}
+                          </label>
                         </div>
                       </div>
 
                       {/* Background color */}
                       <div>
-                        <label className={labelCls}>Cor do plano de fundo</label>
+                        <label className={labelCls}>Cor secundária (fundo)</label>
                         <div className="flex gap-3 mt-2 flex-wrap">
                           {BG_COLORS.map(bg => (
                             <button
                               key={bg.value}
-                              onClick={() => setSettings({ bgColor: bg.value })}
+                              onClick={() => setSettings({ bgColor: bg.value, customSecondary: undefined })}
                               title={bg.name}
                               className={cn(
                                 'flex flex-col items-center gap-1.5 p-1.5 rounded-xl border-2 transition-all',
-                                settings.bgColor === bg.value
+                                !settings.customSecondary && settings.bgColor === bg.value
                                   ? 'border-(--accent-600) scale-105'
                                   : 'border-(--border) hover:border-(--accent-500)',
                               )}
@@ -666,6 +622,31 @@ export function SettingsPage({ user, onProfileUpdate, initialSection }: Settings
                               <span className="text-[10px] font-medium text-(--muted)">{bg.name}</span>
                             </button>
                           ))}
+
+                          {/* Cor secundária 100% customizável */}
+                          <label
+                            title="Fundo personalizado"
+                            className={cn(
+                              'relative flex flex-col items-center gap-1.5 p-1.5 rounded-xl border-2 transition-all cursor-pointer',
+                              settings.customSecondary
+                                ? 'border-(--accent-600) scale-105'
+                                : 'border-dashed border-(--border) hover:border-(--accent-500)',
+                            )}
+                          >
+                            <input
+                              type="color"
+                              value={settings.customSecondary ?? '#e8eaf3'}
+                              onChange={(e) => setSettings({ customSecondary: e.target.value })}
+                              className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
+                            />
+                            <div
+                              className="w-8 h-8 rounded-lg overflow-hidden shadow-inner border border-(--border) flex items-center justify-center"
+                              style={settings.customSecondary ? { backgroundColor: settings.customSecondary } : undefined}
+                            >
+                              {!settings.customSecondary && <Palette size={13} className="text-(--muted)" />}
+                            </div>
+                            <span className="text-[10px] font-medium text-(--muted)">Custom</span>
+                          </label>
                         </div>
                       </div>
 
@@ -770,85 +751,6 @@ export function SettingsPage({ user, onProfileUpdate, initialSection }: Settings
               </div>
             )}
 
-            {activeSection === 'integrations' && (
-              <Card className="p-6 app-surface">
-                <h2 className="text-sm font-semibold text-(--heading) mb-5">{t('settings.sections.integrations')}</h2>
-                {googleError && (
-                  <div className="mb-4 px-4 py-2.5 rounded-xl bg-rose-50 border border-rose-200 text-xs text-rose-600">
-                    ⚠ {googleError}
-                  </div>
-                )}
-                <div className="space-y-3">
-                  {/* Google Calendar funcional */}
-                  <div className="flex items-center gap-4 p-4 border border-(--border) rounded-2xl hover:border-(--accent-500) transition-colors">
-                    <div className="w-10 h-10 rounded-xl flex items-center justify-center text-white font-bold text-sm" style={{ backgroundColor: '#0F9D58' }}>
-                      G
-                    </div>
-                    <div className="flex-1">
-                      <p className="text-sm font-medium text-(--heading)">Google Calendar</p>
-                      <p className="text-xs text-(--muted)">
-                        {googleConnected ? 'Conta conectada  aulas sincronizadas automaticamente ao iniciar' : 'Sincronizar agenda com Google Calendar'}
-                      </p>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <Button
-                        size="sm"
-                        variant={googleConnected ? 'secondary' : 'primary'}
-                        onClick={googleConnected ? () => setGoogleConnected(false) : handleConnectGoogle}
-                        disabled={googleConnecting}
-                      >
-                        {googleConnecting ? 'Aguarde…' : googleConnected ? 'Desconectar' : 'Conectar'}
-                      </Button>
-                    </div>
-                  </div>
-
-                  {/* Auto-sync toggle  só aparece quando conectado */}
-                  {googleConnected && (
-                    <div className="flex items-center justify-between px-4 py-3 rounded-2xl border border-(--border) bg-(--surface-soft)">
-                      <div>
-                        <p className="text-sm font-medium text-(--heading)">Sincronização automática</p>
-                        <p className="text-xs text-(--muted)">Sincroniza com o Google Calendar ao abrir o sistema</p>
-                      </div>
-                      <button
-                        onClick={() => setAutoSync(!autoSync)}
-                        aria-label={autoSync ? 'Desativar sincronização automática' : 'Ativar sincronização automática'}
-                        className="relative w-11 h-6 rounded-full transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-(--accent-500) focus:ring-offset-2"
-                        style={{ backgroundColor: autoSync ? 'var(--accent-600)' : 'var(--border)' }}
-                      >
-                        <span
-                          className="absolute top-0.5 left-0.5 w-5 h-5 bg-white rounded-full shadow transition-transform duration-200"
-                          style={{ transform: autoSync ? 'translateX(20px)' : 'translateX(0)' }}
-                        />
-                      </button>
-                    </div>
-                  )}
-
-                  {/* Outros (estáticos) */}
-                  {[
-                    { name: 'Google Meet',  desc: 'Gerar links de videoconferência', connected: true,  color: '#4285F4' },
-                  ].map(integration => (
-                    <div
-                      key={integration.name}
-                      className="flex items-center gap-4 p-4 border border-(--border) rounded-2xl hover:border-(--accent-500) transition-colors"
-                    >
-                      <div
-                        className="w-10 h-10 rounded-xl flex items-center justify-center text-white font-bold text-sm"
-                        style={{ backgroundColor: integration.color }}
-                      >
-                        {integration.name[0]}
-                      </div>
-                      <div className="flex-1">
-                        <p className="text-sm font-medium text-(--heading)">{integration.name}</p>
-                        <p className="text-xs text-(--muted)">{integration.desc}</p>
-                      </div>
-                      <Button size="sm" variant={integration.connected ? 'secondary' : 'primary'}>
-                        {integration.connected ? 'Desconectar' : 'Conectar'}
-                      </Button>
-                    </div>
-                  ))}
-                </div>
-              </Card>
-            )}
           </motion.div>
         </div>
       </div>

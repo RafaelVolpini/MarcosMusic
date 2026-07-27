@@ -6,12 +6,13 @@ export interface AlunoFormData {
   telefone: string;
   apelido?: string;
   ativo: boolean;
+  aulasPorSemanaPlano: number;
 }
 
 export async function listarAlunos(): Promise<Aluno[]> {
   const res = await fetch('/aluno', { method: 'GET', credentials: 'include' });
   if (!res.ok) throw new Error(`Erro ${res.status}`);
-  const data = await res.json() as Array<{ id: string; nome: string | null; email: string | null; telefone: string | null; status: boolean; apelido?: string | null; reposicoes?: number | null }>;
+  const data = await res.json() as Array<{ id: string; nome: string | null; email: string | null; telefone: string | null; status: boolean; apelido?: string | null; reposicoes?: number | null; aulasPorSemanaPlano?: number | null }>;
   return data.map(d => ({
     id: d.id,
     nome: d.nome ?? d.email ?? 'Aluno',
@@ -20,6 +21,7 @@ export async function listarAlunos(): Promise<Aluno[]> {
     ativo: d.status !== false,
     apelido: d.apelido ?? undefined,
     reposicoes: d.reposicoes ?? 0,
+    aulasPorSemanaPlano: d.aulasPorSemanaPlano ?? 3,
   }));
 }
 
@@ -30,6 +32,7 @@ export async function criarAluno(data: AlunoFormData): Promise<Aluno> {
     telefone: data.telefone,
     apelido: data.apelido ?? null,
     status: data.ativo,
+    aulasPorSemanaPlano: data.aulasPorSemanaPlano,
   };
   const res = await fetch('/aluno/salvar', {
     method: 'POST',
@@ -38,7 +41,7 @@ export async function criarAluno(data: AlunoFormData): Promise<Aluno> {
     body: JSON.stringify(body),
   });
   if (!res.ok) throw new Error(`Erro ${res.status}`);
-  const d = await res.json() as { id: string; nome: string; telefone: string | null; status: boolean; apelido?: string | null };
+  const d = await res.json() as { id: string; nome: string; telefone: string | null; status: boolean; apelido?: string | null; aulasPorSemanaPlano?: number | null };
   return {
     id: d.id,
     nome: d.nome,
@@ -46,6 +49,7 @@ export async function criarAluno(data: AlunoFormData): Promise<Aluno> {
     telefone: d.telefone ?? '',
     ativo: d.status !== false,
     apelido: d.apelido ?? undefined,
+    aulasPorSemanaPlano: d.aulasPorSemanaPlano ?? data.aulasPorSemanaPlano,
   };
 }
 
@@ -57,6 +61,7 @@ export async function atualizarAluno(id: string, data: AlunoFormData): Promise<A
     telefone: data.telefone,
     apelido: data.apelido ?? null,
     status: data.ativo,
+    aulasPorSemanaPlano: data.aulasPorSemanaPlano,
   };
   const res = await fetch('/aluno/salvar', {
     method: 'POST',
@@ -65,7 +70,7 @@ export async function atualizarAluno(id: string, data: AlunoFormData): Promise<A
     body: JSON.stringify(body),
   });
   if (!res.ok) throw new Error(`Erro ${res.status}`);
-  const d = await res.json() as { id: string; nome: string; telefone: string | null; status: boolean; apelido?: string | null };
+  const d = await res.json() as { id: string; nome: string; telefone: string | null; status: boolean; apelido?: string | null; aulasPorSemanaPlano?: number | null };
   return {
     id: d.id,
     nome: d.nome,
@@ -73,6 +78,7 @@ export async function atualizarAluno(id: string, data: AlunoFormData): Promise<A
     telefone: d.telefone ?? '',
     ativo: d.status !== false,
     apelido: d.apelido ?? undefined,
+    aulasPorSemanaPlano: d.aulasPorSemanaPlano ?? data.aulasPorSemanaPlano,
   };
 }
 

@@ -23,7 +23,7 @@ public class CreditoReposicaoService {
     private final NotificacaoService notificacaoService;
 
     /**
-     * Gera crédito de reposição se o aluno cancelou a aula até 23:00 do dia anterior
+     * Gera crédito de reposição se o aluno cancelou a aula com pelo menos 24h de antecedência
      *
      * @param aula aula que foi cancelada
      * @param dataSolicitacaoCancelamento quando o aluno solicitou o cancelamento
@@ -32,9 +32,9 @@ public class CreditoReposicaoService {
     @Transactional
     public boolean gerarCreditoSeCancelamentoValido(Aula aula, LocalDateTime dataSolicitacaoCancelamento) {
         LocalDateTime inicioAula = aula.getDataInicio();
-        LocalDateTime dataLimiteCancelamento = inicioAula.minusDays(1).withHour(23).withMinute(0).withSecond(0);
+        LocalDateTime dataLimiteCancelamento = inicioAula.minusHours(24);
 
-        // Verifica se o cancelamento foi feito até 23:00 do dia anterior
+        // Verifica se o cancelamento foi feito com pelo menos 24h de antecedência
         if (dataSolicitacaoCancelamento.isAfter(dataLimiteCancelamento)) {
             log.warn("Cancelamento de aula {} fora do prazo. Solicitado em {} (limite: {})",
                     aula.getId(), dataSolicitacaoCancelamento, dataLimiteCancelamento);

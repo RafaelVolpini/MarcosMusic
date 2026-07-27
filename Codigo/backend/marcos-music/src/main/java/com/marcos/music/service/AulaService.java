@@ -26,7 +26,6 @@ import com.marcos.music.repository.Aula.AulaCustomRepository;
 import com.marcos.music.repository.Aula.AulaRepository;
 import com.marcos.music.repository.ReposicaoRepository;
 import com.marcos.music.repository.UsuarioRepository;
-import com.marcos.music.integration.google.GoogleCalendarService;
 @Service
 public class AulaService {
     private final AulaRepository repository;
@@ -37,7 +36,6 @@ public class AulaService {
     private final AlunoRepository alunoRepository;
     private final ReposicaoRepository reposicaoRepository;
     private final NotificacaoService notificacaoService;
-    private final GoogleCalendarService googleCalendarService;
     private final CreditoReposicaoService creditoReposicaoService;
 
 
@@ -50,7 +48,6 @@ public class AulaService {
         AlunoRepository alunoRepository,
         ReposicaoRepository reposicaoRepository,
         NotificacaoService notificacaoService,
-        @Lazy GoogleCalendarService googleCalendarService,
         CreditoReposicaoService creditoReposicaoService
     ){
         this.repository = repository;
@@ -61,7 +58,6 @@ public class AulaService {
         this.alunoRepository = alunoRepository;
         this.reposicaoRepository = reposicaoRepository;
         this.notificacaoService = notificacaoService;
-        this.googleCalendarService = googleCalendarService;
         this.creditoReposicaoService = creditoReposicaoService;
     }
 
@@ -104,10 +100,7 @@ public class AulaService {
         boolean recorrente = Boolean.TRUE.equals(dto.getRecorrente());
         List<Aula> aulas = new ArrayList<>();
 
-        boolean isOnline = Boolean.TRUE.equals(dto.getIsOnline());
-
         Aula primeiraAula = new Aula(dto.getDataInicio(), dto.getDataFim(), aluno, recorrente);
-        primeiraAula.setIsOnline(isOnline);
         Aula primeira = salvar(primeiraAula);
         logAula(primeira, "AGENDADO");
         notificacaoService.aulaAgendada(aluno.getId(), primeira.getId(), primeira.getDataInicio());
@@ -120,31 +113,11 @@ public class AulaService {
                 LocalDateTime nextFim = dto.getDataFim().plusWeeks(i);
                 try {
                     Aula proximaAula = new Aula(nextInicio, nextFim, aluno, true);
-                    proximaAula.setIsOnline(isOnline);
                     Aula proxima = salvar(proximaAula);
                     logAula(proxima, "AGENDADO");
                     aulas.add(proxima);
                 } catch (RuntimeException e) {
                     // Ignora semanas com conflito de horário
-                }
-            }
-        }
-
-        // If isOnline, try to create Google Meet links for each lesson
-        if (isOnline && dto.getStudentId() != null && !dto.getStudentId().isBlank()) {
-            UUID professorId = usuarioRepository.findByEmail(email)
-                    .map(u -> u.getId()).orElse(null);
-            if (professorId != null) {
-                for (Aula aula : aulas) {
-                    try {
-                        String hangoutLink = googleCalendarService.createMeetLink(professorId, aula);
-                        if (hangoutLink != null && !hangoutLink.isBlank()) {
-                            aula.setMeetLink(hangoutLink);
-                            repository.save(aula);
-                        }
-                    } catch (Exception e) {
-                        // Google not connected or API error — lesson created without Meet link
-                    }
                 }
             }
         }
@@ -197,12 +170,12 @@ public class AulaService {
             LocalDateTime agora = LocalDateTime.now();
             LocalDateTime inicioAula = a.getDataInicio();
 
-            // Validação: até 23:00 do dia anterior
-            LocalDateTime dataLimiteCancelamento = inicioAula.minusDays(1)
-                    .withHour(23).withMinute(0).withSecond(0);
+            // Validação: cancelamento só é permitido com pelo menos 24h de antecedência
+            LocalDateTime dataLimiteCancelamento = inicioAula.minusHours(24);
 
             if (agora.isAfter(dataLimiteCancelamento)) {
-                throw new RuntimeException("Você não pode cancelar a aula após 23:00 do dia anterior. " +
+                throw new RuntimeException("Você não pode mais desmarcar esta aula. " +
+                        "O cancelamento só é permitido com pelo menos 24h de antecedência. " +
                         "Limite: " + dataLimiteCancelamento.format(
                                 java.time.format.DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm")));
             }
@@ -223,7 +196,7 @@ public class AulaService {
                         a.getAluno().getId(),
                         "CANCELAMENTO_FORA_PRAZO",
                         "Cancelamento fora do prazo",
-                        "Você cancelou a aula, mas fora do prazo (limite: até 23:00 do dia anterior). " +
+                        "Você cancelou a aula, mas fora do prazo (mínimo de 24h de antecedência). " +
                                 "Você não ganhou crédito de reposição.",
                         a.getId()
                 );
@@ -263,19 +236,6 @@ public class AulaService {
         Aula salva = repository.save(a);
         notificacaoService.alunoConfirmouPresenca(a.getAluno().getNome(), salva.getId(), a.getDataInicio());
         return salva;
-    }
-
-    public Aula regenerateMeetLink(Long id, String email) throws Exception {
-        Aula aula = repository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Aula não encontrada"));
-        Usuario professor = usuarioRepository.findByEmail(email)
-                .orElseThrow(() -> new RuntimeException("Usuário não encontrado"));
-        String hangoutLink = googleCalendarService.createMeetLink(professor.getId(), aula);
-        if (hangoutLink == null || hangoutLink.isBlank()) {
-            throw new RuntimeException("Não foi possível gerar o link. Verifique se o Google Calendar está conectado.");
-        }
-        aula.setMeetLink(hangoutLink);
-        return repository.save(aula);
     }
 
     public List<AulaAluno> findDeletedsHorarios(UUID idAluno, List<Long> ids){

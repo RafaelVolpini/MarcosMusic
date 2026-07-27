@@ -1,4 +1,4 @@
-import { createContext, useContext, useState, useEffect, type ReactNode } from 'react';
+import { createContext, useContext, useState, type ReactNode } from 'react';
 import { translations, type Lang } from '../lib/i18n';
 
 const STORAGE_KEY = 'marcos-music:lang';
@@ -16,18 +16,17 @@ const LanguageContext = createContext<LanguageContextType>({
   t: (k) => k,
 });
 
-export function LanguageProvider({ children }: { children: ReactNode }) {
-  // Prevent direct access to localStorage during server-side rendering
-  const [lang, setLangState] = useState<Lang>(() => 'pt');
+function readStoredLang(): Lang {
+  try {
+    const stored = localStorage.getItem(STORAGE_KEY);
+    return stored === 'en' || stored === 'pt' ? stored : 'pt';
+  } catch {
+    return 'pt';
+  }
+}
 
-  useEffect(() => {
-    try {
-      const stored = localStorage.getItem(STORAGE_KEY);
-      if (stored === 'en' || stored === 'pt') setLangState(stored as Lang);
-    } catch {
-      // ignore (localStorage unavailable)
-    }
-  }, []);
+export function LanguageProvider({ children }: { children: ReactNode }) {
+  const [lang, setLangState] = useState<Lang>(readStoredLang);
 
   const setLang = (l: Lang) => {
     setLangState(l);
@@ -54,7 +53,7 @@ export function LanguageProvider({ children }: { children: ReactNode }) {
     if (typeof node === 'string') return node;
     if (typeof node === 'function') {
       try {
-        return String((node as Function)());
+        return String((node as () => unknown)());
       } catch {
         return key;
       }
@@ -69,4 +68,5 @@ export function LanguageProvider({ children }: { children: ReactNode }) {
   );
 }
 
+// eslint-disable-next-line react-refresh/only-export-components -- hook co-localizado de propósito com o Provider
 export const useLanguage = () => useContext(LanguageContext);
