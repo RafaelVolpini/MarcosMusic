@@ -234,16 +234,17 @@ export function SettingsPage({ user, onProfileUpdate, initialSection }: Settings
 
   return (
     <div className="page-padding">
-      <div className="flex gap-6">
+      <div className="flex flex-col md:flex-row gap-6">
         {/* Sidebar nav */}
-        <div className="w-48 shrink-0">
+        <div className="w-full md:w-48 shrink-0">
           <Card className="p-2 app-surface">
+            <div className="grid grid-cols-2 md:flex md:flex-col gap-2 md:gap-0">
             {SECTIONS.map(s => (
               <button
                 key={s.id}
                 onClick={() => setActiveSection(s.id)}
                 className={cn(
-                  'flex items-center gap-3 w-full px-3 h-9 rounded-xl text-sm transition-all mb-0.5',
+                  'flex items-center gap-3 px-3 h-10 rounded-xl text-sm transition-all md:w-full md:mb-0.5 md:h-9',
                   activeSection === s.id
                     ? 'font-medium text-(--accent-700) bg-(--accent-50)'
                     : 'text-(--muted) hover:bg-(--hover-bg)',
@@ -253,6 +254,7 @@ export function SettingsPage({ user, onProfileUpdate, initialSection }: Settings
                 {t(s.labelKey)}
               </button>
             ))}
+            </div>
           </Card>
         </div>
 
