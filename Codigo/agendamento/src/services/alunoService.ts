@@ -1,4 +1,5 @@
 import type { Aluno } from '../types';
+import { API_URL } from '../lib/apiConfig';
 
 export interface AlunoFormData {
   nome: string;
@@ -10,7 +11,7 @@ export interface AlunoFormData {
 }
 
 export async function listarAlunos(): Promise<Aluno[]> {
-  const res = await fetch('/aluno', { method: 'GET', credentials: 'include' });
+  const res = await fetch(`${API_URL}/aluno`, { method: 'GET', credentials: 'include' });
   if (!res.ok) throw new Error(`Erro ${res.status}`);
   const data = await res.json() as Array<{ id: string; nome: string | null; email: string | null; telefone: string | null; status: boolean; apelido?: string | null; reposicoes?: number | null; aulasPorSemanaPlano?: number | null }>;
   return data.map(d => ({
@@ -34,7 +35,7 @@ export async function criarAluno(data: AlunoFormData): Promise<Aluno> {
     status: data.ativo,
     aulasPorSemanaPlano: data.aulasPorSemanaPlano,
   };
-  const res = await fetch('/aluno/salvar', {
+  const res = await fetch(`${API_URL}/aluno/salvar`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     credentials: 'include',
@@ -63,7 +64,7 @@ export async function atualizarAluno(id: string, data: AlunoFormData): Promise<A
     status: data.ativo,
     aulasPorSemanaPlano: data.aulasPorSemanaPlano,
   };
-  const res = await fetch('/aluno/salvar', {
+  const res = await fetch(`${API_URL}/aluno/salvar`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     credentials: 'include',
@@ -83,7 +84,7 @@ export async function atualizarAluno(id: string, data: AlunoFormData): Promise<A
 }
 
 export async function deletarAluno(id: string): Promise<void> {
-  const res = await fetch(`/aluno/${id}`, {
+  const res = await fetch(`${API_URL}/aluno/${id}`, {
     method: 'DELETE',
     credentials: 'include',
   });

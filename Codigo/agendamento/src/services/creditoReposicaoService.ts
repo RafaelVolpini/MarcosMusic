@@ -1,3 +1,5 @@
+import { API_URL } from '../lib/apiConfig';
+
 export interface CreditoReposicaoDTO {
   id: number;
   dataCriacao: string;
@@ -18,7 +20,7 @@ export interface SaldoCreditosDTO {
 }
 
 export async function getSaldoCreditos(alunoId: string): Promise<SaldoCreditosDTO> {
-  const res = await fetch(`/credito-reposicao/aluno/${alunoId}/saldo`, {
+  const res = await fetch(`${API_URL}/credito-reposicao/aluno/${alunoId}/saldo`, {
     method: 'GET',
     credentials: 'include',
     headers: { 'Cache-Control': 'no-cache' }
@@ -34,7 +36,7 @@ export async function getSaldoCreditos(alunoId: string): Promise<SaldoCreditosDT
 }
 
 export async function getCreditosDisponivel(alunoId: string): Promise<CreditoReposicaoDTO[]> {
-  const res = await fetch(`/credito-reposicao/aluno/${alunoId}/disponivel`, {
+  const res = await fetch(`${API_URL}/credito-reposicao/aluno/${alunoId}/disponivel`, {
     method: 'GET',
     credentials: 'include'
   });
@@ -43,7 +45,7 @@ export async function getCreditosDisponivel(alunoId: string): Promise<CreditoRep
 }
 
 export async function getTotalCreditosDisponivel(alunoId: string): Promise<number> {
-  const res = await fetch(`/credito-reposicao/aluno/${alunoId}/total`, {
+  const res = await fetch(`${API_URL}/credito-reposicao/aluno/${alunoId}/total`, {
     method: 'GET',
     credentials: 'include'
   });

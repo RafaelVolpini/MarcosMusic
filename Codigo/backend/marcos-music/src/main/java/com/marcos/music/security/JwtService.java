@@ -2,6 +2,7 @@ package com.marcos.music.security;
 
 import io.jsonwebtoken.*;
 import io.jsonwebtoken.security.Keys;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
 import com.marcos.music.entity.Usuario;
@@ -14,7 +15,8 @@ import java.util.UUID;
 @Service
 public class JwtService {
 
-    private final String SECRET = "super-secret-key-super-secret-key";
+    @Value("${jwt.secret}")
+    private String SECRET;
 
     public String generateToken(Usuario user) {
         return generateToken(user, false);

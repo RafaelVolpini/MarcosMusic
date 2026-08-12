@@ -1,1 +1,1 @@
-ALTER TABLE aula ADD presenca_confirmada BIT NOT NULL DEFAULT 0;
+ALTER TABLE aula ADD COLUMN presenca_confirmada BOOLEAN NOT NULL DEFAULT FALSE;

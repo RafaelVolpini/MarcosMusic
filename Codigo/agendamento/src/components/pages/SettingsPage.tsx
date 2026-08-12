@@ -7,6 +7,7 @@ import {
 import { Card } from '../ui/Card';
 import { Button } from '../ui/Button';
 import { cn } from '../../utils';
+import { API_URL } from '../../lib/apiConfig';
 import {
   useThemeSettings,
   type ThemePreset,
@@ -185,7 +186,7 @@ export function SettingsPage({ user, onProfileUpdate, initialSection }: Settings
     setProfileLoading(true);
     setProfileError('');
     try {
-      const res = await fetch('/auth/update-profile', {
+      const res = await fetch(`${API_URL}/auth/update-profile`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         credentials: 'include',

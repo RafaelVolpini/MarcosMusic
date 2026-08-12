@@ -1,4 +1,5 @@
 import type { WeeklyAvailability } from '../types';
+import { API_URL } from '../lib/apiConfig';
 
 // ─── DTOs espelhados do backend ──────────────────────────────────────────────
 
@@ -45,7 +46,7 @@ export async function buscarAulas(
   dataFim: string,
 ): Promise<CalendarResponseDTO[]> {
   try {
-    const res = await fetch('/aula/buscar', {
+    const res = await fetch(`${API_URL}/aula/buscar`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       credentials: 'include',
@@ -64,7 +65,7 @@ export async function buscarAulas(
  */
 export async function cancelarAula(id: string): Promise<void> {
   try {
-    const res = await fetch(`/aula/cancelar/${id}`, {
+    const res = await fetch(`${API_URL}/aula/cancelar/${id}`, {
       method: 'GET',
       credentials: 'include',
     });
@@ -92,7 +93,7 @@ export interface CriarAulaDTO {
  */
 export async function criarAula(dto: CriarAulaDTO): Promise<CalendarResponseDTO[]> {
   try {
-    const res = await fetch('/aula/criar', {
+    const res = await fetch(`${API_URL}/aula/criar`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       credentials: 'include',
@@ -115,7 +116,7 @@ export async function reagendarAula(
   dataInicio: string,
   dataFim: string,
 ): Promise<CalendarResponseDTO> {
-  const res = await fetch(`/aula/reagendar/${id}`, {
+  const res = await fetch(`${API_URL}/aula/reagendar/${id}`, {
     method: 'PUT',
     headers: { 'Content-Type': 'application/json' },
     credentials: 'include',
@@ -129,7 +130,7 @@ export async function reagendarAula(
  * Confirma presença do aluno na aula.
  */
 export async function confirmarPresenca(id: string): Promise<CalendarResponseDTO> {
-  const res = await fetch(`/aula/confirmarPresenca/${id}`, {
+  const res = await fetch(`${API_URL}/aula/confirmarPresenca/${id}`, {
     method: 'PUT',
     credentials: 'include',
   });
@@ -142,7 +143,7 @@ export async function confirmarPresenca(id: string): Promise<CalendarResponseDTO
  */
 export async function validarHorario(dto: HorarioValidatorDTO): Promise<boolean> {
   try {
-    const res = await fetch('/aluno/validar-horario', {
+    const res = await fetch(`${API_URL}/aluno/validar-horario`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       credentials: 'include',
@@ -170,7 +171,7 @@ export interface DisponibilidadeResponseDTO {
  * Lista todos os slots de disponibilidade cadastrados no banco.
  */
 export async function buscarDisponibilidade(): Promise<DisponibilidadeResponseDTO[]> {
-  const res = await fetch('/disponibilidade', { credentials: 'include' });
+  const res = await fetch(`${API_URL}/disponibilidade`, { credentials: 'include' });
   return handleResponse<DisponibilidadeResponseDTO[]>(res);
 }
 
@@ -182,7 +183,7 @@ export async function salvarDisponibilidade(
   availability: WeeklyAvailability,
   availabilityReposicao: WeeklyAvailability,
 ): Promise<DisponibilidadeResponseDTO[]> {
-  const res = await fetch('/disponibilidade/salvar', {
+  const res = await fetch(`${API_URL}/disponibilidade/salvar`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     credentials: 'include',

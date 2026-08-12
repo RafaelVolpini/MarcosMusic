@@ -1,3 +1,5 @@
+import { API_URL } from './apiConfig';
+
 export interface AuthUser {
   id?: string;
   role: 'teacher' | 'student';
@@ -15,7 +17,7 @@ export interface ContractAcceptance {
   acceptedAt: string;
 }
 
-const BACKEND_URL = '';
+const BACKEND_URL = API_URL;
 
 // User metadata only the access token lives in an HttpOnly cookie managed by the browser
 const SESSION_KEY = 'marcos-music:auth:session';

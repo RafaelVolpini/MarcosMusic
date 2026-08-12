@@ -4,6 +4,7 @@ import { User, Phone, Mail, CheckCircle2, Music2, ShieldCheck, AlertCircle } fro
 import { Button } from '../ui/Button';
 import type { AuthUser } from '../../lib/auth';
 import { useLanguage } from '../../context/LanguageContext';
+import { API_URL } from '../../lib/apiConfig';
 
 const SESSION_KEY = 'marcos-music:auth:session';
 
@@ -59,7 +60,7 @@ export function ProfileSetupPage({ user, onComplete, inApp = false }: ProfileSet
     setSaved(false);
 
     try {
-      const res = await fetch('/aluno/salvar', {
+      const res = await fetch(`${API_URL}/aluno/salvar`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         credentials: 'include',

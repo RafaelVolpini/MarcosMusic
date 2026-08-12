@@ -33,7 +33,9 @@ async function handleResponse<T>(res: Response): Promise<T> {
   return text ? JSON.parse(text) : (undefined as unknown as T);
 }
 
-const BASE = '/notificacao';
+import { API_URL } from '../lib/apiConfig';
+
+const BASE = `${API_URL}/notificacao`;
 
 // ─── API ──────────────────────────────────────────────────────────────────────
 

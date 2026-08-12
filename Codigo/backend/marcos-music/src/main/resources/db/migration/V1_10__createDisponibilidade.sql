@@ -1,20 +1,20 @@
 -- Tabela de disponibilidade semanal do professor
 -- Cada linha representa um slot recorrente: (dia_semana, horario)
--- disponivel  = 1 → horário liberado para aula regular
--- reposicao   = 1 → horário liberado exclusivamente para reposição
--- aula_marcada = 1 → há uma aula concreta vinculada (aula_id + aluno_id obrigatórios)
--- flag_cancelada = 1 → a aula vinculada foi cancelada (ou a reposição foi cancelada)
+-- disponivel  = true → horário liberado para aula regular
+-- reposicao   = true → horário liberado exclusivamente para reposição
+-- aula_marcada = true → há uma aula concreta vinculada (aula_id + aluno_id obrigatórios)
+-- flag_cancelada = true → a aula vinculada foi cancelada (ou a reposição foi cancelada)
 
 CREATE TABLE disponibilidade (
-    id              INT              IDENTITY(1,1) PRIMARY KEY,
-    dia_semana      VARCHAR(3)       NOT NULL,   -- 'mon','tue','wed','thu','fri','sat','sun'
-    horario         VARCHAR(5)       NOT NULL,   -- '07:00' ... '23:00'
-    disponivel      BIT              NOT NULL DEFAULT 0,
-    reposicao       BIT              NOT NULL DEFAULT 0,
-    aula_marcada    BIT              NOT NULL DEFAULT 0,
-    aula_id         INT              NULL,
-    aluno_id        UNIQUEIDENTIFIER NULL,
-    flag_cancelada  BIT              NOT NULL DEFAULT 0,
+    id              SERIAL      PRIMARY KEY,
+    dia_semana      VARCHAR(3)  NOT NULL,   -- 'mon','tue','wed','thu','fri','sat','sun'
+    horario         VARCHAR(5)  NOT NULL,   -- '07:00' ... '23:00'
+    disponivel      BOOLEAN     NOT NULL DEFAULT FALSE,
+    reposicao       BOOLEAN     NOT NULL DEFAULT FALSE,
+    aula_marcada    BOOLEAN     NOT NULL DEFAULT FALSE,
+    aula_id         INT         NULL,
+    aluno_id        UUID        NULL,
+    flag_cancelada  BOOLEAN     NOT NULL DEFAULT FALSE,
 
     CONSTRAINT uq_disponibilidade
         UNIQUE (dia_semana, horario),
@@ -29,11 +29,11 @@ CREATE TABLE disponibilidade (
         REFERENCES aluno(id)
         ON DELETE NO ACTION,
 
-    -- se aula_marcada = 1, aula_id e aluno_id devem ser preenchidos
+    -- se aula_marcada = true, aula_id e aluno_id devem ser preenchidos
     CONSTRAINT chk_disp_aula_marcada
-        CHECK (aula_marcada = 0 OR (aula_id IS NOT NULL AND aluno_id IS NOT NULL)),
+        CHECK (aula_marcada = FALSE OR (aula_id IS NOT NULL AND aluno_id IS NOT NULL)),
 
     -- flag_cancelada só faz sentido quando há aula marcada
     CONSTRAINT chk_disp_cancelada
-        CHECK (flag_cancelada = 0 OR aula_marcada = 1)
+        CHECK (flag_cancelada = FALSE OR aula_marcada = TRUE)
 );
