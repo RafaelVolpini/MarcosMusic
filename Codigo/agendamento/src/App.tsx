@@ -367,6 +367,7 @@ function AppInner() {
                 appMode === 'mobile' ? (
                   <MobileAgendaPage
                     lessons={visibleLessons}
+                    students={alunos}
                     availability={availability}
                     availabilityReposicao={availabilityReposicao}
                     currentUser={sessionUser}

@@ -9,9 +9,12 @@ import type { Lesson, WeeklyAvailability } from '../../../types';
 import { LessonModal } from '../../modals/LessonModal';
 import { NewLessonModal } from '../../modals/NewLessonModal';
 import { cn } from '../../../utils';
+import { criarAula } from '../../../services/aulaService';
+import { useToast } from '../../ui/Toast';
 
 interface MobileAgendaPageProps {
   lessons: Lesson[];
+  students: Aluno[];
   availability: WeeklyAvailability;
   availabilityReposicao: WeeklyAvailability;
   currentUser: AuthUser | null;
@@ -22,6 +25,7 @@ interface MobileAgendaPageProps {
 
 export function MobileAgendaPage({
   lessons,
+  students,
   availability,
   availabilityReposicao,
   currentUser,
@@ -32,6 +36,7 @@ export function MobileAgendaPage({
   const [date, setDate] = useState(today(getLocalTimeZone()));
   const [selectedLesson, setSelectedLesson] = useState<Lesson | null>(null);
   const [isNewLessonModalOpen, setIsNewLessonModalOpen] = useState(false);
+  const toast = useToast();
 
   const selectedDateStr = date.toString(); // format: YYYY-MM-DD
 
@@ -47,6 +52,28 @@ export function MobileAgendaPage({
     const tStr = dataInicio.split('T')[1].substring(0, 5);
     onMoveLesson(lessonId, dStr, tStr);
     setSelectedLesson(null);
+  };
+
+  const handleCreateLesson = async (data: any) => {
+    try {
+      const dataInicio = `${data.date}T${data.startTime}:00`;
+      const dataFim = `${data.date}T${data.endTime}:00`;
+      await criarAula({
+        alunoId: data.studentId,
+        dataInicio,
+        dataFim,
+        tipo: data.type,
+        status: 'marcada',
+        instrumento: data.instrument,
+        observacoes: data.notes,
+        recorrente: data.recorrente,
+      });
+      toast('Aula agendada com sucesso!', 'success');
+      setIsNewLessonModalOpen(false);
+      // Aqui idealmente deveríamos ter um onReloadLessons vindo do App
+    } catch (err) {
+      toast('Erro ao agendar aula.', 'error');
+    }
   };
 
   return (
@@ -204,10 +231,14 @@ export function MobileAgendaPage({
       <AnimatePresence>
         {isNewLessonModalOpen && currentUser && (
           <NewLessonModal
-            onClose={() => setIsNewLessonModalOpen(false)}
+            open={isNewLessonModalOpen}
+            defaultDate={selectedDateStr}
+            defaultTime="08:00"
+            lessons={lessons}
+            students={students}
             currentUser={currentUser}
-            availability={availability}
-            initialDate={selectedDateStr}
+            onClose={() => setIsNewLessonModalOpen(false)}
+            onCreate={handleCreateLesson}
           />
         )}
       </AnimatePresence>
