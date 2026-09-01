@@ -11,7 +11,9 @@ import {
 } from 'react-router-dom';
 import { Layout } from './components/layout/Layout';
 import { Dashboard } from './components/pages/Dashboard';
-import { AgendaPage } from './components/pages/AgendaPage';
+import { WebAgendaPage } from './components/pages/web/WebAgendaPage';
+import { MobileAgendaPage } from './components/pages/mobile/MobileAgendaPage';
+import { MobileLayout } from './components/layout/mobile/MobileLayout';
 import { StudentsPage } from './components/pages/StudentsPage';
 import { CreditosPage } from './components/pages/CreditosPage';
 import { DisponibilidadePage } from './components/pages/Disponibilidade';
@@ -97,6 +99,9 @@ function AppInner() {
     if (!savedUser) return false;
     return savedUser.role === 'teacher' || savedUser.termos === true;
   });
+  const [appMode, setAppMode] = useState<"web" | "mobile">(() => {
+    return (localStorage.getItem('appMode') as "web" | "mobile") || "web";
+  });
   const [collapsed, setCollapsed] = useState(false);
   const [lessons, setLessons] = useState<Lesson[]>([]);
   const [alunos, setAlunos] = useState<Aluno[]>([]);
@@ -175,8 +180,10 @@ function AppInner() {
 
   const defaultPage: Page = sessionUser?.role === 'teacher' ? 'dashboard' : 'agenda';
 
-  const handleLoginSuccess = (user: AuthUser) => {
+  const handleLoginSuccess = (user: AuthUser, mode: 'web' | 'mobile') => {
     setSessionUser(user);
+    setAppMode(mode);
+    localStorage.setItem('appMode', mode);
     loadAvailability();
     loadLessons();
     loadAlunos();
@@ -327,8 +334,10 @@ function AppInner() {
   const currentPage = PATH_TO_PAGE[location.pathname];
   const safeActivePage = currentPage && allowedPages.includes(currentPage) ? currentPage : defaultPage;
 
+  const ActiveLayout = appMode === 'mobile' ? MobileLayout : Layout;
+
   return (
-    <Layout
+    <ActiveLayout
       collapsed={collapsed}
       onToggle={() => setCollapsed((v) => !v)}
       activePage={safeActivePage}
@@ -355,15 +364,28 @@ function AppInner() {
             <Route
               path={PAGE_PATHS.agenda}
               element={(
-                <AgendaPage
-                  lessons={visibleLessons}
-                  availability={availability}
-                  availabilityReposicao={availabilityReposicao}
-                  currentUser={sessionUser}
-                  onUpdateLesson={handleUpdateLesson}
-                  onDeleteLesson={handleDeleteLesson}
-                  onMoveLesson={handleMoveLesson}
-                />
+                appMode === 'mobile' ? (
+                  <MobileAgendaPage
+                    lessons={visibleLessons}
+                    students={alunos}
+                    availability={availability}
+                    availabilityReposicao={availabilityReposicao}
+                    currentUser={sessionUser}
+                    onUpdateLesson={handleUpdateLesson}
+                    onDeleteLesson={handleDeleteLesson}
+                    onMoveLesson={handleMoveLesson}
+                  />
+                ) : (
+                  <WebAgendaPage
+                    lessons={visibleLessons}
+                    availability={availability}
+                    availabilityReposicao={availabilityReposicao}
+                    currentUser={sessionUser}
+                    onUpdateLesson={handleUpdateLesson}
+                    onDeleteLesson={handleDeleteLesson}
+                    onMoveLesson={handleMoveLesson}
+                  />
+                )
               )}
             />
             {allowedPages.includes('students') && (
@@ -405,7 +427,7 @@ function AppInner() {
           </Routes>
         </motion.div>
       </AnimatePresence>
-    </Layout>
+    </ActiveLayout>
   );
 }
 

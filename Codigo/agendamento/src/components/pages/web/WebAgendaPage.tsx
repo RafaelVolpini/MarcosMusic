@@ -1,16 +1,16 @@
 import { useState, useEffect, useCallback } from 'react';
-import type { Lesson, WeeklyAvailability, Aluno } from '../../types';
-import type { AuthUser } from '../../lib/auth';
-import { CalendarView } from '../calendar/CalendarView';
-import { LessonModal } from '../modals/LessonModal';
-import { NewLessonModal } from '../modals/NewLessonModal';
-import { ReposicaoCalendarModal } from '../modals/ReposicaoCalendarModal';
-import { buscarAulas, cancelarAula, criarAula, reagendarAula, confirmarPresenca } from '../../services/aulaService';
-import { listarAlunos } from '../../services/alunoService';
-import { listarReposicoes, type ReposicaoDTO } from '../../services/reposicaoService';
-import { toLesson } from '../../adapters/aulaAdapter';
-import { timeToMinutes, minutesToTime } from '../../utils';
-import { useToast } from '../ui/Toast';
+import type { Lesson, WeeklyAvailability, Aluno } from '../../../types';
+import type { AuthUser } from '../../../lib/auth';
+import { CalendarView } from '../../calendar/CalendarView';
+import { LessonModal } from '../../modals/LessonModal';
+import { NewLessonModal } from '../../modals/NewLessonModal';
+import { ReposicaoCalendarModal } from '../../modals/ReposicaoCalendarModal';
+import { buscarAulas, cancelarAula, criarAula, reagendarAula, confirmarPresenca } from '../../../services/aulaService';
+import { listarAlunos } from '../../../services/alunoService';
+import { listarReposicoes, type ReposicaoDTO } from '../../../services/reposicaoService';
+import { toLesson } from '../../../adapters/aulaAdapter';
+import { timeToMinutes, minutesToTime } from '../../../utils';
+import { useToast } from '../../ui/Toast';
 
 interface AgendaPageProps {
   lessons: Lesson[];
@@ -22,7 +22,7 @@ interface AgendaPageProps {
   onMoveLesson: (id: string, date: string, time: string) => void;
 }
 
-export function AgendaPage({
+export function WebAgendaPage({
   lessons: lessonsProp,
   availability, availabilityReposicao, currentUser,
   onUpdateLesson, onDeleteLesson,

@@ -16,7 +16,7 @@ const inputBase =
   "w-full rounded-md border border-(--input-border) bg-(--input-bg) px-3 py-2 text-sm text-(--text) outline-none transition focus:ring-2 focus:ring-(--accent-500)/25 focus:border-(--accent-500)";
 
 interface LoginPageProps {
-  onLoginSuccess: (user: AuthUser) => void;
+  onLoginSuccess: (user: AuthUser, mode: "web" | "mobile") => void;
   onForgotPassword: () => void;
 }
 
@@ -31,6 +31,7 @@ export function LoginPage({
   const [touched, setTouched] = useState({ email: false, password: false });
   const [apiError, setApiError] = useState("");
   const [loading, setLoading] = useState(false);
+  const [loginMode, setLoginMode] = useState<"web" | "mobile">("web");
   const { t } = useLanguage();
 
   const emailTrimmed = email.trim().toLowerCase();
@@ -58,7 +59,7 @@ export function LoginPage({
     try {
       const user = await login(emailTrimmed, password.trim(), rememberMe);
       if (!user) throw new Error(t("auth.errInvalid"));
-      onLoginSuccess(user);
+      onLoginSuccess(user, loginMode);
     } catch (err) {
       setApiError(err instanceof Error ? err.message : t("auth.errInvalid"));
     } finally {
@@ -220,6 +221,37 @@ export function LoginPage({
             )}
           </Button>
         </form>
+
+        <div className="mt-8 grid grid-cols-2 gap-4">
+          <Button
+            type="button"
+            variant={loginMode === "web" ? "primary" : "secondary"}
+            onClick={() => setLoginMode("web")}
+            className={`w-full justify-center transition-all duration-300 ${loginMode === "web"
+              ? "border-transparent text-white shadow-lg"
+              : "border-(--border) text-(--text) hover:border-transparent hover:bg-[var(--accent-600)] hover:text-white"
+              }`}
+            style={{
+              background: loginMode === "web" ? "var(--accent-600)" : undefined,
+            }}
+          >
+            Modo web
+          </Button>
+          <Button
+            type="button"
+            variant={loginMode === "mobile" ? "primary" : "secondary"}
+            onClick={() => setLoginMode("mobile")}
+            className={`w-full justify-center transition-all duration-300 ${loginMode === "mobile"
+              ? "border-transparent text-white shadow-lg"
+              : "border-(--border) text-(--text) hover:border-transparent hover:bg-[var(--accent-600)] hover:text-white"
+              }`}
+            style={{
+              background: loginMode === "mobile" ? "var(--accent-600)" : undefined,
+            }}
+          >
+            Modo mobile
+          </Button>
+        </div>
 
         <p className="mt-8 text-center text-xs text-(--muted)">
           Acesso restrito a contas criadas pelo professor. Entre em contato com
